@@ -1,0 +1,25 @@
+{
+  "name": "sosci",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+  "dev": "parcel src/scripts/*.js",
+  "build": "parcel build src/scripts/*.js",
+  "deploy": "./deploy.sh"
+ },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/taua/sosci.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/taua/sosci/issues"
+  },
+  "homepage": "https://github.com/taua/sosci#readme",
+  "description": "",
+  "devDependencies": {
+    "parcel": "^2.15.4"
+  }
+}
