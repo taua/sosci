@@ -130,7 +130,7 @@
 
   // Only insert newRequire.load when it is actually used.
   // The code in this file is linted against ES5, so dynamic import is not allowed.
-  var $parcel$bundleURL;function $parcel$resolve(url) {  url = importMap[url] || url;  if (!$parcel$bundleURL) {    try {      throw new Error();    } catch (err) {      var matches = ('' + err.stack).match(        /(https?|file|ftp|(chrome|moz|safari-web)-extension):\/\/[^)\n]+/g,      );      if (matches) {        $parcel$bundleURL = matches[0];      } else {        return distDir + url;      }    }  }  return new URL(distDir + url, $parcel$bundleURL).toString();}newRequire.resolve = $parcel$resolve;
+  // INSERT_LOAD_HERE
 
   Object.defineProperty(newRequire, 'root', {
     get: function () {
@@ -160,7 +160,7 @@
       });
     }
   }
-})({"8Kk5H":[function(require,module,exports,__globalThis) {
+})({"9CTwD":[function(require,module,exports,__globalThis) {
 var global = arguments[3];
 var HMR_HOST = null;
 var HMR_PORT = null;
@@ -168,7 +168,7 @@ var HMR_SERVER_PORT = 58698;
 var HMR_SECURE = false;
 var HMR_ENV_HASH = "d6ea1d42532a7575";
 var HMR_USE_SSE = false;
-module.bundle.HMR_BUNDLE_ID = "3f39f7b52b15311d";
+module.bundle.HMR_BUNDLE_ID = "60812b4e599f4e0e";
 "use strict";
 /* global HMR_HOST, HMR_PORT, HMR_SERVER_PORT, HMR_ENV_HASH, HMR_SECURE, HMR_USE_SSE, chrome, browser, __parcel__import__, __parcel__importScripts__, ServiceWorkerGlobalScope */ /*::
 import type {
@@ -666,136 +666,15 @@ function hmrAccept(bundle /*: ParcelRequire */ , id /*: string */ ) {
     }
 }
 
-},{}],"Niccm":[function(require,module,exports,__globalThis) {
+},{}],"gEnYU":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "greet", ()=>greet);
-function greet(page) {
-    console.log(`Welcome to the ${page} page of Soul Science Studio!`);
+parcelHelpers.export(exports, "initHomePage", ()=>initHomePage);
+function initHomePage() {
+    console.log('Home page JS loaded!');
+// Home page specific code here
 }
-console.log('Global JS loaded');
-if (window.location.pathname.includes('about')) require("9e5b3873cfad757a").then((module)=>{
-    module.initAboutPage();
-});
-else if (window.location.pathname.includes('work')) require("fb0e6e5a4ade22e8").then((module)=>{
-    module.initWorkPage();
-});
-else if (window.location.pathname.includes('home')) require("15f686a79e03c55a").then((module)=>{
-    module.initHomePage();
-});
-else // Home or default page logic
-console.log('Home page logic here');
 
-},{"9e5b3873cfad757a":"3UF59","fb0e6e5a4ade22e8":"fNrHc","15f686a79e03c55a":"an9pY","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"3UF59":[function(require,module,exports,__globalThis) {
-module.exports = require("83560999e491354a")(module.bundle.resolve("about.24d794f7.js")).catch((err)=>{
-    delete module.bundle.cache[module.id];
-    throw err;
-}).then(()=>module.bundle.root('gtead'));
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["9CTwD"], null, "parcelRequire60dc", {})
 
-},{"83560999e491354a":"61B45","gtead":"gtead"}],"61B45":[function(require,module,exports,__globalThis) {
-"use strict";
-var cacheLoader = require("ca2a84f7fa4a3bb0");
-module.exports = cacheLoader(function(bundle) {
-    return new Promise(function(resolve, reject) {
-        // Don't insert the same script twice (e.g. if it was already in the HTML)
-        var existingScripts = document.getElementsByTagName('script');
-        if ([].concat(existingScripts).some(function(script) {
-            return script.src === bundle;
-        })) {
-            resolve();
-            return;
-        }
-        var preloadLink = document.createElement('link');
-        preloadLink.href = bundle;
-        preloadLink.rel = 'preload';
-        preloadLink.as = 'script';
-        document.head.appendChild(preloadLink);
-        var script = document.createElement('script');
-        script.async = true;
-        script.type = 'text/javascript';
-        script.src = bundle;
-        script.onerror = function(e) {
-            var error = new TypeError("Failed to fetch dynamically imported module: ".concat(bundle, ". Error: ").concat(e.message));
-            script.onerror = script.onload = null;
-            script.remove();
-            reject(error);
-        };
-        script.onload = function() {
-            script.onerror = script.onload = null;
-            resolve();
-        };
-        document.getElementsByTagName('head')[0].appendChild(script);
-    });
-});
-
-},{"ca2a84f7fa4a3bb0":"j49pS"}],"j49pS":[function(require,module,exports,__globalThis) {
-"use strict";
-var cachedBundles = {};
-var cachedPreloads = {};
-var cachedPrefetches = {};
-function getCache(type) {
-    switch(type){
-        case 'preload':
-            return cachedPreloads;
-        case 'prefetch':
-            return cachedPrefetches;
-        default:
-            return cachedBundles;
-    }
-}
-module.exports = function(loader, type) {
-    return function(bundle) {
-        var cache = getCache(type);
-        if (cache[bundle]) return cache[bundle];
-        return cache[bundle] = loader.apply(null, arguments).catch(function(e) {
-            delete cache[bundle];
-            throw e;
-        });
-    };
-};
-
-},{}],"fNrHc":[function(require,module,exports,__globalThis) {
-module.exports = require("8c2b502056816a57")(module.bundle.resolve("work.88846810.js")).catch((err)=>{
-    delete module.bundle.cache[module.id];
-    throw err;
-}).then(()=>module.bundle.root('ksOB8'));
-
-},{"8c2b502056816a57":"61B45","ksOB8":"ksOB8"}],"an9pY":[function(require,module,exports,__globalThis) {
-module.exports = require("6f1ff1c5f72e2fff")(module.bundle.resolve("home.599f4e0e.js")).catch((err)=>{
-    delete module.bundle.cache[module.id];
-    throw err;
-}).then(()=>module.bundle.root('gEnYU'));
-
-},{"6f1ff1c5f72e2fff":"61B45","gEnYU":"gEnYU"}],"gkKU3":[function(require,module,exports,__globalThis) {
-exports.interopDefault = function(a) {
-    return a && a.__esModule ? a : {
-        default: a
-    };
-};
-exports.defineInteropFlag = function(a) {
-    Object.defineProperty(a, '__esModule', {
-        value: true
-    });
-};
-exports.exportAll = function(source, dest) {
-    Object.keys(source).forEach(function(key) {
-        if (key === 'default' || key === '__esModule' || Object.prototype.hasOwnProperty.call(dest, key)) return;
-        Object.defineProperty(dest, key, {
-            enumerable: true,
-            get: function() {
-                return source[key];
-            }
-        });
-    });
-    return dest;
-};
-exports.export = function(dest, destName, get) {
-    Object.defineProperty(dest, destName, {
-        enumerable: true,
-        get: get
-    });
-};
-
-},{}]},["8Kk5H","Niccm"], "Niccm", "parcelRequire60dc", {}, "./", "/")
-
-//# sourceMappingURL=global.js.map
+//# sourceMappingURL=home.599f4e0e.js.map
