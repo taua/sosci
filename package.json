@@ -1,12 +1,11 @@
 {
   "name": "sosci",
   "version": "1.0.0",
-  "main": "index.js",
   "scripts": {
-  "dev": "parcel src/scripts/*.js",
-  "build": "parcel build src/scripts/*.js",
+  "dev": "parcel src/scripts/global.js",
+  "build": "parcel build src/scripts/global.js",
   "deploy": "./deploy.sh"
- },
+},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/taua/sosci.git"
