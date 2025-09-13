@@ -1,8 +1,28 @@
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ScrollSmoother } from "gsap/ScrollSmoother";
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
+
 export function greet(page) {
   console.log(`Welcome to the ${page} page of Soul Science Studio!`);
 }
 
 console.log('Global JS loaded');
+
+window.addEventListener('DOMContentLoaded', () => {
+  const wrapper = document.querySelector('.main-shell');
+  const content = document.querySelector('.content-shell');
+  if (wrapper && content) {
+    ScrollSmoother.create({
+      wrapper: ".main-shell",
+      content: ".content-shell",
+      smooth: 1.2, // Adjust smoothness as needed
+      effects: true
+    });
+  } else {
+    console.warn('ScrollSmoother: .main-shell or .content-shell not found in DOM.');
+  }
+});
 
 if (window.location.pathname.includes('about')) {
   import('./about.js').then(module => {

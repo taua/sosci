@@ -2,10 +2,10 @@
   "name": "sosci",
   "version": "1.0.0",
   "scripts": {
-  "dev": "parcel src/scripts/global.js --port 58698",
-  "build": "parcel build src/scripts/global.js",
-  "deploy": "./deploy.sh"
-},
+    "dev": "parcel src/scripts/global.js --port 58698",
+    "build": "parcel build src/scripts/global.js",
+    "deploy": "./deploy.sh"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/taua/sosci.git"
@@ -20,5 +20,8 @@
   "description": "",
   "devDependencies": {
     "parcel": "^2.15.4"
+  },
+  "dependencies": {
+    "gsap": "^3.13.0"
   }
 }

@@ -1,4 +1,12 @@
+import { gsap } from "gsap";
+
 export function initHomePage() {
   console.log('Home page JS loaded!');
-  // Home page specific code here
+  // Example GSAP animation for the home page
+  gsap.from(".home-animate", {
+    y: 100,
+    opacity: 0,
+    duration: 1.2,
+    ease: "power2.out"
+  });
 }

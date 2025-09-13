@@ -672,7 +672,7 @@ parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initWorkPage", ()=>initWorkPage);
 function initWorkPage() {
     console.log('Work page JS loaded!');
-// Work page specific code here
+// Add work page specific code here
 }
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["2tWFu"], null, "parcelRequire60dc", {})

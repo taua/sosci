@@ -672,7 +672,7 @@ parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initAboutPage", ()=>initAboutPage);
 function initAboutPage() {
     console.log('About page JS loaded!');
-// About page specific code here
+// Add about page specific code here
 }
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["fMX4k"], null, "parcelRequire60dc", {})

@@ -670,11 +670,18 @@ function hmrAccept(bundle /*: ParcelRequire */ , id /*: string */ ) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initHomePage", ()=>initHomePage);
+var _gsap = require("gsap");
 function initHomePage() {
     console.log('Home page JS loaded!');
-// Home page specific code here
+    // Example GSAP animation for the home page
+    (0, _gsap.gsap).from(".home-animate", {
+        y: 100,
+        opacity: 0,
+        duration: 1.2,
+        ease: "power2.out"
+    });
 }
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["9CTwD"], null, "parcelRequire60dc", {})
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC"}]},["9CTwD"], null, "parcelRequire60dc", {})
 
 //# sourceMappingURL=home.599f4e0e.js.map
