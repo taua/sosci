@@ -673,13 +673,7 @@ parcelHelpers.export(exports, "initHomePage", ()=>initHomePage);
 var _gsap = require("gsap");
 function initHomePage() {
     console.log('Home page JS loaded!');
-    // Example GSAP animation for the home page
-    (0, _gsap.gsap).from(".home-animate", {
-        y: 100,
-        opacity: 0,
-        duration: 1.2,
-        ease: "power2.out"
-    });
+// Add home page specific GSAP code here
 }
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC"}]},["9CTwD"], null, "parcelRequire60dc", {})

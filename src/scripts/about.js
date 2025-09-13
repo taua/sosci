@@ -1,4 +1,6 @@
+import { gsap } from "gsap";
+
 export function initAboutPage() {
   console.log('About page JS loaded!');
-  // Add about page specific code here
+  // Add about page specific GSAP code here
 }

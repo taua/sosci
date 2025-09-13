@@ -1,7 +1,8 @@
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ScrollSmoother } from "gsap/ScrollSmoother";
-gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
+import { SplitText } from "gsap/SplitText";
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, SplitText);
 
 export function greet(page) {
   console.log(`Welcome to the ${page} page of Soul Science Studio!`);

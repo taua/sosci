@@ -670,11 +670,12 @@ function hmrAccept(bundle /*: ParcelRequire */ , id /*: string */ ) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initWorkPage", ()=>initWorkPage);
+var _gsap = require("gsap");
 function initWorkPage() {
     console.log('Work page JS loaded!');
-// Add work page specific code here
+// Add work page specific GSAP code here
 }
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["2tWFu"], null, "parcelRequire60dc", {})
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC"}]},["2tWFu"], null, "parcelRequire60dc", {})
 
 //# sourceMappingURL=work.88846810.js.map
