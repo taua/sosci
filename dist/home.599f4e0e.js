@@ -671,11 +671,208 @@ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initHomePage", ()=>initHomePage);
 var _gsap = require("gsap");
+var _imgTrailEffect = require("./imgTrailEffect");
+var _imgTrailEffectDefault = parcelHelpers.interopDefault(_imgTrailEffect);
 function initHomePage() {
     console.log('Home page JS loaded!');
-// Add home page specific GSAP code here
+    (0, _imgTrailEffectDefault.default)();
 }
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC"}]},["9CTwD"], null, "parcelRequire60dc", {})
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC","./imgTrailEffect":"jMsgH"}],"jMsgH":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "default", ()=>imgTrailEffect);
+var _gsap = require("gsap");
+var _gsapDefault = parcelHelpers.interopDefault(_gsap);
+function imgTrailEffect() {
+    // body element
+    const body = document.body;
+    //let handleMouseMove;
+    // helper functions
+    const MathUtils = {
+        // linear interpolation
+        lerp: (a, b, n)=>(1 - n) * a + n * b,
+        // distance between two points
+        distance: (x1, y1, x2, y2)=>Math.hypot(x2 - x1, y2 - y1)
+    };
+    // get the mouse position
+    const getMousePos = (ev)=>{
+        let posx = 0;
+        let posy = 0;
+        if (!ev) ev = window.event;
+        if (ev.pageX || ev.pageY) {
+            posx = ev.pageX;
+            posy = ev.pageY;
+        } else if (ev.clientX || ev.clientY) {
+            posx = ev.clientX + body.scrollLeft + docEl.scrollLeft;
+            posy = ev.clientY + body.scrollTop + docEl.scrollTop;
+        }
+        return {
+            x: posx,
+            y: posy
+        };
+    };
+    // mousePos: current mouse position
+    // cacheMousePos: previous mouse position
+    // lastMousePos: last last recorded mouse position (at the time the last image was shown)
+    let mousePos = lastMousePos = cacheMousePos = {
+        x: 0,
+        y: 0
+    };
+    function handleMouseMove(ev) {
+        mousePos = getMousePos(ev);
+    }
+    // Add the event listener
+    window.addEventListener('mousemove', handleMouseMove);
+    window._handleMouseMoveRef = handleMouseMove;
+    // update the mouse position
+    //window.addEventListener('mousemove', ev => mousePos = getMousePos(ev));
+    // gets the distance from the current mouse position to the last recorded mouse position
+    const getMouseDistance = ()=>MathUtils.distance(mousePos.x, mousePos.y, lastMousePos.x, lastMousePos.y);
+    class Image {
+        constructor(el){
+            this.DOM = {
+                el: el
+            };
+            // image deafult styles
+            this.defaultStyle = {
+                scale: 1,
+                x: 0,
+                y: 0,
+                opacity: 0
+            };
+            // get sizes/position
+            this.getRect();
+            // init/bind events
+            this.initEvents();
+        }
+        initEvents() {
+            // on resize get updated sizes/position
+            window.addEventListener('resize', ()=>this.resize());
+        }
+        resize() {
+            // reset styles
+            (0, _gsapDefault.default).set(this.DOM.el, this.defaultStyle);
+            // get sizes/position
+            this.getRect();
+        }
+        getRect() {
+            this.rect = this.DOM.el.getBoundingClientRect();
+        }
+        isActive() {
+            // check if image is animating or if it's visible
+            return (0, _gsapDefault.default).isTweening(this.DOM.el) || this.DOM.el.style.opacity != 0;
+        }
+    }
+    class ImageTrail {
+        constructor(){
+            // images container
+            this.DOM = {
+                content: document.querySelector('.content')
+            };
+            // array of Image objs, one per image element
+            this.images = [];
+            [
+                ...this.DOM.content.querySelectorAll('img')
+            ].forEach((img)=>this.images.push(new Image(img)));
+            // total number of images
+            this.imagesTotal = this.images.length;
+            // upcoming image index
+            this.imgPosition = 0;
+            // zIndex value to apply to the upcoming image
+            this.zIndexVal = 1;
+            // mouse distance required to show the next image
+            this.threshold = 100;
+            // render the images
+            requestAnimationFrame(()=>this.render());
+        }
+        render() {
+            // get distance between the current mouse position and the position of the previous image
+            let distance = getMouseDistance();
+            // cache previous mouse position
+            cacheMousePos.x = MathUtils.lerp(cacheMousePos.x || mousePos.x, mousePos.x, 0.1);
+            cacheMousePos.y = MathUtils.lerp(cacheMousePos.y || mousePos.y, mousePos.y, 0.1);
+            // if the mouse moved more than [this.threshold] then show the next image
+            if (distance > this.threshold) {
+                this.showNextImage();
+                ++this.zIndexVal;
+                this.imgPosition = this.imgPosition < this.imagesTotal - 1 ? this.imgPosition + 1 : 0;
+                lastMousePos = mousePos;
+            }
+            // check when mousemove stops and all images are inactive (not visible and not animating)
+            let isIdle = true;
+            for (let img of this.images)if (img.isActive()) {
+                isIdle = false;
+                break;
+            }
+            // reset z-index initial value
+            if (isIdle && this.zIndexVal !== 1) this.zIndexVal = 1;
+            // loop..
+            requestAnimationFrame(()=>this.render());
+        }
+        showNextImage() {
+            // show image at position [this.imgPosition]
+            const img = this.images[this.imgPosition];
+            // kill any tween on the image
+            (0, _gsapDefault.default).killTweensOf(img.DOM.el);
+            let theIndex = $(img.DOM.el).index();
+            //let theTextColor = colorCombos[theIndex].text_color;
+            //let theBgColor = colorCombos[theIndex].background_color;
+            //let theDelay = .15;
+            //let theDuration = 4;
+            //gsap.killTweensOf(['.bg-color' , '.menu-top-bar' , '.menu-bottom-bar' , '.home-body' ]);
+            //gsap.to('.bg-color', {duration: theDuration, ease:Power4.easeOut, backgroundColor:theBgColor , delay: theDelay})
+            //gsap.to(['.menu-top-bar' , '.menu-bottom-bar'], {duration: theDuration, ease:Power4.easeOut, color:theTextColor , delay: theDelay});
+            //gsap.to('.home-body', {duration: theDuration, ease:Power4.easeOut, color:theTextColor, textStrokeColor:theTextColor , delay: theDelay});
+            (0, _gsapDefault.default).timeline()// show the image
+            .fromTo(img.DOM.el, {
+                zIndex: this.zIndexVal,
+                scale: 0,
+                opacity: 0,
+                x: cacheMousePos.x - img.rect.width / 2,
+                y: cacheMousePos.y - img.rect.height / 2
+            }, {
+                //startAt: {opacity: 0, scale: 1},
+                opacity: 1,
+                scale: .6,
+                duration: .15,
+                //ease: "expo",
+                zIndex: this.zIndexVal,
+                x: cacheMousePos.x - img.rect.width / 2,
+                y: cacheMousePos.y - img.rect.height / 2
+            }, 0)// animate position
+            .to(img.DOM.el, {
+                duration: 1,
+                ease: "expo",
+                x: mousePos.x - img.rect.width / 2,
+                y: mousePos.y - img.rect.height / 2
+            }, "<")// then make it disappear
+            .to(img.DOM.el, {
+                duration: .3,
+                ease: "power4",
+                opacity: 0
+            }, 1.1)// scale down the image
+            .to(img.DOM.el, {
+                duration: .3,
+                ease: "quint",
+                scale: 0.2
+            }, 1.1);
+        }
+    }
+    // Preload images
+    const preloadImages = ()=>{
+        return new Promise((resolve, reject)=>{
+            imagesLoaded(document.querySelectorAll('.content__img'), resolve);
+        });
+    };
+    // And then..
+    preloadImages().then(()=>{
+        // Remove the loader
+        document.body.classList.remove('loading');
+        new ImageTrail();
+    });
+}
+
+},{"gsap":"fPSuC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["9CTwD"], null, "parcelRequire60dc", {})
 
 //# sourceMappingURL=home.599f4e0e.js.map

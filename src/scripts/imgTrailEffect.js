@@ -1,7 +1,7 @@
 
 import gsap from 'gsap';
 import {Power4} from "gsap";
-import colorCombos from "./colorCombos";
+//import colorCombos from "./colorCombos";
 
 
 // ********************************************************//
@@ -145,14 +145,14 @@ export default function imgTrailEffect() {
             // kill any tween on the image
             gsap.killTweensOf(img.DOM.el);
             let theIndex = $(img.DOM.el).index();
-            let theTextColor = colorCombos[theIndex].text_color;
-            let theBgColor = colorCombos[theIndex].background_color;
-            let theDelay = .15;
-            let theDuration = 4;
-            gsap.killTweensOf(['.bg-color' , '.menu-top-bar' , '.menu-bottom-bar' , '.home-body' ]);
-            gsap.to('.bg-color', {duration: theDuration, ease:Power4.easeOut, backgroundColor:theBgColor , delay: theDelay})
-            gsap.to(['.menu-top-bar' , '.menu-bottom-bar'], {duration: theDuration, ease:Power4.easeOut, color:theTextColor , delay: theDelay});
-            gsap.to('.home-body', {duration: theDuration, ease:Power4.easeOut, color:theTextColor, textStrokeColor:theTextColor , delay: theDelay});
+            //let theTextColor = colorCombos[theIndex].text_color;
+            //let theBgColor = colorCombos[theIndex].background_color;
+            //let theDelay = .15;
+            //let theDuration = 4;
+            //gsap.killTweensOf(['.bg-color' , '.menu-top-bar' , '.menu-bottom-bar' , '.home-body' ]);
+            //gsap.to('.bg-color', {duration: theDuration, ease:Power4.easeOut, backgroundColor:theBgColor , delay: theDelay})
+            //gsap.to(['.menu-top-bar' , '.menu-bottom-bar'], {duration: theDuration, ease:Power4.easeOut, color:theTextColor , delay: theDelay});
+            //gsap.to('.home-body', {duration: theDuration, ease:Power4.easeOut, color:theTextColor, textStrokeColor:theTextColor , delay: theDelay});
 
             gsap.timeline()
             // show the image
