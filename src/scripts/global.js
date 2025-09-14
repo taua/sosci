@@ -25,17 +25,17 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-if (window.location.pathname.includes('about')) {
+if (window.location.pathname === '/' || window.location.pathname.includes('home')) {
+  import('./home.js').then(module => {
+    module.initHomePage();
+  });
+} else if (window.location.pathname.includes('about')) {
   import('./about.js').then(module => {
     module.initAboutPage();
   });
 } else if (window.location.pathname.includes('work')) {
   import('./work.js').then(module => {
     module.initWorkPage();
-  });
-} else if (window.location.pathname.includes('home')) {
-  import('./home.js').then(module => {
-    module.initHomePage();
   });
 } else {
   // Home or default page logic

@@ -690,14 +690,14 @@ window.addEventListener('DOMContentLoaded', ()=>{
     });
     else console.warn('ScrollSmoother: .main-shell or .content-shell not found in DOM.');
 });
-if (window.location.pathname.includes('about')) require("9e5b3873cfad757a").then((module)=>{
+if (window.location.pathname === '/' || window.location.pathname.includes('home')) require("15f686a79e03c55a").then((module)=>{
+    module.initHomePage();
+});
+else if (window.location.pathname.includes('about')) require("9e5b3873cfad757a").then((module)=>{
     module.initAboutPage();
 });
 else if (window.location.pathname.includes('work')) require("fb0e6e5a4ade22e8").then((module)=>{
     module.initWorkPage();
-});
-else if (window.location.pathname.includes('home')) require("15f686a79e03c55a").then((module)=>{
-    module.initHomePage();
 });
 else // Home or default page logic
 console.log('Home page logic here');

@@ -1,4 +1,5 @@
 
+import imagesLoaded from "imagesloaded";
 import gsap from 'gsap';
 import {Power4} from "gsap";
 //import colorCombos from "./colorCombos";
