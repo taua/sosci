@@ -669,16 +669,121 @@ function hmrAccept(bundle /*: ParcelRequire */ , id /*: string */ ) {
 },{}],"gEnYU":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
+// Entry point for home page JS
 parcelHelpers.export(exports, "initHomePage", ()=>initHomePage);
 var _gsap = require("gsap");
 var _imgTrailEffect = require("./imgTrailEffect");
 var _imgTrailEffectDefault = parcelHelpers.interopDefault(_imgTrailEffect);
+var _horizontalLoop = require("./horizontalLoop");
+var _horizontalLoopDefault = parcelHelpers.interopDefault(_horizontalLoop);
+var _observer = require("gsap/Observer");
+var _scrollTrigger = require("gsap/ScrollTrigger");
+(0, _gsap.gsap).registerPlugin((0, _observer.Observer), (0, _scrollTrigger.ScrollTrigger));
+// Track the last real mouse position globally
+window._lastRealMousePos = {
+    x: window.innerWidth / 2,
+    y: window.innerHeight / 2
+};
+window.addEventListener('mousemove', function(e) {
+    window._lastRealMousePos = {
+        x: e.pageX,
+        y: e.pageY
+    };
+});
 function initHomePage() {
-    console.log('Home page JS loaded!');
-    (0, _imgTrailEffectDefault.default)();
+    // Wait for all resources (images, fonts, etc.) to load
+    window.addEventListener('load', ()=>{
+        // Initialize image trail effect and store cleanup function
+        let imgTrailCleanup = (0, _imgTrailEffectDefault.default)();
+        // Set up ScrollTrigger for the hero section to enable/disable imgTrailEffect
+        (0, _scrollTrigger.ScrollTrigger).create({
+            trigger: '.img-trail-hero-shell',
+            start: 'top top',
+            end: '50% top',
+            onLeave: ()=>{
+                // Kill or disable imgTrailEffect when leaving hero
+                console.log('Disabling imgTrailEffect');
+                if (typeof imgTrailCleanup === 'function') imgTrailCleanup();
+            },
+            onEnterBack: ()=>{
+                console.log('Re-enabling imgTrailEffect');
+                // Re-enable imgTrailEffect when re-entering hero
+                imgTrailCleanup = (0, _imgTrailEffectDefault.default)();
+            }
+        });
+        const speed = 5;
+        // Loop through each ticker group container on the page
+        document.querySelectorAll('.home-project-scroll-txt-shell').forEach((shell)=>{
+            const txts = shell.querySelectorAll('.home-project-txt');
+            if (txts.length > 0) introTicker(txts, shell);
+        });
+        // Sets up a horizontal ticker effect and Observer for a group of text nodes
+        function introTicker(txtNodes, shell) {
+            // Create the horizontal loop animation for the text nodes
+            const heroLoop = (0, _horizontalLoopDefault.default)(txtNodes, {
+                repeat: -1,
+                speed: 1
+            });
+            let tl;
+            let observerInstance = null;
+            // Use ScrollTrigger to activate Observer only when the section is in view
+            (0, _scrollTrigger.ScrollTrigger).create({
+                trigger: shell,
+                start: "0% 100%",
+                end: "100% 0%",
+                //markers: true,     // Show GSAP markers for debugging
+                onEnter: ()=>{
+                    // Create Observer to listen for wheel events on this shell
+                    //console.log('Observer ACTIVE for', shell);
+                    observerInstance = (0, _observer.Observer).create({
+                        target: shell,
+                        type: 'wheel',
+                        onChangeY: (self)=>{
+                            tl && tl.kill();
+                            const factor = self.deltaY > 0 ? 1 : -1;
+                            tl = (0, _gsap.gsap).timeline().to(heroLoop, {
+                                timeScale: speed * factor,
+                                duration: 0.25
+                            }).to(heroLoop, {
+                                timeScale: 1 * factor,
+                                duration: 1
+                            });
+                        }
+                    });
+                },
+                onLeave: ()=>{
+                    // Kill Observer when section leaves viewport
+                    if (observerInstance) observerInstance.kill();
+                },
+                onEnterBack: ()=>{
+                    // Re-create Observer when scrolling back into view
+                    //console.log('Observer ACTIVE (back) for', shell);
+                    observerInstance = (0, _observer.Observer).create({
+                        target: shell,
+                        type: 'wheel',
+                        onChangeY: (self)=>{
+                            tl && tl.kill();
+                            const factor = self.deltaY > 0 ? 1 : -1;
+                            tl = (0, _gsap.gsap).timeline().to(heroLoop, {
+                                timeScale: speed * factor,
+                                duration: 0.25
+                            }).to(heroLoop, {
+                                timeScale: 1 * factor,
+                                duration: 1
+                            });
+                        }
+                    });
+                },
+                onLeaveBack: ()=>{
+                    // Kill Observer when section leaves viewport (scrolling up)
+                    if (observerInstance) observerInstance.kill();
+                }
+            });
+        }
+    });
 }
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC","./imgTrailEffect":"jMsgH"}],"jMsgH":[function(require,module,exports,__globalThis) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC","./imgTrailEffect":"jMsgH","./horizontalLoop":"02lVZ","gsap/Observer":"aAWxM","gsap/ScrollTrigger":"7wnFk"}],"jMsgH":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "default", ()=>imgTrailEffect);
@@ -699,15 +804,16 @@ function imgTrailEffect() {
     };
     // get the mouse position
     const getMousePos = (ev)=>{
-        let posx = 0;
-        let posy = 0;
-        if (!ev) ev = window.event;
-        if (ev.pageX || ev.pageY) {
-            posx = ev.pageX;
-            posy = ev.pageY;
-        } else if (ev.clientX || ev.clientY) {
-            posx = ev.clientX + body.scrollLeft + docEl.scrollLeft;
-            posy = ev.clientY + body.scrollTop + docEl.scrollTop;
+        let posx = window.innerWidth / 2;
+        let posy = window.innerHeight / 2;
+        if (ev) {
+            if (ev.pageX || ev.pageY) {
+                posx = ev.pageX;
+                posy = ev.pageY;
+            } else if (ev.clientX || ev.clientY) {
+                posx = ev.clientX + body.scrollLeft + docEl.scrollLeft;
+                posy = ev.clientY + body.scrollTop + docEl.scrollTop;
+            }
         }
         return {
             x: posx,
@@ -717,18 +823,16 @@ function imgTrailEffect() {
     // mousePos: current mouse position
     // cacheMousePos: previous mouse position
     // lastMousePos: last last recorded mouse position (at the time the last image was shown)
+    const lastReal = window._lastRealMousePos || getMousePos();
     let mousePos = lastMousePos = cacheMousePos = {
-        x: 0,
-        y: 0
+        x: lastReal.x,
+        y: lastReal.y
     };
+    // Update mousePos on every mousemove
     function handleMouseMove(ev) {
         mousePos = getMousePos(ev);
     }
-    // Add the event listener
     window.addEventListener('mousemove', handleMouseMove);
-    window._handleMouseMoveRef = handleMouseMove;
-    // update the mouse position
-    //window.addEventListener('mousemove', ev => mousePos = getMousePos(ev));
     // gets the distance from the current mouse position to the last recorded mouse position
     const getMouseDistance = ()=>MathUtils.distance(mousePos.x, mousePos.y, lastMousePos.x, lastMousePos.y);
     class Image {
@@ -766,51 +870,42 @@ function imgTrailEffect() {
             return (0, _gsapDefault.default).isTweening(this.DOM.el) || this.DOM.el.style.opacity != 0;
         }
     }
+    let imageTrailInstance = null;
+    let animationFrameId = null;
     class ImageTrail {
         constructor(){
-            // images container
             this.DOM = {
                 content: document.querySelector('.content')
             };
-            // array of Image objs, one per image element
             this.images = [];
             [
                 ...this.DOM.content.querySelectorAll('img')
             ].forEach((img)=>this.images.push(new Image(img)));
-            // total number of images
             this.imagesTotal = this.images.length;
-            // upcoming image index
             this.imgPosition = 0;
-            // zIndex value to apply to the upcoming image
             this.zIndexVal = 1;
-            // mouse distance required to show the next image
             this.threshold = 100;
-            // render the images
-            requestAnimationFrame(()=>this.render());
+            // Force recalc of all image rects on creation
+            this.images.forEach((img)=>img.resize());
+            animationFrameId = requestAnimationFrame(()=>this.render());
         }
         render() {
-            // get distance between the current mouse position and the position of the previous image
             let distance = getMouseDistance();
-            // cache previous mouse position
             cacheMousePos.x = MathUtils.lerp(cacheMousePos.x || mousePos.x, mousePos.x, 0.1);
             cacheMousePos.y = MathUtils.lerp(cacheMousePos.y || mousePos.y, mousePos.y, 0.1);
-            // if the mouse moved more than [this.threshold] then show the next image
             if (distance > this.threshold) {
                 this.showNextImage();
                 ++this.zIndexVal;
                 this.imgPosition = this.imgPosition < this.imagesTotal - 1 ? this.imgPosition + 1 : 0;
                 lastMousePos = mousePos;
             }
-            // check when mousemove stops and all images are inactive (not visible and not animating)
             let isIdle = true;
             for (let img of this.images)if (img.isActive()) {
                 isIdle = false;
                 break;
             }
-            // reset z-index initial value
             if (isIdle && this.zIndexVal !== 1) this.zIndexVal = 1;
-            // loop..
-            requestAnimationFrame(()=>this.render());
+            animationFrameId = requestAnimationFrame(()=>this.render());
         }
         showNextImage() {
             // show image at position [this.imgPosition]
@@ -860,6 +955,14 @@ function imgTrailEffect() {
                 scale: 0.2
             }, 1.1);
         }
+        destroy() {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            // Remove resize listeners from all images
+            this.images.forEach((img)=>{
+                // This will not remove anonymous listeners, so you may want to refactor if needed
+                window.removeEventListener('resize', ()=>img.resize());
+            });
+        }
     }
     // Preload images
     const preloadImages = ()=>{
@@ -871,8 +974,20 @@ function imgTrailEffect() {
     preloadImages().then(()=>{
         // Remove the loader
         document.body.classList.remove('loading');
-        new ImageTrail();
+        // Immediately update all mouse position variables to the current mouse position on (re)activation
+        const currentMouse = getMousePos();
+        mousePos = lastMousePos = cacheMousePos = {
+            x: currentMouse.x,
+            y: currentMouse.y
+        };
+        imageTrailInstance = new ImageTrail();
     });
+    // Return a cleanup function to remove the event listener
+    return function cleanup() {
+        window.removeEventListener('mousemove', handleMouseMove);
+        if (imageTrailInstance && typeof imageTrailInstance.destroy === 'function') imageTrailInstance.destroy();
+    // Add any other cleanup logic here (timeouts, DOM changes, etc.)
+    };
 }
 
 },{"gsap":"fPSuC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","imagesloaded":"aYzyZ"}],"aYzyZ":[function(require,module,exports,__globalThis) {
@@ -1218,6 +1333,80 @@ function imgTrailEffect() {
     return EvEmitter;
 });
 
-},{}]},["9CTwD"], null, "parcelRequire60dc", {})
+},{}],"02lVZ":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "default", ()=>horizontalLoop);
+var _gsap = require("gsap");
+var _gsapDefault = parcelHelpers.interopDefault(_gsap);
+function horizontalLoop(items, config) {
+    items = (0, _gsapDefault.default).utils.toArray(items);
+    config = config || {};
+    let tl = (0, _gsapDefault.default).timeline({
+        repeat: config.repeat,
+        paused: config.paused,
+        defaults: {
+            ease: 'none'
+        },
+        onReverseComplete: ()=>tl.totalTime(tl.rawTime() + tl.duration() * 100)
+    }), length = items.length, startX = items[0].offsetLeft, times = [], widths = [], xPercents = [], curIndex = 0, pixelsPerSecond = (config.speed || 1) * 100, snap = config.snap === false ? (v)=>v : (0, _gsapDefault.default).utils.snap(config.snap || 1), totalWidth, curX, distanceToStart, distanceToLoop, item, i;
+    (0, _gsapDefault.default).set(items, {
+        // convert "x" to "xPercent" to make things responsive, and populate the widths/xPercents Arrays to make lookups faster.
+        xPercent: (i, el)=>{
+            let w = widths[i] = parseFloat((0, _gsapDefault.default).getProperty(el, 'width', 'px'));
+            xPercents[i] = snap(parseFloat((0, _gsapDefault.default).getProperty(el, 'x', 'px')) / w * 100 + (0, _gsapDefault.default).getProperty(el, 'xPercent'));
+            return xPercents[i];
+        }
+    });
+    (0, _gsapDefault.default).set(items, {
+        x: 0
+    });
+    totalWidth = items[length - 1].offsetLeft + xPercents[length - 1] / 100 * widths[length - 1] - startX + items[length - 1].offsetWidth * (0, _gsapDefault.default).getProperty(items[length - 1], 'scaleX') + (parseFloat(config.paddingRight) || 0);
+    for(i = 0; i < length; i++){
+        item = items[i];
+        curX = xPercents[i] / 100 * widths[i];
+        distanceToStart = item.offsetLeft + curX - startX;
+        distanceToLoop = distanceToStart + widths[i] * (0, _gsapDefault.default).getProperty(item, 'scaleX');
+        tl.to(item, {
+            xPercent: snap((curX - distanceToLoop) / widths[i] * 100),
+            duration: distanceToLoop / pixelsPerSecond
+        }, 0).fromTo(item, {
+            xPercent: snap((curX - distanceToLoop + totalWidth) / widths[i] * 100)
+        }, {
+            xPercent: xPercents[i],
+            duration: (curX - distanceToLoop + totalWidth - curX) / pixelsPerSecond,
+            immediateRender: false
+        }, distanceToLoop / pixelsPerSecond).add('label' + i, distanceToStart / pixelsPerSecond);
+        times[i] = distanceToStart / pixelsPerSecond;
+    }
+    function toIndex(index, vars) {
+        vars = vars || {};
+        Math.abs(index - curIndex) > length / 2 && (index += index > curIndex ? -length : length); // always go in the shortest direction
+        let newIndex = (0, _gsapDefault.default).utils.wrap(0, length, index), time = times[newIndex];
+        if (time > tl.time() !== index > curIndex) {
+            // if we're wrapping the timeline's playhead, make the proper adjustments
+            vars.modifiers = {
+                time: (0, _gsapDefault.default).utils.wrap(0, tl.duration())
+            };
+            time += tl.duration() * (index > curIndex ? 1 : -1);
+        }
+        curIndex = newIndex;
+        vars.overwrite = true;
+        return tl.tweenTo(time, vars);
+    }
+    tl.next = (vars)=>toIndex(curIndex + 1, vars);
+    tl.previous = (vars)=>toIndex(curIndex - 1, vars);
+    tl.current = ()=>curIndex;
+    tl.toIndex = (index, vars)=>toIndex(index, vars);
+    tl.times = times;
+    tl.progress(1, true).progress(0, true); // pre-render for performance
+    if (config.reversed) {
+        tl.vars.onReverseComplete();
+        tl.reverse();
+    }
+    return tl;
+}
+
+},{"gsap":"fPSuC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["9CTwD"], null, "parcelRequire60dc", {})
 
 //# sourceMappingURL=home.599f4e0e.js.map
