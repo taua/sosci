@@ -173,10 +173,26 @@ export default function imgTrailEffect() {
         destroy() {
             if (animationFrameId) {
                 cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
             }
-            // Remove resize listeners from all images
+            // Animate all images out with the same scale down effect as in showNextImage
+            const tl = gsap.timeline();
             this.images.forEach(img => {
-                // This will not remove anonymous listeners, so you may want to refactor if needed
+                tl.to(img.DOM.el, {
+                    opacity: 0,
+                    scale: 0.2,
+                    duration: 0.3,
+                    ease: "quint"
+                }, 0); // All at once
+            });
+            // After animation, reset styles
+            tl.add(() => {
+                this.images.forEach(img => {
+                    gsap.set(img.DOM.el, img.defaultStyle);
+                });
+            });
+            // Remove resize listeners as before
+            this.images.forEach(img => {
                 window.removeEventListener('resize', () => img.resize());
             });
         }
@@ -204,6 +220,7 @@ export default function imgTrailEffect() {
         window.removeEventListener('mousemove', handleMouseMove);
         if (imageTrailInstance && typeof imageTrailInstance.destroy === 'function') {
             imageTrailInstance.destroy();
+            imageTrailInstance = null;
         }
         // Add any other cleanup logic here (timeouts, DOM changes, etc.)
     };

@@ -956,10 +956,28 @@ function imgTrailEffect() {
             }, 1.1);
         }
         destroy() {
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
-            // Remove resize listeners from all images
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            // Animate all images out with the same scale down effect as in showNextImage
+            const tl = (0, _gsapDefault.default).timeline();
             this.images.forEach((img)=>{
-                // This will not remove anonymous listeners, so you may want to refactor if needed
+                tl.to(img.DOM.el, {
+                    opacity: 0,
+                    scale: 0.2,
+                    duration: 0.3,
+                    ease: "quint"
+                }, 0); // All at once
+            });
+            // After animation, reset styles
+            tl.add(()=>{
+                this.images.forEach((img)=>{
+                    (0, _gsapDefault.default).set(img.DOM.el, img.defaultStyle);
+                });
+            });
+            // Remove resize listeners as before
+            this.images.forEach((img)=>{
                 window.removeEventListener('resize', ()=>img.resize());
             });
         }
@@ -985,7 +1003,10 @@ function imgTrailEffect() {
     // Return a cleanup function to remove the event listener
     return function cleanup() {
         window.removeEventListener('mousemove', handleMouseMove);
-        if (imageTrailInstance && typeof imageTrailInstance.destroy === 'function') imageTrailInstance.destroy();
+        if (imageTrailInstance && typeof imageTrailInstance.destroy === 'function') {
+            imageTrailInstance.destroy();
+            imageTrailInstance = null;
+        }
     // Add any other cleanup logic here (timeouts, DOM changes, etc.)
     };
 }
