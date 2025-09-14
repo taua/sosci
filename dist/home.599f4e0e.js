@@ -678,7 +678,8 @@ var _horizontalLoop = require("./horizontalLoop");
 var _horizontalLoopDefault = parcelHelpers.interopDefault(_horizontalLoop);
 var _observer = require("gsap/Observer");
 var _scrollTrigger = require("gsap/ScrollTrigger");
-(0, _gsap.gsap).registerPlugin((0, _observer.Observer), (0, _scrollTrigger.ScrollTrigger));
+var _splitText = require("gsap/SplitText");
+(0, _gsap.gsap).registerPlugin((0, _observer.Observer), (0, _scrollTrigger.ScrollTrigger), (0, _splitText.SplitText));
 // Track the last real mouse position globally
 window._lastRealMousePos = {
     x: window.innerWidth / 2,
@@ -693,23 +694,55 @@ window.addEventListener('mousemove', function(e) {
 function initHomePage() {
     // Wait for all resources (images, fonts, etc.) to load
     window.addEventListener('load', ()=>{
-        // Initialize image trail effect and store cleanup function
-        let imgTrailCleanup = (0, _imgTrailEffectDefault.default)();
-        // Set up ScrollTrigger for the hero section to enable/disable imgTrailEffect
+        // Only run imgTrailEffect when hero is in view
+        let imgTrailCleanup = null;
+        let imgTrailActive = false;
+        let manualCheckDone = false;
         (0, _scrollTrigger.ScrollTrigger).create({
             trigger: '.img-trail-hero-shell',
-            start: 'top top',
-            end: '50% top',
+            start: 'top bottom',
+            end: 'bottom 50%',
+            onEnter: ()=>{
+                if (!imgTrailActive) {
+                    imgTrailCleanup = (0, _imgTrailEffectDefault.default)();
+                    imgTrailActive = true;
+                }
+            },
             onLeave: ()=>{
-                // Kill or disable imgTrailEffect when leaving hero
-                console.log('Disabling imgTrailEffect');
-                if (typeof imgTrailCleanup === 'function') imgTrailCleanup();
+                if (imgTrailActive) {
+                    if (typeof imgTrailCleanup === 'function') imgTrailCleanup();
+                    imgTrailCleanup = null;
+                    imgTrailActive = false;
+                }
             },
             onEnterBack: ()=>{
-                console.log('Re-enabling imgTrailEffect');
-                // Re-enable imgTrailEffect when re-entering hero
-                imgTrailCleanup = (0, _imgTrailEffectDefault.default)();
+                if (!imgTrailActive) {
+                    imgTrailCleanup = (0, _imgTrailEffectDefault.default)();
+                    imgTrailActive = true;
+                }
+            },
+            onLeaveBack: ()=>{
+                if (imgTrailActive) {
+                    if (typeof imgTrailCleanup === 'function') imgTrailCleanup();
+                    imgTrailCleanup = null;
+                    imgTrailActive = false;
+                }
             }
+        });
+        // Ensure ScrollTrigger is refreshed and check hero in view after layout is stable (only once)
+        (0, _scrollTrigger.ScrollTrigger).refresh();
+        if (!manualCheckDone) requestAnimationFrame(()=>{
+            const heroShell = document.querySelector('.img-trail-hero-shell');
+            if (heroShell) {
+                const rect = heroShell.getBoundingClientRect();
+                if (rect.top <= window.innerHeight && rect.bottom >= 0) {
+                    if (!imgTrailActive) {
+                        imgTrailCleanup = (0, _imgTrailEffectDefault.default)();
+                        imgTrailActive = true;
+                    }
+                }
+            }
+            manualCheckDone = true;
         });
         const speed = 5;
         // Loop through each ticker group container on the page
@@ -780,10 +813,39 @@ function initHomePage() {
                 }
             });
         }
+        // Animate manifesto text words on scroll using GSAP SplitText
+        const manifesto = document.querySelector('.manifesto-txt');
+        if (manifesto) // Only split once
+        {
+            if (!manifesto.classList.contains('split')) {
+                const split = new (0, _splitText.SplitText)(manifesto, {
+                    type: 'words'
+                });
+                manifesto.classList.add('split');
+                // Animate words
+                (0, _gsap.gsap).set(split.words, {
+                    color: '#222',
+                    display: 'inline',
+                    whiteSpace: 'normal'
+                });
+                (0, _gsap.gsap).to(split.words, {
+                    color: '#fff',
+                    stagger: 0.05,
+                    duration: 0.5,
+                    ease: 'power2.out',
+                    scrollTrigger: {
+                        trigger: '.manifesto-shell',
+                        start: 'top 80%',
+                        end: 'bottom 20%',
+                        scrub: true
+                    }
+                });
+            }
+        }
     });
 }
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC","./imgTrailEffect":"jMsgH","./horizontalLoop":"02lVZ","gsap/Observer":"aAWxM","gsap/ScrollTrigger":"7wnFk"}],"jMsgH":[function(require,module,exports,__globalThis) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC","./imgTrailEffect":"jMsgH","./horizontalLoop":"02lVZ","gsap/Observer":"aAWxM","gsap/ScrollTrigger":"7wnFk","gsap/SplitText":"63tvY"}],"jMsgH":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "default", ()=>imgTrailEffect);

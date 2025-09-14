@@ -3,8 +3,9 @@ import imgTrailEffect from "./imgTrailEffect";
 import horizontalLoop from "./horizontalLoop";
 import { Observer } from "gsap/Observer";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { SplitText } from "gsap/SplitText";
 
-gsap.registerPlugin(Observer, ScrollTrigger);
+gsap.registerPlugin(Observer, ScrollTrigger, SplitText);
 
 // Track the last real mouse position globally
 window._lastRealMousePos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
@@ -16,25 +17,58 @@ window.addEventListener('mousemove', function(e) {
 export function initHomePage() {
     // Wait for all resources (images, fonts, etc.) to load
     window.addEventListener('load', () => {
-        // Initialize image trail effect and store cleanup function
-        let imgTrailCleanup = imgTrailEffect();
-
-        // Set up ScrollTrigger for the hero section to enable/disable imgTrailEffect
+        // Only run imgTrailEffect when hero is in view
+        let imgTrailCleanup = null;
+        let imgTrailActive = false;
+        let manualCheckDone = false;
         ScrollTrigger.create({
-            trigger: '.img-trail-hero-shell', // Change to your hero section selector
-            start: 'top top',
-            end: '50% top',
+            trigger: '.img-trail-hero-shell',
+            start: 'top bottom',
+            end: 'bottom 50%',
+            onEnter: () => {
+                if (!imgTrailActive) {
+                    imgTrailCleanup = imgTrailEffect();
+                    imgTrailActive = true;
+                }
+            },
             onLeave: () => {
-                // Kill or disable imgTrailEffect when leaving hero
-                console.log('Disabling imgTrailEffect');
-                if (typeof imgTrailCleanup === 'function') imgTrailCleanup();
+                if (imgTrailActive) {
+                    if (typeof imgTrailCleanup === 'function') imgTrailCleanup();
+                    imgTrailCleanup = null;
+                    imgTrailActive = false;
+                }
             },
             onEnterBack: () => {
-                console.log('Re-enabling imgTrailEffect');
-                // Re-enable imgTrailEffect when re-entering hero
-                imgTrailCleanup = imgTrailEffect();
+                if (!imgTrailActive) {
+                    imgTrailCleanup = imgTrailEffect();
+                    imgTrailActive = true;
+                }
+            },
+            onLeaveBack: () => {
+                if (imgTrailActive) {
+                    if (typeof imgTrailCleanup === 'function') imgTrailCleanup();
+                    imgTrailCleanup = null;
+                    imgTrailActive = false;
+                }
             }
         });
+        // Ensure ScrollTrigger is refreshed and check hero in view after layout is stable (only once)
+        ScrollTrigger.refresh();
+        if (!manualCheckDone) {
+            requestAnimationFrame(() => {
+                const heroShell = document.querySelector('.img-trail-hero-shell');
+                if (heroShell) {
+                    const rect = heroShell.getBoundingClientRect();
+                    if (rect.top <= window.innerHeight && rect.bottom >= 0) {
+                        if (!imgTrailActive) {
+                            imgTrailCleanup = imgTrailEffect();
+                            imgTrailActive = true;
+                        }
+                    }
+                }
+                manualCheckDone = true;
+            });
+        }
 
         const speed = 5;
 
@@ -110,6 +144,30 @@ export function initHomePage() {
                     }
                 }
             });
+        }
+
+        // Animate manifesto text words on scroll using GSAP SplitText
+        const manifesto = document.querySelector('.manifesto-txt');
+        if (manifesto) {
+            // Only split once
+            if (!manifesto.classList.contains('split')) {
+                const split = new SplitText(manifesto, { type: 'words' });
+                manifesto.classList.add('split');
+                // Animate words
+                gsap.set(split.words, { color: '#222', display: 'inline', whiteSpace: 'normal' });
+                gsap.to(split.words, {
+                    color: '#fff',
+                    stagger: 0.05,
+                    duration: 0.5,
+                    ease: 'power2.out',
+                    scrollTrigger: {
+                        trigger: '.manifesto-shell',
+                        start: 'top 80%',
+                        end: 'bottom 20%',
+                        scrub: true,
+                    }
+                });
+            }
         }
     });
 }
