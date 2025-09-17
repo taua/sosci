@@ -676,6 +676,8 @@ var _imgTrailEffect = require("./imgTrailEffect");
 var _imgTrailEffectDefault = parcelHelpers.interopDefault(_imgTrailEffect);
 var _horizontalLoop = require("./horizontalLoop");
 var _horizontalLoopDefault = parcelHelpers.interopDefault(_horizontalLoop);
+var _grainEffect = require("./grainEffect");
+var _grainEffectDefault = parcelHelpers.interopDefault(_grainEffect);
 var _observer = require("gsap/Observer");
 var _scrollTrigger = require("gsap/ScrollTrigger");
 var _splitText = require("gsap/SplitText");
@@ -692,57 +694,88 @@ window.addEventListener('mousemove', function(e) {
     };
 });
 function initHomePage() {
+    // Initialize grain effect with custom settings
+    const grainCleanup = (0, _grainEffectDefault.default)({
+        opacity: 1,
+        grainAlpha: 32,
+        grainScale: 3.4,
+        fps: 13,
+        blendMode: 'hard-light',
+        greyness: 90 // Mid-grey like the reference
+    });
     // Wait for all resources (images, fonts, etc.) to load
     window.addEventListener('load', ()=>{
-        // Only run imgTrailEffect when hero is in view
-        let imgTrailCleanup = null;
-        let imgTrailActive = false;
-        let manualCheckDone = false;
-        (0, _scrollTrigger.ScrollTrigger).create({
-            trigger: '.img-trail-hero-shell',
-            start: 'top bottom',
-            end: 'bottom 50%',
-            onEnter: ()=>{
-                if (!imgTrailActive) {
-                    imgTrailCleanup = (0, _imgTrailEffectDefault.default)();
-                    imgTrailActive = true;
-                }
-            },
-            onLeave: ()=>{
-                if (imgTrailActive) {
-                    if (typeof imgTrailCleanup === 'function') imgTrailCleanup();
-                    imgTrailCleanup = null;
-                    imgTrailActive = false;
-                }
-            },
-            onEnterBack: ()=>{
-                if (!imgTrailActive) {
-                    imgTrailCleanup = (0, _imgTrailEffectDefault.default)();
-                    imgTrailActive = true;
-                }
-            },
-            onLeaveBack: ()=>{
-                if (imgTrailActive) {
-                    if (typeof imgTrailCleanup === 'function') imgTrailCleanup();
-                    imgTrailCleanup = null;
-                    imgTrailActive = false;
+        // Ensure we start at the top of the page
+        window.scrollTo(0, 0);
+        // Set initial state of hero image
+        (0, _gsap.gsap).set('.hero-img', {
+            opacity: 0,
+            scale: 1.3,
+            filter: 'blur(20px)',
+            transformOrigin: 'center center'
+        });
+        // Create opacity animation
+        const opacityTimeline = (0, _gsap.gsap).timeline({
+            scrollTrigger: {
+                trigger: '.hero-ticker-shell',
+                start: 'top bottom',
+                end: 'bottom -50%',
+                scrub: 1,
+                onUpdate: (self)=>{
+                    const progress = self.progress;
+                    if (progress <= 0.25) // Quick fade in and unblur during first 25%
+                    (0, _gsap.gsap).to('.hero-img', {
+                        opacity: progress * 4,
+                        filter: `blur(${20 - progress * 80}px)`,
+                        duration: 0.1
+                    });
+                    else if (progress >= 0.35) // Very quick fade out starting at 35%
+                    (0, _gsap.gsap).to('.hero-img', {
+                        opacity: 1 - (progress - 0.35) * 4,
+                        duration: 0.1
+                    });
                 }
             }
         });
-        // Ensure ScrollTrigger is refreshed and check hero in view after layout is stable (only once)
-        (0, _scrollTrigger.ScrollTrigger).refresh();
-        if (!manualCheckDone) requestAnimationFrame(()=>{
-            const heroShell = document.querySelector('.img-trail-hero-shell');
-            if (heroShell) {
-                const rect = heroShell.getBoundingClientRect();
-                if (rect.top <= window.innerHeight && rect.bottom >= 0) {
-                    if (!imgTrailActive) {
-                        imgTrailCleanup = (0, _imgTrailEffectDefault.default)();
-                        imgTrailActive = true;
-                    }
-                }
+        // Create scale animation
+        (0, _gsap.gsap).to('.hero-img', {
+            scale: 1,
+            scrollTrigger: {
+                trigger: '.hero-ticker-shell',
+                start: 'top bottom',
+                end: 'center center',
+                scrub: true
             }
-            manualCheckDone = true;
+        });
+        // Only run imgTrailEffect when hero is in view
+        let imgTrailCleanup = null;
+        let activationTimeout = null;
+        function enableEffect() {
+            clearTimeout(activationTimeout);
+            activationTimeout = setTimeout(()=>{
+                if (typeof imgTrailCleanup === 'function') {
+                    imgTrailCleanup();
+                    imgTrailCleanup = null;
+                }
+                imgTrailCleanup = (0, _imgTrailEffectDefault.default)();
+            }, 100);
+        }
+        function disableEffect() {
+            clearTimeout(activationTimeout);
+            if (typeof imgTrailCleanup === 'function') {
+                imgTrailCleanup();
+                imgTrailCleanup = null;
+            }
+        }
+        (0, _scrollTrigger.ScrollTrigger).create({
+            trigger: '.img-trail-hero-shell',
+            start: 'top bottom',
+            end: 'bottom 75%',
+            //markers: true,
+            onEnter: enableEffect,
+            onLeave: disableEffect,
+            onEnterBack: enableEffect,
+            onLeaveBack: disableEffect
         });
         const speed = 5;
         // Loop through each ticker group container on the page
@@ -845,7 +878,7 @@ function initHomePage() {
     });
 }
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC","./imgTrailEffect":"jMsgH","./horizontalLoop":"02lVZ","gsap/Observer":"aAWxM","gsap/ScrollTrigger":"7wnFk","gsap/SplitText":"63tvY"}],"jMsgH":[function(require,module,exports,__globalThis) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC","./imgTrailEffect":"jMsgH","./horizontalLoop":"02lVZ","gsap/Observer":"aAWxM","gsap/ScrollTrigger":"7wnFk","gsap/SplitText":"63tvY","./grainEffect":"gseYd"}],"jMsgH":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "default", ()=>imgTrailEffect);
@@ -1490,6 +1523,84 @@ function horizontalLoop(items, config) {
     return tl;
 }
 
-},{"gsap":"fPSuC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["9CTwD"], null, "parcelRequire60dc", {})
+},{"gsap":"fPSuC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gseYd":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "default", ()=>grainEffect);
+function grainEffect(config = {}) {
+    // Customizable settings
+    const settings = {
+        opacity: config.opacity || 0.75,
+        grainAlpha: config.grainAlpha || 65,
+        grainScale: config.grainScale || 1.1,
+        fps: config.fps || 50,
+        blendMode: config.blendMode || 'soft-light',
+        greyness: 128,
+        patterns: config.patterns || 10,
+        ...config
+    };
+    // Create canvas and add to DOM
+    const canvas = document.createElement('canvas');
+    Object.assign(canvas.style, {
+        position: 'fixed',
+        top: '0',
+        left: '0',
+        width: '100vw',
+        height: '100vh',
+        pointerEvents: 'none',
+        zIndex: '999999',
+        opacity: settings.opacity,
+        mixBlendMode: settings.blendMode
+    });
+    document.body.appendChild(canvas);
+    // Set up canvas context
+    const ctx = canvas.getContext('2d', {
+        willReadFrequently: true
+    });
+    let frameRequest;
+    // Handle resize
+    function resize() {
+        canvas.width = Math.floor(window.innerWidth * settings.grainScale);
+        canvas.height = Math.floor(window.innerHeight * settings.grainScale);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+    // Pre-calculate noise patterns at higher resolution
+    const patterns = Array.from({
+        length: settings.patterns
+    }, ()=>{
+        const pattern = ctx.createImageData(canvas.width, canvas.height);
+        const data = pattern.data;
+        for(let i = 0; i < data.length; i += 16){
+            // Add variation around middle grey
+            const noise = Math.floor(settings.greyness + (Math.random() - 0.5) * 255);
+            for(let j = 0; j < 4; j++){
+                const idx = i + j * 4;
+                data[idx] = noise;
+                data[idx + 1] = noise;
+                data[idx + 2] = noise;
+                data[idx + 3] = settings.grainAlpha;
+            }
+        }
+        return pattern;
+    });
+    let patternIndex = 0;
+    // Animation loop
+    function animate() {
+        ctx.putImageData(patterns[patternIndex], 0, 0);
+        patternIndex = (patternIndex + 1) % patterns.length;
+        frameRequest = setTimeout(()=>requestAnimationFrame(animate), settings.fps);
+    }
+    // Start animation
+    animate();
+    // Return cleanup function
+    return ()=>{
+        clearTimeout(frameRequest);
+        canvas.remove();
+        window.removeEventListener('resize', resize);
+    };
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["9CTwD"], null, "parcelRequire60dc", {})
 
 //# sourceMappingURL=home.599f4e0e.js.map

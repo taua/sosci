@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import imgTrailEffect from "./imgTrailEffect";
 import horizontalLoop from "./horizontalLoop";
+import grainEffect from "./grainEffect";
 import { Observer } from "gsap/Observer";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
@@ -15,60 +16,97 @@ window.addEventListener('mousemove', function(e) {
 
 // Entry point for home page JS
 export function initHomePage() {
+    // Initialize grain effect with custom settings
+    const grainCleanup = grainEffect({
+        opacity: 1,         // Full strength to see pattern
+        grainAlpha: 32,     // Lower alpha for finer grain
+        grainScale: 3.4,      // Higher scale for more density
+        fps: 13,            // Slightly slower for better performance
+        blendMode: 'hard-light',  // Sharp contrast like the image
+        greyness: 90       // Mid-grey like the reference
+    });
+
     // Wait for all resources (images, fonts, etc.) to load
     window.addEventListener('load', () => {
-        // Only run imgTrailEffect when hero is in view
-        let imgTrailCleanup = null;
-        let imgTrailActive = false;
-        let manualCheckDone = false;
-        ScrollTrigger.create({
-            trigger: '.img-trail-hero-shell',
-            start: 'top bottom',
-            end: 'bottom 50%',
-            onEnter: () => {
-                if (!imgTrailActive) {
-                    imgTrailCleanup = imgTrailEffect();
-                    imgTrailActive = true;
-                }
-            },
-            onLeave: () => {
-                if (imgTrailActive) {
-                    if (typeof imgTrailCleanup === 'function') imgTrailCleanup();
-                    imgTrailCleanup = null;
-                    imgTrailActive = false;
-                }
-            },
-            onEnterBack: () => {
-                if (!imgTrailActive) {
-                    imgTrailCleanup = imgTrailEffect();
-                    imgTrailActive = true;
-                }
-            },
-            onLeaveBack: () => {
-                if (imgTrailActive) {
-                    if (typeof imgTrailCleanup === 'function') imgTrailCleanup();
-                    imgTrailCleanup = null;
-                    imgTrailActive = false;
+        // Ensure we start at the top of the page
+        window.scrollTo(0, 0);
+
+        // Set initial state of hero image
+        gsap.set('.hero-img', { 
+            opacity: 0, 
+            scale: 1.3,
+            filter: 'blur(20px)',
+            transformOrigin: 'center center'
+        });
+
+        // Create opacity animation
+        const opacityTimeline = gsap.timeline({
+            scrollTrigger: {
+                trigger: '.hero-ticker-shell',
+                start: 'top bottom',
+                end: 'bottom -50%',
+                scrub: 1,
+                onUpdate: (self) => {
+                    const progress = self.progress;
+                    if (progress <= 0.25) {
+                        // Quick fade in and unblur during first 25%
+                        gsap.to('.hero-img', { 
+                            opacity: progress * 4, 
+                            filter: `blur(${20 - (progress * 80)}px)`,
+                            duration: 0.1 
+                        });
+                    } else if (progress >= 0.35) {
+                        // Very quick fade out starting at 35%
+                        gsap.to('.hero-img', { opacity: 1 - ((progress - 0.35) * 4), duration: 0.1 });
+                    }
                 }
             }
         });
-        // Ensure ScrollTrigger is refreshed and check hero in view after layout is stable (only once)
-        ScrollTrigger.refresh();
-        if (!manualCheckDone) {
-            requestAnimationFrame(() => {
-                const heroShell = document.querySelector('.img-trail-hero-shell');
-                if (heroShell) {
-                    const rect = heroShell.getBoundingClientRect();
-                    if (rect.top <= window.innerHeight && rect.bottom >= 0) {
-                        if (!imgTrailActive) {
-                            imgTrailCleanup = imgTrailEffect();
-                            imgTrailActive = true;
-                        }
-                    }
+
+        // Create scale animation
+        gsap.to('.hero-img', {
+            scale: 1,
+            scrollTrigger: {
+                trigger: '.hero-ticker-shell',
+                start: 'top bottom',
+                end: 'center center',
+                scrub: true
+            }
+        });
+
+        // Only run imgTrailEffect when hero is in view
+        let imgTrailCleanup = null;
+        let activationTimeout = null;
+
+        function enableEffect() {
+            clearTimeout(activationTimeout);
+            activationTimeout = setTimeout(() => {
+                if (typeof imgTrailCleanup === 'function') {
+                    imgTrailCleanup();
+                    imgTrailCleanup = null;
                 }
-                manualCheckDone = true;
-            });
+                imgTrailCleanup = imgTrailEffect();
+            }, 100);
         }
+
+        function disableEffect() {
+            clearTimeout(activationTimeout);
+            if (typeof imgTrailCleanup === 'function') {
+                imgTrailCleanup();
+                imgTrailCleanup = null;
+            }
+        }
+
+        ScrollTrigger.create({
+            trigger: '.img-trail-hero-shell',
+            start: 'top bottom',
+            end: 'bottom 75%',
+            //markers: true,
+            onEnter: enableEffect,
+            onLeave: disableEffect,
+            onEnterBack: enableEffect,
+            onLeaveBack: disableEffect
+        });
 
         const speed = 5;
 
