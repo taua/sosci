@@ -21,7 +21,7 @@ export function initHomePage() {
         opacity: 1,         // Full strength to see pattern
         grainAlpha: 32,     // Lower alpha for finer grain
         grainScale: 3.4,      // Higher scale for more density
-        fps: 13,            // Slightly slower for better performance
+        fps: 10,            // Slightly slower for better performance
         blendMode: 'hard-light',  // Sharp contrast like the image
         greyness: 90       // Mid-grey like the reference
     });
@@ -37,6 +37,52 @@ export function initHomePage() {
             scale: 1.3,
             filter: 'blur(20px)',
             transformOrigin: 'center center'
+        });
+
+        // Add scroll CTA line animation
+        gsap.set('.scroll-cta-line', {
+            scaleY: 0,
+            transformOrigin: 'top center'
+        });
+
+        const scrollCtaTimeline = gsap.timeline({
+            repeat: -1,
+            defaults: {
+                duration: 1,
+                ease: "expo.inOut"
+            }
+        });
+
+        scrollCtaTimeline
+            .to('.scroll-cta-line', {
+                scaleY: 1,
+                transformOrigin: 'top center'
+            })
+            .set('.scroll-cta-line', {
+                transformOrigin: 'bottom center'
+            })
+            .to('.scroll-cta-line', {
+                scaleY: 0
+            });
+
+        // Control scroll CTA visibility based on hero section
+        ScrollTrigger.create({
+            trigger: '.hero-ticker-shell',
+            start: 'top bottom', // Triggers as soon as the section enters viewport
+            onEnter: () => {
+                scrollCtaTimeline.pause();
+                gsap.to('.scroll-cta-line', {
+                    opacity: 0,
+                    duration: 0.3
+                });
+            },
+            onLeaveBack: () => {
+                scrollCtaTimeline.play();
+                gsap.to('.scroll-cta-line', {
+                    opacity: 1,
+                    duration: 0.3
+                });
+            }
         });
 
         // Create opacity animation
@@ -192,7 +238,7 @@ export function initHomePage() {
                 const split = new SplitText(manifesto, { type: 'words' });
                 manifesto.classList.add('split');
                 // Animate words
-                gsap.set(split.words, { color: '#222', display: 'inline', whiteSpace: 'normal' });
+                gsap.set(split.words, { color: '#2f2f2fff', display: 'inline', whiteSpace: 'normal' });
                 gsap.to(split.words, {
                     color: '#fff',
                     stagger: 0.05,

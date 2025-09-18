@@ -699,7 +699,7 @@ function initHomePage() {
         opacity: 1,
         grainAlpha: 32,
         grainScale: 3.4,
-        fps: 13,
+        fps: 10,
         blendMode: 'hard-light',
         greyness: 90 // Mid-grey like the reference
     });
@@ -713,6 +713,45 @@ function initHomePage() {
             scale: 1.3,
             filter: 'blur(20px)',
             transformOrigin: 'center center'
+        });
+        // Add scroll CTA line animation
+        (0, _gsap.gsap).set('.scroll-cta-line', {
+            scaleY: 0,
+            transformOrigin: 'top center'
+        });
+        const scrollCtaTimeline = (0, _gsap.gsap).timeline({
+            repeat: -1,
+            defaults: {
+                duration: 1,
+                ease: "expo.inOut"
+            }
+        });
+        scrollCtaTimeline.to('.scroll-cta-line', {
+            scaleY: 1,
+            transformOrigin: 'top center'
+        }).set('.scroll-cta-line', {
+            transformOrigin: 'bottom center'
+        }).to('.scroll-cta-line', {
+            scaleY: 0
+        });
+        // Control scroll CTA visibility based on hero section
+        (0, _scrollTrigger.ScrollTrigger).create({
+            trigger: '.hero-ticker-shell',
+            start: 'top bottom',
+            onEnter: ()=>{
+                scrollCtaTimeline.pause();
+                (0, _gsap.gsap).to('.scroll-cta-line', {
+                    opacity: 0,
+                    duration: 0.3
+                });
+            },
+            onLeaveBack: ()=>{
+                scrollCtaTimeline.play();
+                (0, _gsap.gsap).to('.scroll-cta-line', {
+                    opacity: 1,
+                    duration: 0.3
+                });
+            }
         });
         // Create opacity animation
         const opacityTimeline = (0, _gsap.gsap).timeline({
@@ -857,7 +896,7 @@ function initHomePage() {
                 manifesto.classList.add('split');
                 // Animate words
                 (0, _gsap.gsap).set(split.words, {
-                    color: '#222',
+                    color: '#2f2f2fff',
                     display: 'inline',
                     whiteSpace: 'normal'
                 });
@@ -878,7 +917,7 @@ function initHomePage() {
     });
 }
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC","./imgTrailEffect":"jMsgH","./horizontalLoop":"02lVZ","gsap/Observer":"aAWxM","gsap/ScrollTrigger":"7wnFk","gsap/SplitText":"63tvY","./grainEffect":"gseYd"}],"jMsgH":[function(require,module,exports,__globalThis) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC","./imgTrailEffect":"jMsgH","./horizontalLoop":"02lVZ","./grainEffect":"gseYd","gsap/Observer":"aAWxM","gsap/ScrollTrigger":"7wnFk","gsap/SplitText":"63tvY"}],"jMsgH":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "default", ()=>imgTrailEffect);
