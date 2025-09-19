@@ -6,16 +6,6 @@ import grainEffect from "./grainEffect";
 
 gsap.registerPlugin(ScrollTrigger, ScrollSmoother, SplitText);
 
-// Initialize grain effect globally
-const grainCleanup = grainEffect({
-  opacity: 1,
-  grainAlpha: 32,
-  grainScale: 3.4,
-  fps: 10,
-  blendMode: 'hard-light',
-  greyness: 90
-});
-
 export function greet(page) {
   console.log(`Welcome to the ${page} page of Soul Science Studio!`);
 }
@@ -23,6 +13,30 @@ export function greet(page) {
 console.log('Global JS loaded');
 
 window.addEventListener('DOMContentLoaded', () => {
+  // Initialize grain effect with optimized settings
+  try {
+    console.log('Initializing grain effect...');
+    const grainCleanup = grainEffect({
+      opacity: 0.8,      // Slightly reduced for better performance
+      grainAlpha: 24,    // Balanced visibility
+      grainScale: 1.5,   // Reduced scale for better performance
+      fps: 24,           // Increased for smoother animation
+      blendMode: 'overlay', // Changed to lighter blend mode
+      greyness: 85,      // Slightly reduced for subtlety
+      colored: false,
+      useRAF: true       // Use requestAnimationFrame
+    });
+
+    // Cleanup on page unload
+    window.addEventListener('unload', () => {
+      if (typeof grainCleanup === 'function') {
+        grainCleanup();
+      }
+    });
+  } catch (error) {
+    console.error('Failed to initialize grain effect:', error);
+  }
+
   const wrapper = document.querySelector('.main-shell');
   const content = document.querySelector('.content-shell');
   if (wrapper && content) {

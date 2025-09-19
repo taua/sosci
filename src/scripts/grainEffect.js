@@ -1,12 +1,12 @@
 export default function grainEffect(config = {}) {
     // Customizable settings
     const settings = {
-        opacity: config.opacity || 0.75,      // Overall canvas opacity
-        grainAlpha: config.grainAlpha || 65,  // Grain transparency (0-255)
-        grainScale: config.grainScale || 1.1, // Resolution scale (0-1)
-        fps: config.fps || 50,                // Animation speed (ms between frames)
-        blendMode: config.blendMode || 'soft-light', // Blend mode ('overlay', 'multiply', etc)
-        greyness: 128, // Middle grey base for better visibility on all backgrounds
+        opacity: config.opacity || 1,      // Overall canvas opacity
+        grainAlpha: config.grainAlpha || 32,  // Grain transparency (0-255)
+        grainScale: config.grainScale || 3.4, // Resolution scale (0-1)
+        fps: config.fps || 10,                // Animation speed (ms between frames)
+        blendMode: config.blendMode || 'hard-light', // Blend mode ('overlay', 'multiply', etc)
+        greyness: 90, // Middle grey base for better visibility on all backgrounds
         patterns: config.patterns || 10,        // Number of pre-calculated patterns
         ...config
     };

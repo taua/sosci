@@ -677,20 +677,31 @@ var _splitText = require("gsap/SplitText");
 var _grainEffect = require("./grainEffect");
 var _grainEffectDefault = parcelHelpers.interopDefault(_grainEffect);
 (0, _gsap.gsap).registerPlugin((0, _scrollTrigger.ScrollTrigger), (0, _scrollSmoother.ScrollSmoother), (0, _splitText.SplitText));
-// Initialize grain effect globally
-const grainCleanup = (0, _grainEffectDefault.default)({
-    opacity: 1,
-    grainAlpha: 32,
-    grainScale: 3.4,
-    fps: 10,
-    blendMode: 'hard-light',
-    greyness: 90
-});
 function greet(page) {
     console.log(`Welcome to the ${page} page of Soul Science Studio!`);
 }
 console.log('Global JS loaded');
 window.addEventListener('DOMContentLoaded', ()=>{
+    // Initialize grain effect with optimized settings
+    try {
+        console.log('Initializing grain effect...');
+        const grainCleanup = (0, _grainEffectDefault.default)({
+            opacity: 0.8,
+            grainAlpha: 24,
+            grainScale: 1.5,
+            fps: 24,
+            blendMode: 'overlay',
+            greyness: 85,
+            colored: false,
+            useRAF: true // Use requestAnimationFrame
+        });
+        // Cleanup on page unload
+        window.addEventListener('unload', ()=>{
+            if (typeof grainCleanup === 'function') grainCleanup();
+        });
+    } catch (error) {
+        console.error('Failed to initialize grain effect:', error);
+    }
     const wrapper = document.querySelector('.main-shell');
     const content = document.querySelector('.content-shell');
     if (wrapper && content) (0, _scrollSmoother.ScrollSmoother).create({
@@ -8179,12 +8190,12 @@ parcelHelpers.export(exports, "default", ()=>grainEffect);
 function grainEffect(config = {}) {
     // Customizable settings
     const settings = {
-        opacity: config.opacity || 0.75,
-        grainAlpha: config.grainAlpha || 65,
-        grainScale: config.grainScale || 1.1,
-        fps: config.fps || 50,
-        blendMode: config.blendMode || 'soft-light',
-        greyness: 128,
+        opacity: config.opacity || 1,
+        grainAlpha: config.grainAlpha || 32,
+        grainScale: config.grainScale || 3.4,
+        fps: config.fps || 10,
+        blendMode: config.blendMode || 'hard-light',
+        greyness: 90,
         patterns: config.patterns || 10,
         ...config
     };
