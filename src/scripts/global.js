@@ -13,18 +13,20 @@ export function greet(page) {
 console.log('Global JS loaded');
 
 window.addEventListener('DOMContentLoaded', () => {
-  // Initialize grain effect with optimized settings
   try {
     console.log('Initializing grain effect...');
     const grainCleanup = grainEffect({
-      opacity: 0.8,      // Slightly reduced for better performance
-      grainAlpha: 24,    // Balanced visibility
-      grainScale: 1.5,   // Reduced scale for better performance
-      fps: 24,           // Increased for smoother animation
-      blendMode: 'overlay', // Changed to lighter blend mode
-      greyness: 85,      // Slightly reduced for subtlety
-      colored: false,
-      useRAF: true       // Use requestAnimationFrame
+      // Performance settings
+      fps: 15,           // Decrease if CPU usage is high
+      grainScale: 1.5,   // Increase if grain is too fine (max 3.0)
+      useRAF: true,      // Keep true for modern browsers
+      
+      // Visual settings
+      opacity: 0.8,      // Range 0.6-0.9 is ideal
+      grainAlpha: 24,    // Range 20-30 works best
+      blendMode: 'overlay', // Try 'soft-light' for subtler effect
+      greyness: 85,      // Adjust 80-90 for different contrasts
+      colored: false
     });
 
     // Cleanup on page unload

@@ -682,18 +682,19 @@ function greet(page) {
 }
 console.log('Global JS loaded');
 window.addEventListener('DOMContentLoaded', ()=>{
-    // Initialize grain effect with optimized settings
     try {
         console.log('Initializing grain effect...');
         const grainCleanup = (0, _grainEffectDefault.default)({
+            // Performance settings
+            fps: 15,
+            grainScale: 1.5,
+            useRAF: true,
+            // Visual settings
             opacity: 0.8,
             grainAlpha: 24,
-            grainScale: 1.5,
-            fps: 24,
             blendMode: 'overlay',
             greyness: 85,
-            colored: false,
-            useRAF: true // Use requestAnimationFrame
+            colored: false
         });
         // Cleanup on page unload
         window.addEventListener('unload', ()=>{
