@@ -2,7 +2,19 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ScrollSmoother } from "gsap/ScrollSmoother";
 import { SplitText } from "gsap/SplitText";
+import grainEffect from "./grainEffect";
+
 gsap.registerPlugin(ScrollTrigger, ScrollSmoother, SplitText);
+
+// Initialize grain effect globally
+const grainCleanup = grainEffect({
+  opacity: 1,
+  grainAlpha: 32,
+  grainScale: 3.4,
+  fps: 10,
+  blendMode: 'hard-light',
+  greyness: 90
+});
 
 export function greet(page) {
   console.log(`Welcome to the ${page} page of Soul Science Studio!`);
@@ -25,6 +37,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// Page-specific imports
 if (window.location.pathname === '/' || window.location.pathname.includes('home')) {
   import('./home.js').then(module => {
     module.initHomePage();

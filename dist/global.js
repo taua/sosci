@@ -674,7 +674,18 @@ var _gsap = require("gsap");
 var _scrollTrigger = require("gsap/ScrollTrigger");
 var _scrollSmoother = require("gsap/ScrollSmoother");
 var _splitText = require("gsap/SplitText");
+var _grainEffect = require("./grainEffect");
+var _grainEffectDefault = parcelHelpers.interopDefault(_grainEffect);
 (0, _gsap.gsap).registerPlugin((0, _scrollTrigger.ScrollTrigger), (0, _scrollSmoother.ScrollSmoother), (0, _splitText.SplitText));
+// Initialize grain effect globally
+const grainCleanup = (0, _grainEffectDefault.default)({
+    opacity: 1,
+    grainAlpha: 32,
+    grainScale: 3.4,
+    fps: 10,
+    blendMode: 'hard-light',
+    greyness: 90
+});
 function greet(page) {
     console.log(`Welcome to the ${page} page of Soul Science Studio!`);
 }
@@ -690,6 +701,7 @@ window.addEventListener('DOMContentLoaded', ()=>{
     });
     else console.warn('ScrollSmoother: .main-shell or .content-shell not found in DOM.');
 });
+// Page-specific imports
 if (window.location.pathname === '/' || window.location.pathname.includes('home')) require("15f686a79e03c55a").then((module)=>{
     module.initHomePage();
 });
@@ -705,7 +717,7 @@ else if (window.location.pathname.includes('projects')) require("3281aad929e661e
 else // Home or default page logic
 console.log('Home page logic here');
 
-},{"9e5b3873cfad757a":"3UF59","fb0e6e5a4ade22e8":"fNrHc","15f686a79e03c55a":"an9pY","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC","gsap/ScrollSmoother":"cGoQX","gsap/ScrollTrigger":"7wnFk","gsap/SplitText":"63tvY","3281aad929e661e8":"iuGBB"}],"3UF59":[function(require,module,exports,__globalThis) {
+},{"9e5b3873cfad757a":"3UF59","fb0e6e5a4ade22e8":"fNrHc","15f686a79e03c55a":"an9pY","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC","gsap/ScrollSmoother":"cGoQX","gsap/ScrollTrigger":"7wnFk","gsap/SplitText":"63tvY","3281aad929e661e8":"iuGBB","./grainEffect":"gseYd"}],"3UF59":[function(require,module,exports,__globalThis) {
 module.exports = require("83560999e491354a")(module.bundle.resolve("about.24d794f7.js")).catch((err)=>{
     delete module.bundle.cache[module.id];
     throw err;
@@ -8160,6 +8172,84 @@ module.exports = require("9303aa280a72ebc4")(module.bundle.resolve("project.b69f
     throw err;
 }).then(()=>module.bundle.root('ba2gq'));
 
-},{"9303aa280a72ebc4":"61B45","ba2gq":"ba2gq"}]},["8Kk5H","Niccm"], "Niccm", "parcelRequire60dc", {}, "./", "/")
+},{"9303aa280a72ebc4":"61B45","ba2gq":"ba2gq"}],"gseYd":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "default", ()=>grainEffect);
+function grainEffect(config = {}) {
+    // Customizable settings
+    const settings = {
+        opacity: config.opacity || 0.75,
+        grainAlpha: config.grainAlpha || 65,
+        grainScale: config.grainScale || 1.1,
+        fps: config.fps || 50,
+        blendMode: config.blendMode || 'soft-light',
+        greyness: 128,
+        patterns: config.patterns || 10,
+        ...config
+    };
+    // Create canvas and add to DOM
+    const canvas = document.createElement('canvas');
+    Object.assign(canvas.style, {
+        position: 'fixed',
+        top: '0',
+        left: '0',
+        width: '100vw',
+        height: '100vh',
+        pointerEvents: 'none',
+        zIndex: '999999',
+        opacity: settings.opacity,
+        mixBlendMode: settings.blendMode
+    });
+    document.body.appendChild(canvas);
+    // Set up canvas context
+    const ctx = canvas.getContext('2d', {
+        willReadFrequently: true
+    });
+    let frameRequest;
+    // Handle resize
+    function resize() {
+        canvas.width = Math.floor(window.innerWidth * settings.grainScale);
+        canvas.height = Math.floor(window.innerHeight * settings.grainScale);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+    // Pre-calculate noise patterns at higher resolution
+    const patterns = Array.from({
+        length: settings.patterns
+    }, ()=>{
+        const pattern = ctx.createImageData(canvas.width, canvas.height);
+        const data = pattern.data;
+        for(let i = 0; i < data.length; i += 16){
+            // Add variation around middle grey
+            const noise = Math.floor(settings.greyness + (Math.random() - 0.5) * 255);
+            for(let j = 0; j < 4; j++){
+                const idx = i + j * 4;
+                data[idx] = noise;
+                data[idx + 1] = noise;
+                data[idx + 2] = noise;
+                data[idx + 3] = settings.grainAlpha;
+            }
+        }
+        return pattern;
+    });
+    let patternIndex = 0;
+    // Animation loop
+    function animate() {
+        ctx.putImageData(patterns[patternIndex], 0, 0);
+        patternIndex = (patternIndex + 1) % patterns.length;
+        frameRequest = setTimeout(()=>requestAnimationFrame(animate), settings.fps);
+    }
+    // Start animation
+    animate();
+    // Return cleanup function
+    return ()=>{
+        clearTimeout(frameRequest);
+        canvas.remove();
+        window.removeEventListener('resize', resize);
+    };
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["8Kk5H","Niccm"], "Niccm", "parcelRequire60dc", {}, "./", "/")
 
 //# sourceMappingURL=global.js.map
