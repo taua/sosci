@@ -37,6 +37,10 @@ if (window.location.pathname === '/' || window.location.pathname.includes('home'
   import('./work.js').then(module => {
     module.initWorkPage();
   });
+} else if (window.location.pathname.includes('projects')) {
+  import('./project.js').then(module => {
+    module.initProjectPage();
+  });
 } else {
   // Home or default page logic
   console.log('Home page logic here');
