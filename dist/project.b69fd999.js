@@ -737,6 +737,30 @@ function initProjectPage() {
                 }
             }
         });
+        // Add indicator items animation
+        (0, _gsap.gsap).set('.indicator-item-shell', {
+            x: -150
+        });
+        (0, _scrollTrigger.ScrollTrigger).create({
+            trigger: '.projects-section-shell',
+            start: 'top 35%',
+            onEnter: ()=>{
+                (0, _gsap.gsap).to('.indicator-item-shell', {
+                    x: 0,
+                    duration: 1,
+                    stagger: 0.15,
+                    ease: "expo.out"
+                });
+            },
+            onLeaveBack: ()=>{
+                (0, _gsap.gsap).to('.indicator-item-shell', {
+                    x: -150,
+                    duration: 0.8,
+                    stagger: 0.1,
+                    ease: "expo.in"
+                });
+            }
+        });
     });
 }
 
