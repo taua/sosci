@@ -700,6 +700,40 @@ window.addEventListener('DOMContentLoaded', ()=>{
     } catch (error) {
         console.error('Failed to initialize grain effect:', error);
     }
+    // Initialize video visibility control
+    function initVideoVisibility() {
+        const videos = document.querySelectorAll('.bg-proj-video video');
+        if (!videos.length) return;
+        console.log('Initializing video visibility control for', videos.length, 'videos');
+        videos.forEach((video, index)=>{
+            // Configure video
+            video.muted = true;
+            video.playsInline = true;
+            video.loop = true;
+            // Create ScrollTrigger for each video
+            (0, _scrollTrigger.ScrollTrigger).create({
+                trigger: video.parentElement,
+                start: 'top bottom',
+                end: 'bottom top',
+                onEnter: ()=>{
+                    console.log(`Video ${index} entered view`);
+                    video.play().catch(console.error);
+                },
+                onLeave: ()=>{
+                    console.log(`Video ${index} left view`);
+                    video.pause();
+                },
+                onEnterBack: ()=>{
+                    console.log(`Video ${index} entered view (scrolling up)`);
+                    video.play().catch(console.error);
+                },
+                onLeaveBack: ()=>{
+                    console.log(`Video ${index} left view (scrolling up)`);
+                    video.pause();
+                }
+            });
+        });
+    }
     const wrapper = document.querySelector('.main-shell');
     const content = document.querySelector('.content-shell');
     if (wrapper && content) (0, _scrollSmoother.ScrollSmoother).create({
@@ -709,6 +743,8 @@ window.addEventListener('DOMContentLoaded', ()=>{
         effects: true
     });
     else console.warn('ScrollSmoother: .main-shell or .content-shell not found in DOM.');
+    // Initialize video control after ScrollTrigger setup
+    initVideoVisibility();
 });
 // Page-specific imports
 if (window.location.pathname === '/' || window.location.pathname.includes('home')) require("15f686a79e03c55a").then((module)=>{
