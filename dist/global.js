@@ -678,12 +678,11 @@ var _grainEffect = require("./grainEffect");
 var _grainEffectDefault = parcelHelpers.interopDefault(_grainEffect);
 (0, _gsap.gsap).registerPlugin((0, _scrollTrigger.ScrollTrigger), (0, _scrollSmoother.ScrollSmoother), (0, _splitText.SplitText));
 function greet(page) {
-    console.log(`Welcome to the ${page} page of Soul Science Studio!`);
+// Remove console.log
 }
-console.log('Global JS loaded');
+// Remove console.log Global JS loaded
 window.addEventListener('DOMContentLoaded', ()=>{
     try {
-        console.log('Initializing grain effect...');
         const grainCleanup = (0, _grainEffectDefault.default)({
             // Visual settings
             opacity: 1,
@@ -704,33 +703,18 @@ window.addEventListener('DOMContentLoaded', ()=>{
     function initVideoVisibility() {
         const videos = document.querySelectorAll('.bg-proj-video video');
         if (!videos.length) return;
-        console.log('Initializing video visibility control for', videos.length, 'videos');
-        videos.forEach((video, index)=>{
-            // Configure video
+        videos.forEach((video)=>{
             video.muted = true;
             video.playsInline = true;
             video.loop = true;
-            // Create ScrollTrigger for each video
             (0, _scrollTrigger.ScrollTrigger).create({
                 trigger: video.parentElement,
                 start: 'top bottom',
                 end: 'bottom top',
-                onEnter: ()=>{
-                    console.log(`Video ${index} entered view`);
-                    video.play().catch(console.error);
-                },
-                onLeave: ()=>{
-                    console.log(`Video ${index} left view`);
-                    video.pause();
-                },
-                onEnterBack: ()=>{
-                    console.log(`Video ${index} entered view (scrolling up)`);
-                    video.play().catch(console.error);
-                },
-                onLeaveBack: ()=>{
-                    console.log(`Video ${index} left view (scrolling up)`);
-                    video.pause();
-                }
+                onEnter: ()=>video.play().catch(console.error),
+                onLeave: ()=>video.pause(),
+                onEnterBack: ()=>video.play().catch(console.error),
+                onLeaveBack: ()=>video.pause()
             });
         });
     }
@@ -743,7 +727,6 @@ window.addEventListener('DOMContentLoaded', ()=>{
         effects: true
     });
     else console.warn('ScrollSmoother: .main-shell or .content-shell not found in DOM.');
-    // Initialize video control after ScrollTrigger setup
     initVideoVisibility();
 });
 // Page-specific imports
