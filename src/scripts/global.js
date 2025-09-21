@@ -16,17 +16,13 @@ window.addEventListener('DOMContentLoaded', () => {
   try {
     console.log('Initializing grain effect...');
     const grainCleanup = grainEffect({
-      // Performance settings
-      fps: 15,           // Decrease if CPU usage is high
-      grainScale: 1.5,   // Increase if grain is too fine (max 3.0)
-      useRAF: true,      // Keep true for modern browsers
-      
       // Visual settings
-      opacity: 0.8,      // Range 0.6-0.9 is ideal
-      grainAlpha: 24,    // Range 20-30 works best
-      blendMode: 'overlay', // Try 'soft-light' for subtler effect
-      greyness: 85,      // Adjust 80-90 for different contrasts
-      colored: false
+      opacity: 1,         // Full strength to see pattern
+      grainAlpha: 32,     // Lower alpha for finer grain
+      grainScale: 3.4,    // Higher scale for more density
+      fps: 10,            // Slightly slower for better performance
+      blendMode: 'hard-light', // Sharp contrast like the image
+      greyness: 90        // Mid-grey like the reference
     });
 
     // Cleanup on page unload

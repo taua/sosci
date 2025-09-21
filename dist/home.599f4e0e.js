@@ -676,8 +676,6 @@ var _imgTrailEffect = require("./imgTrailEffect");
 var _imgTrailEffectDefault = parcelHelpers.interopDefault(_imgTrailEffect);
 var _horizontalLoop = require("./horizontalLoop");
 var _horizontalLoopDefault = parcelHelpers.interopDefault(_horizontalLoop);
-var _grainEffect = require("./grainEffect");
-var _grainEffectDefault = parcelHelpers.interopDefault(_grainEffect);
 var _observer = require("gsap/Observer");
 var _scrollTrigger = require("gsap/ScrollTrigger");
 var _splitText = require("gsap/SplitText");
@@ -694,15 +692,7 @@ window.addEventListener('mousemove', function(e) {
     };
 });
 function initHomePage() {
-    // Initialize grain effect with custom settings
-    const grainCleanup = (0, _grainEffectDefault.default)({
-        opacity: 1,
-        grainAlpha: 32,
-        grainScale: 3.4,
-        fps: 10,
-        blendMode: 'hard-light',
-        greyness: 90 // Mid-grey like the reference
-    });
+    // Remove grain effect initialization
     // Wait for all resources (images, fonts, etc.) to load
     window.addEventListener('load', ()=>{
         // Ensure we start at the top of the page
@@ -917,7 +907,7 @@ function initHomePage() {
     });
 }
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC","./imgTrailEffect":"jMsgH","./horizontalLoop":"02lVZ","./grainEffect":"gseYd","gsap/Observer":"aAWxM","gsap/ScrollTrigger":"7wnFk","gsap/SplitText":"63tvY"}],"jMsgH":[function(require,module,exports,__globalThis) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC","./imgTrailEffect":"jMsgH","./horizontalLoop":"02lVZ","gsap/Observer":"aAWxM","gsap/ScrollTrigger":"7wnFk","gsap/SplitText":"63tvY"}],"jMsgH":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "default", ()=>imgTrailEffect);

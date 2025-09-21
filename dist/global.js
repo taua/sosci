@@ -685,16 +685,13 @@ window.addEventListener('DOMContentLoaded', ()=>{
     try {
         console.log('Initializing grain effect...');
         const grainCleanup = (0, _grainEffectDefault.default)({
-            // Performance settings
-            fps: 15,
-            grainScale: 1.5,
-            useRAF: true,
             // Visual settings
-            opacity: 0.8,
-            grainAlpha: 24,
-            blendMode: 'overlay',
-            greyness: 85,
-            colored: false
+            opacity: 1,
+            grainAlpha: 32,
+            grainScale: 3.4,
+            fps: 10,
+            blendMode: 'hard-light',
+            greyness: 90 // Mid-grey like the reference
         });
         // Cleanup on page unload
         window.addEventListener('unload', ()=>{

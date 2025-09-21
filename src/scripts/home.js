@@ -1,7 +1,6 @@
 import { gsap } from "gsap";
 import imgTrailEffect from "./imgTrailEffect";
 import horizontalLoop from "./horizontalLoop";
-import grainEffect from "./grainEffect";
 import { Observer } from "gsap/Observer";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
@@ -16,16 +15,8 @@ window.addEventListener('mousemove', function(e) {
 
 // Entry point for home page JS
 export function initHomePage() {
-    // Initialize grain effect with custom settings
-    const grainCleanup = grainEffect({
-        opacity: 1,         // Full strength to see pattern
-        grainAlpha: 32,     // Lower alpha for finer grain
-        grainScale: 3.4,      // Higher scale for more density
-        fps: 10,            // Slightly slower for better performance
-        blendMode: 'hard-light',  // Sharp contrast like the image
-        greyness: 90       // Mid-grey like the reference
-    });
-
+    // Remove grain effect initialization
+    
     // Wait for all resources (images, fonts, etc.) to load
     window.addEventListener('load', () => {
         // Ensure we start at the top of the page
