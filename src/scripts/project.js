@@ -83,7 +83,7 @@ export function initProjectPage() {
             onLeaveBack: () => {
                 gsap.to('.indicator-item-shell', {
                     x: -150,
-                    duration: 0.8,
+                    duration: 0.6,
                     stagger: 0.1,
                     ease: "expo.in"
                 });
