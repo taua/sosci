@@ -682,6 +682,7 @@ function initWorkPage() {
     const workImgMasks = document.querySelectorAll('.work-img-mask');
     let currentIndex = 1000; // Starting z-index
     let currentVideo = null; // Track currently playing video
+    let currentMask = null; // Track currently visible mask
     // Add debug info
     console.log('Work init:', {
         shellExists: !!workImgShell,
@@ -690,6 +691,31 @@ function initWorkPage() {
         shellParent: workImgShell?.parentElement
     });
     if (!workImgShell || !workLinksShell) return;
+    // Set initial state for first mask immediately
+    if (workImgMasks.length > 0) {
+        const firstMask = workImgMasks[0];
+        (0, _gsap.gsap).set(firstMask, {
+            zIndex: currentIndex
+        });
+        const firstAnimeElement = firstMask.querySelector('.work-img-mask-anime');
+        if (firstAnimeElement) {
+            (0, _gsap.gsap).set(firstAnimeElement, {
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '100%',
+                overflow: 'hidden'
+            });
+            currentMask = firstMask;
+            // Play first video if exists
+            const firstVideo = firstMask.querySelector('video');
+            if (firstVideo) {
+                firstVideo.play();
+                currentVideo = firstVideo;
+            }
+        }
+    }
     // Reset and set initial state
     workImgShell.style.cssText = ''; // Clear any existing styles
     (0, _gsap.gsap).set(workImgShell, {
@@ -714,58 +740,78 @@ function initWorkPage() {
         duration: 1.2,
         ease: "expo.out"
     });
-    // Mouse move handler using content-shell position offset
+    // Mouse move handler using content-shell position
     window.addEventListener("mousemove", (e)=>{
         const shellYoffset = document.querySelector('.content-shell').getBoundingClientRect().top;
         xTo(e.clientX);
         yTo(e.clientY - shellYoffset);
     });
-    // Container hover handling
-    workLinksShell.addEventListener('mouseenter', ()=>{
+    // Container hover handling for both shells
+    const handleContainerHover = (enter)=>{
         (0, _gsap.gsap).killTweensOf(workImgShell, "opacity");
         (0, _gsap.gsap).to(workImgShell, {
-            opacity: 1,
-            scale: 1,
-            duration: 0.6,
+            opacity: enter ? 1 : 0,
+            scale: enter ? 1 : 0.8,
+            duration: enter ? 0.6 : 0.3,
             ease: "expo.out"
         });
+        if (enter && currentMask) {
+            const video = currentMask.querySelector('video');
+            if (video) {
+                video.play();
+                currentVideo = video;
+            }
+        } else if (!enter && currentVideo) {
+            currentVideo.pause();
+            currentVideo = null;
+        }
+    };
+    workLinksShell.addEventListener('mouseenter', ()=>handleContainerHover(true));
+    workLinksShell.addEventListener('mouseleave', ()=>handleContainerHover(false));
+    workImgShell.addEventListener('mouseenter', ()=>handleContainerHover(true));
+    workImgShell.addEventListener('mouseleave', ()=>handleContainerHover(false));
+    // Add mouse position tracking
+    let lastMouseY = 0;
+    window.addEventListener('mousemove', (e)=>{
+        lastMouseY = e.clientY;
     });
     // Handle matching z-index updates and video control
     workLinks.forEach((link, index)=>{
-        link.addEventListener('mouseenter', ()=>{
+        link.addEventListener('mouseenter', (e)=>{
             currentIndex++;
+            // Skip animation if it's the first item and we're just starting
+            if (index === 0 && currentMask === workImgMasks[0]) return;
             // Pause current video if exists
             if (currentVideo) currentVideo.pause();
-            // Find matching mask and update its z-index
             const correspondingMask = workImgMasks[index];
-            if (correspondingMask) {
-                // Update z-index
+            if (correspondingMask && correspondingMask !== currentMask) {
+                currentMask = correspondingMask; // Update current mask
                 (0, _gsap.gsap).set(correspondingMask, {
                     zIndex: currentIndex
                 });
                 const animeElement = correspondingMask.querySelector('.work-img-mask-anime');
                 if (animeElement) {
-                    // Kill any existing tweens
-                    (0, _gsap.gsap).killTweensOf(animeElement);
-                    // Set up container for animation
+                    // Kill all tweens
+                    const children = animeElement.children;
+                    (0, _gsap.gsap).killTweensOf([
+                        animeElement,
+                        children
+                    ]);
+                    // Get position and direction
+                    const rect = correspondingMask.getBoundingClientRect();
+                    const elementCenter = rect.top + rect.height / 2;
+                    const fromTop = lastMouseY < elementCenter;
+                    // Setup and animate only if it's a new mask
                     (0, _gsap.gsap).set(animeElement, {
                         position: 'absolute',
-                        top: 0,
+                        top: fromTop ? 'auto' : 0,
+                        bottom: fromTop ? 0 : 'auto',
                         left: 0,
                         right: 0,
                         height: '0%',
                         overflow: 'hidden'
                     });
-                    // Set up children to stay in place
-                    const children = animeElement.children;
-                    (0, _gsap.gsap).set(children, {
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '101%'
-                    });
-                    // Animate height
-                    (0, _gsap.gsap).to(animeElement, {
+                    (0, _gsap.gsap).timeline().to(animeElement, {
                         height: '100%',
                         duration: 1.1,
                         ease: "expo.out"
@@ -780,20 +826,6 @@ function initWorkPage() {
             }
         });
     });
-    workLinksShell.addEventListener('mouseleave', ()=>{
-        (0, _gsap.gsap).killTweensOf(workImgShell, "opacity");
-        (0, _gsap.gsap).to(workImgShell, {
-            opacity: 0,
-            scale: 0.8,
-            duration: 0.3,
-            ease: "expo.out"
-        });
-        // Pause current video if exists
-        if (currentVideo) {
-            currentVideo.pause();
-            currentVideo = null;
-        }
-    });
     // Handle z-index updates for individual links
     workLinks.forEach((link, index)=>{
         link.addEventListener('mouseenter', ()=>{
@@ -803,6 +835,18 @@ function initWorkPage() {
             });
         });
     });
+    // Add function to check if cursor is over element
+    const isCursorOverElement = (element, x, y)=>{
+        const rect = element.getBoundingClientRect();
+        return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+    };
+    // Check initial cursor position
+    const checkInitialCursor = (e)=>{
+        if (isCursorOverElement(workLinksShell, e.clientX, e.clientY)) handleContainerHover(true);
+        document.removeEventListener('mousemove', checkInitialCursor);
+    };
+    // Add one-time mousemove listener for initial position
+    document.addEventListener('mousemove', checkInitialCursor);
 }
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC"}]},["2tWFu"], null, "parcelRequire60dc", {})
