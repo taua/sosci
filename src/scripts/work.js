@@ -74,10 +74,43 @@ export function initWorkPage() {
             // Find matching mask and update its z-index
             const correspondingMask = workImgMasks[index];
             if (correspondingMask) {
-                //console.log(`Link ${index} hovered, updating mask z-index to ${currentIndex}`);
+                // Update z-index
                 gsap.set(correspondingMask, { zIndex: currentIndex });
                 
-                // Find and play video if it exists
+                const animeElement = correspondingMask.querySelector('.work-img-mask-anime');
+                if (animeElement) {
+                    // Kill any existing tweens
+                    gsap.killTweensOf(animeElement);
+                    
+                    // Set up container for animation
+                    gsap.set(animeElement, { 
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: '0%',
+                        overflow: 'hidden'
+                    });
+
+                    // Set up children to stay in place
+                    const children = animeElement.children;
+                    gsap.set(children, {
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '101%',
+                        //height: '100%'
+                    });
+
+                    // Animate height
+                    gsap.to(animeElement, {
+                        height: '100%',
+                        duration: 1.1,
+                        ease: "expo.out"
+                    });
+                }
+                
+                // Find and play video if exists
                 const video = correspondingMask.querySelector('video');
                 if (video) {
                     video.play();
