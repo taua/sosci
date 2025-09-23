@@ -701,6 +701,8 @@ window.addEventListener('DOMContentLoaded', ()=>{
     }
     // Initialize video visibility control
     function initVideoVisibility() {
+        // Skip video control on work page
+        if (window.location.pathname.includes('work')) return;
         const videos = document.querySelectorAll('.bg-proj-video video');
         if (!videos.length) return;
         videos.forEach((video)=>{

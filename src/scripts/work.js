@@ -1,11 +1,17 @@
 import { gsap } from "gsap";
 
 export function initWorkPage() {
+    // Pause all videos on work page
+    document.querySelectorAll('video').forEach(video => {
+        video.pause();
+    });
+
     const workImgShell = document.querySelector('.work-img-shell');
     const workLinksShell = document.querySelector('.work-links-shell');
     const workLinks = document.querySelectorAll('.work-links-item');
     const workImgMasks = document.querySelectorAll('.work-img-mask');
     let currentIndex = 1000; // Starting z-index
+    let currentVideo = null; // Track currently playing video
 
     // Add debug info
     console.log('Work init:', {
@@ -55,16 +61,28 @@ export function initWorkPage() {
         });
     });
 
-    // Handle matching z-index updates
+    // Handle matching z-index updates and video control
     workLinks.forEach((link, index) => {
         link.addEventListener('mouseenter', () => {
             currentIndex++;
+            
+            // Pause current video if exists
+            if (currentVideo) {
+                currentVideo.pause();
+            }
             
             // Find matching mask and update its z-index
             const correspondingMask = workImgMasks[index];
             if (correspondingMask) {
                 //console.log(`Link ${index} hovered, updating mask z-index to ${currentIndex}`);
                 gsap.set(correspondingMask, { zIndex: currentIndex });
+                
+                // Find and play video if it exists
+                const video = correspondingMask.querySelector('video');
+                if (video) {
+                    video.play();
+                    currentVideo = video;
+                }
             }
         });
     });
@@ -77,6 +95,12 @@ export function initWorkPage() {
             duration: 0.3,
             ease: "expo.out"
         });
+
+        // Pause current video if exists
+        if (currentVideo) {
+            currentVideo.pause();
+            currentVideo = null;
+        }
     });
 
     // Handle z-index updates for individual links
