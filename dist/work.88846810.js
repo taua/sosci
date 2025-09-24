@@ -779,6 +779,23 @@ function initWorkPage() {
     workLinks.forEach((link, index)=>{
         link.addEventListener('mouseenter', (e)=>{
             currentIndex++;
+            // Animate links-bg with directional scale
+            const linksBg = link.querySelector('.links-bg');
+            if (linksBg) {
+                const rect = link.getBoundingClientRect();
+                const elementCenter = rect.top + rect.height / 2;
+                const fromTop = lastMouseY < elementCenter;
+                (0, _gsap.gsap).killTweensOf(linksBg);
+                (0, _gsap.gsap).set(linksBg, {
+                    transformOrigin: fromTop ? 'top center' : 'bottom center',
+                    scaleY: 0
+                });
+                (0, _gsap.gsap).to(linksBg, {
+                    scaleY: 1,
+                    duration: 0.7,
+                    ease: "expo.out"
+                });
+            }
             // Skip animation if it's the first item and we're just starting
             if (index === 0 && currentMask === workImgMasks[0]) return;
             // Pause current video if exists
@@ -823,6 +840,23 @@ function initWorkPage() {
                     video.play();
                     currentVideo = video;
                 }
+            }
+        });
+        link.addEventListener('mouseleave', (e)=>{
+            const linksBg = link.querySelector('.links-bg');
+            if (linksBg) {
+                const rect = link.getBoundingClientRect();
+                const elementCenter = rect.top + rect.height / 2;
+                const fromTop = e.clientY < elementCenter;
+                (0, _gsap.gsap).killTweensOf(linksBg);
+                (0, _gsap.gsap).set(linksBg, {
+                    transformOrigin: fromTop ? 'top center' : 'bottom center'
+                });
+                (0, _gsap.gsap).to(linksBg, {
+                    scaleY: 0,
+                    duration: 0.9,
+                    ease: "expo.out"
+                });
             }
         });
     });

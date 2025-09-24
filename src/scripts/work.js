@@ -115,6 +115,25 @@ export function initWorkPage() {
         link.addEventListener('mouseenter', (e) => {
             currentIndex++;
             
+            // Animate links-bg with directional scale
+            const linksBg = link.querySelector('.links-bg');
+            if (linksBg) {
+                const rect = link.getBoundingClientRect();
+                const elementCenter = rect.top + (rect.height / 2);
+                const fromTop = lastMouseY < elementCenter;
+                
+                gsap.killTweensOf(linksBg);
+                gsap.set(linksBg, {
+                    transformOrigin: fromTop ? 'top center' : 'bottom center',
+                    scaleY: 0
+                });
+                gsap.to(linksBg, {
+                    scaleY: 1,
+                    duration: 0.7,
+                    ease: "expo.out"
+                });
+            }
+
             // Skip animation if it's the first item and we're just starting
             if (index === 0 && currentMask === workImgMasks[0]) {
                 return;
@@ -166,6 +185,25 @@ export function initWorkPage() {
                     video.play();
                     currentVideo = video;
                 }
+            }
+        });
+
+        link.addEventListener('mouseleave', (e) => {
+            const linksBg = link.querySelector('.links-bg');
+            if (linksBg) {
+                const rect = link.getBoundingClientRect();
+                const elementCenter = rect.top + (rect.height / 2);
+                const fromTop = e.clientY < elementCenter;
+                
+                gsap.killTweensOf(linksBg);
+                gsap.set(linksBg, {
+                    transformOrigin: fromTop ? 'top center' : 'bottom center'
+                });
+                gsap.to(linksBg, {
+                    scaleY: 0,
+                    duration: 0.9,
+                    ease: "expo.out"
+                });
             }
         });
     });
