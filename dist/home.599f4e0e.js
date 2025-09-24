@@ -814,19 +814,36 @@ function initHomePage() {
         });
         // Simplified ticker function
         function introTicker(txtNodes, shell) {
-            const baseSpeed = 1.2; // Increased from 0.5
-            const maxSpeed = 8; // Increased from 4
-            const velocityMult = 0.005; // Increased from 0.003
+            const baseSpeed = 1.2;
+            const maxSpeed = 8;
+            const velocityMult = 0.005;
             const heroLoop = (0, _horizontalLoopDefault.default)(txtNodes, {
                 repeat: -1,
-                speed: baseSpeed
+                speed: 0 // Start paused
             });
             let scrollTimeout;
+            let isInView = false;
+            // Create intersection observer
+            const observer = new IntersectionObserver((entries)=>{
+                isInView = entries[0].isIntersecting;
+                if (!isInView) {
+                    (0, _gsap.gsap).killTweensOf(heroLoop);
+                    heroLoop.pause();
+                } else {
+                    heroLoop.resume();
+                    heroLoop.timeScale(baseSpeed);
+                }
+            }, {
+                threshold: 0.1
+            });
+            // Observe the shell
+            observer.observe(shell);
             (0, _scrollTrigger.ScrollTrigger).create({
                 trigger: shell,
                 start: "top bottom",
                 end: "bottom top",
                 onUpdate: ({ getVelocity })=>{
+                    if (!isInView) return;
                     (0, _gsap.gsap).killTweensOf(heroLoop);
                     const scrollVelocity = getVelocity();
                     const direction = Math.sign(scrollVelocity);
@@ -843,13 +860,23 @@ function initHomePage() {
                 },
                 onLeave: ()=>{
                     (0, _gsap.gsap).killTweensOf(heroLoop);
+                    heroLoop.pause();
+                },
+                onEnter: ()=>{
+                    heroLoop.resume();
                     heroLoop.timeScale(baseSpeed);
                 },
                 onLeaveBack: ()=>{
                     (0, _gsap.gsap).killTweensOf(heroLoop);
+                    heroLoop.pause();
+                },
+                onEnterBack: ()=>{
+                    heroLoop.resume();
                     heroLoop.timeScale(-baseSpeed);
                 }
             });
+            // Cleanup
+            return ()=>observer.disconnect();
         }
         // Animate manifesto text words on scroll using GSAP SplitText
         const manifesto = document.querySelector('.manifesto-txt');
