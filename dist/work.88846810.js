@@ -792,7 +792,7 @@ function initWorkPage() {
                 });
                 (0, _gsap.gsap).to(linksBg, {
                     scaleY: 1,
-                    duration: 0.7,
+                    duration: 0.6,
                     ease: "expo.out"
                 });
             }
@@ -854,22 +854,21 @@ function initWorkPage() {
                 });
                 (0, _gsap.gsap).to(linksBg, {
                     scaleY: 0,
-                    duration: 0.9,
+                    duration: 0.6,
                     ease: "expo.out"
                 });
             }
         });
     });
+    /*
     // Handle z-index updates for individual links
-    workLinks.forEach((link, index)=>{
-        link.addEventListener('mouseenter', ()=>{
+    workLinks.forEach((link, index) => {
+        link.addEventListener('mouseenter', () => {
             currentIndex++;
-            (0, _gsap.gsap).set(link, {
-                zIndex: currentIndex
-            });
+            gsap.set(link, { zIndex: currentIndex });
         });
     });
-    // Add function to check if cursor is over element
+    */ // Add function to check if cursor is over element
     const isCursorOverElement = (element, x, y)=>{
         const rect = element.getBoundingClientRect();
         return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;

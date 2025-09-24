@@ -129,7 +129,7 @@ export function initWorkPage() {
                 });
                 gsap.to(linksBg, {
                     scaleY: 1,
-                    duration: 0.7,
+                    duration: 0.6,
                     ease: "expo.out"
                 });
             }
@@ -201,13 +201,13 @@ export function initWorkPage() {
                 });
                 gsap.to(linksBg, {
                     scaleY: 0,
-                    duration: 0.9,
+                    duration: 0.6,
                     ease: "expo.out"
                 });
             }
         });
     });
-
+    /*
     // Handle z-index updates for individual links
     workLinks.forEach((link, index) => {
         link.addEventListener('mouseenter', () => {
@@ -215,6 +215,7 @@ export function initWorkPage() {
             gsap.set(link, { zIndex: currentIndex });
         });
     });
+    */
 
     // Add function to check if cursor is over element
     const isCursorOverElement = (element, x, y) => {
