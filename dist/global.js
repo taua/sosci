@@ -688,7 +688,7 @@ window.addEventListener('DOMContentLoaded', ()=>{
             opacity: 1,
             grainAlpha: 32,
             grainScale: 3.4,
-            fps: 10,
+            fps: 8,
             blendMode: 'hard-light',
             greyness: 90 // Mid-grey like the reference
         });

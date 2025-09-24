@@ -19,7 +19,7 @@ window.addEventListener('DOMContentLoaded', () => {
       opacity: 1,         // Full strength to see pattern
       grainAlpha: 32,     // Lower alpha for finer grain
       grainScale: 3.4,    // Higher scale for more density
-      fps: 10,            // Slightly slower for better performance
+      fps: 8,            // Slightly slower for better performance
       blendMode: 'hard-light', // Sharp contrast like the image
       greyness: 90        // Mid-grey like the reference
     });
