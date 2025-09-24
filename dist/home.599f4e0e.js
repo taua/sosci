@@ -812,66 +812,42 @@ function initHomePage() {
             const txts = shell.querySelectorAll('.home-project-txt');
             if (txts.length > 0) introTicker(txts, shell);
         });
-        // Sets up a horizontal ticker effect and Observer for a group of text nodes
+        // Simplified ticker function
         function introTicker(txtNodes, shell) {
-            // Create the horizontal loop animation for the text nodes
+            const baseSpeed = 1.2; // Increased from 0.5
+            const maxSpeed = 8; // Increased from 4
+            const velocityMult = 0.005; // Increased from 0.003
             const heroLoop = (0, _horizontalLoopDefault.default)(txtNodes, {
                 repeat: -1,
-                speed: 1
+                speed: baseSpeed
             });
-            let tl;
-            let observerInstance = null;
-            // Use ScrollTrigger to activate Observer only when the section is in view
+            let scrollTimeout;
             (0, _scrollTrigger.ScrollTrigger).create({
                 trigger: shell,
-                start: "0% 100%",
-                end: "100% 0%",
-                //markers: true,     // Show GSAP markers for debugging
-                onEnter: ()=>{
-                    // Create Observer to listen for wheel events on this shell
-                    //console.log('Observer ACTIVE for', shell);
-                    observerInstance = (0, _observer.Observer).create({
-                        target: shell,
-                        type: 'wheel',
-                        onChangeY: (self)=>{
-                            tl && tl.kill();
-                            const factor = self.deltaY > 0 ? 1 : -1;
-                            tl = (0, _gsap.gsap).timeline().to(heroLoop, {
-                                timeScale: speed * factor,
-                                duration: 0.25
-                            }).to(heroLoop, {
-                                timeScale: 1 * factor,
-                                duration: 1
-                            });
-                        }
-                    });
+                start: "top bottom",
+                end: "bottom top",
+                onUpdate: ({ getVelocity })=>{
+                    (0, _gsap.gsap).killTweensOf(heroLoop);
+                    const scrollVelocity = getVelocity();
+                    const direction = Math.sign(scrollVelocity);
+                    const boostSpeed = direction * Math.min(Math.abs(scrollVelocity * velocityMult), maxSpeed);
+                    heroLoop.timeScale(baseSpeed * direction + boostSpeed);
+                    clearTimeout(scrollTimeout);
+                    scrollTimeout = setTimeout(()=>{
+                        (0, _gsap.gsap).to(heroLoop, {
+                            timeScale: baseSpeed * direction,
+                            duration: 0.8,
+                            ease: "power2.out"
+                        });
+                    }, 150);
                 },
                 onLeave: ()=>{
-                    // Kill Observer when section leaves viewport
-                    if (observerInstance) observerInstance.kill();
-                },
-                onEnterBack: ()=>{
-                    // Re-create Observer when scrolling back into view
-                    //console.log('Observer ACTIVE (back) for', shell);
-                    observerInstance = (0, _observer.Observer).create({
-                        target: shell,
-                        type: 'wheel',
-                        onChangeY: (self)=>{
-                            tl && tl.kill();
-                            const factor = self.deltaY > 0 ? 1 : -1;
-                            tl = (0, _gsap.gsap).timeline().to(heroLoop, {
-                                timeScale: speed * factor,
-                                duration: 0.25
-                            }).to(heroLoop, {
-                                timeScale: 1 * factor,
-                                duration: 1
-                            });
-                        }
-                    });
+                    (0, _gsap.gsap).killTweensOf(heroLoop);
+                    heroLoop.timeScale(baseSpeed);
                 },
                 onLeaveBack: ()=>{
-                    // Kill Observer when section leaves viewport (scrolling up)
-                    if (observerInstance) observerInstance.kill();
+                    (0, _gsap.gsap).killTweensOf(heroLoop);
+                    heroLoop.timeScale(-baseSpeed);
                 }
             });
         }

@@ -155,68 +155,48 @@ export function initHomePage() {
             }
         });
 
-        // Sets up a horizontal ticker effect and Observer for a group of text nodes
+        // Simplified ticker function
         function introTicker(txtNodes, shell) {
-            // Create the horizontal loop animation for the text nodes
+            const baseSpeed = 1.2;    // Increased from 0.5
+            const maxSpeed = 8;       // Increased from 4
+            const velocityMult = 0.005; // Increased from 0.003
+
             const heroLoop = horizontalLoop(txtNodes, {
                 repeat: -1,
-                speed: 1,
+                speed: baseSpeed
             });
 
-            let tl;
-            let observerInstance = null;
+            let scrollTimeout;
 
-            // Use ScrollTrigger to activate Observer only when the section is in view
             ScrollTrigger.create({
                 trigger: shell,
-                start: "0% 100%", // When top of shell hits bottom of viewport
-                end: "100% 0%",    // When 100% of shell hits top of viewport
-                //markers: true,     // Show GSAP markers for debugging
-                onEnter: () => {
-                    // Create Observer to listen for wheel events on this shell
-                    //console.log('Observer ACTIVE for', shell);
-                    observerInstance = Observer.create({
-                        target: shell,
-                        type: 'wheel',
-                        onChangeY: (self) => {
-                            tl && tl.kill();
-                            const factor = self.deltaY > 0 ? 1 : -1;
-                            tl = gsap
-                                .timeline()
-                                .to(heroLoop, { timeScale: speed * factor, duration: 0.25 })
-                                .to(heroLoop, { timeScale: 1 * factor, duration: 1 });
-                        },
-                    });
+                start: "top bottom",
+                end: "bottom top",
+                onUpdate: ({ getVelocity }) => {
+                    gsap.killTweensOf(heroLoop);
+                    
+                    const scrollVelocity = getVelocity();
+                    const direction = Math.sign(scrollVelocity);
+                    const boostSpeed = direction * Math.min(Math.abs(scrollVelocity * velocityMult), maxSpeed);
+                    
+                    heroLoop.timeScale(baseSpeed * direction + boostSpeed);
+                    
+                    clearTimeout(scrollTimeout);
+                    scrollTimeout = setTimeout(() => {
+                        gsap.to(heroLoop, {
+                            timeScale: baseSpeed * direction,
+                            duration: 0.8,
+                            ease: "power2.out"
+                        });
+                    }, 150);
                 },
                 onLeave: () => {
-                    // Kill Observer when section leaves viewport
-                    if (observerInstance) {
-                        observerInstance.kill();
-                        //console.log('Observer KILLED for', shell);
-                    }
-                },
-                onEnterBack: () => {
-                    // Re-create Observer when scrolling back into view
-                    //console.log('Observer ACTIVE (back) for', shell);
-                    observerInstance = Observer.create({
-                        target: shell,
-                        type: 'wheel',
-                        onChangeY: (self) => {
-                            tl && tl.kill();
-                            const factor = self.deltaY > 0 ? 1 : -1;
-                            tl = gsap
-                                .timeline()
-                                .to(heroLoop, { timeScale: speed * factor, duration: 0.25 })
-                                .to(heroLoop, { timeScale: 1 * factor, duration: 1 });
-                        },
-                    });
+                    gsap.killTweensOf(heroLoop);
+                    heroLoop.timeScale(baseSpeed);
                 },
                 onLeaveBack: () => {
-                    // Kill Observer when section leaves viewport (scrolling up)
-                    if (observerInstance) {
-                        observerInstance.kill();
-                        //console.log('Observer KILLED (back) for', shell);
-                    }
+                    gsap.killTweensOf(heroLoop);
+                    heroLoop.timeScale(-baseSpeed);
                 }
             });
         }
