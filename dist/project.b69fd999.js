@@ -745,6 +745,7 @@ function initProjectPage() {
             trigger: '.projects-section-shell',
             start: 'top 35%',
             onEnter: ()=>{
+                (0, _gsap.gsap).killTweensOf('.indicator-item-shell');
                 (0, _gsap.gsap).to('.indicator-item-shell', {
                     x: 0,
                     duration: 1,
@@ -753,6 +754,7 @@ function initProjectPage() {
                 });
             },
             onLeaveBack: ()=>{
+                (0, _gsap.gsap).killTweensOf('.indicator-item-shell');
                 (0, _gsap.gsap).to('.indicator-item-shell', {
                     x: -150,
                     duration: 0.6,
