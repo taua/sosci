@@ -730,6 +730,14 @@ window.addEventListener('DOMContentLoaded', ()=>{
     });
     else console.warn('ScrollSmoother: .main-shell or .content-shell not found in DOM.');
     initVideoVisibility();
+    // Add click listener for all sosci-links
+    document.addEventListener('click', (e)=>{
+        const link = e.target.closest('.sosci-link');
+        if (link) {
+            const url = link.getAttribute('link-url');
+            if (url) navigateToUrl(url);
+        }
+    });
 });
 // Page-specific imports
 if (window.location.pathname === '/' || window.location.pathname.includes('home')) require("15f686a79e03c55a").then((module)=>{
@@ -746,6 +754,9 @@ else if (window.location.pathname.includes('projects')) require("3281aad929e661e
 });
 else // Home or default page logic
 console.log('Home page logic here');
+function navigateToUrl(url) {
+    console.log('Navigating to:', url);
+}
 
 },{"9e5b3873cfad757a":"3UF59","fb0e6e5a4ade22e8":"fNrHc","15f686a79e03c55a":"an9pY","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC","gsap/ScrollSmoother":"cGoQX","gsap/ScrollTrigger":"7wnFk","gsap/SplitText":"63tvY","3281aad929e661e8":"iuGBB","./grainEffect":"gseYd"}],"3UF59":[function(require,module,exports,__globalThis) {
 module.exports = require("83560999e491354a")(module.bundle.resolve("about.24d794f7.js")).catch((err)=>{

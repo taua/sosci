@@ -73,6 +73,17 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   initVideoVisibility();
+
+  // Add click listener for all sosci-links
+  document.addEventListener('click', (e) => {
+    const link = e.target.closest('.sosci-link');
+    if (link) {
+      const url = link.getAttribute('link-url');
+      if (url) {
+        navigateToUrl(url);
+      }
+    }
+  });
 });
 
 // Page-specific imports
@@ -95,4 +106,8 @@ if (window.location.pathname === '/' || window.location.pathname.includes('home'
 } else {
   // Home or default page logic
   console.log('Home page logic here');
+}
+
+function navigateToUrl(url) {
+    console.log('Navigating to:', url);
 }
