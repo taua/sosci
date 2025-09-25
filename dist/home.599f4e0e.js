@@ -679,6 +679,7 @@ var _horizontalLoopDefault = parcelHelpers.interopDefault(_horizontalLoop);
 var _observer = require("gsap/Observer");
 var _scrollTrigger = require("gsap/ScrollTrigger");
 var _splitText = require("gsap/SplitText");
+var _scrollReset = require("./utils/scrollReset");
 (0, _gsap.gsap).registerPlugin((0, _observer.Observer), (0, _scrollTrigger.ScrollTrigger), (0, _splitText.SplitText));
 // Track the last real mouse position globally
 window._lastRealMousePos = {
@@ -692,24 +693,7 @@ window.addEventListener('mousemove', function(e) {
     };
 });
 function initHomePage() {
-    // Force scroll to top immediately
-    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-    // Force reload if not at top
-    if (window.scrollY !== 0) {
-        window.location.reload();
-        return;
-    }
-    // Block and reset scroll
-    document.body.style.overflow = 'hidden';
-    window.scrollTo({
-        top: 0,
-        left: 0,
-        behavior: 'instant'
-    });
-    requestAnimationFrame(()=>{
-        window.scrollTo(0, 0);
-        document.body.style.overflow = '';
-    });
+    (0, _scrollReset.initScrollReset)();
     // Additional reset on DOM ready
     document.addEventListener('DOMContentLoaded', ()=>{
         window.scrollTo(0, 0);
@@ -916,7 +900,7 @@ function initHomePage() {
     });
 }
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC","./imgTrailEffect":"jMsgH","./horizontalLoop":"02lVZ","gsap/Observer":"aAWxM","gsap/ScrollTrigger":"7wnFk","gsap/SplitText":"63tvY"}],"jMsgH":[function(require,module,exports,__globalThis) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC","./imgTrailEffect":"jMsgH","./horizontalLoop":"02lVZ","gsap/Observer":"aAWxM","gsap/ScrollTrigger":"7wnFk","gsap/SplitText":"63tvY","./utils/scrollReset":"eHkwM"}],"jMsgH":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "default", ()=>imgTrailEffect);
@@ -1561,6 +1545,28 @@ function horizontalLoop(items, config) {
     return tl;
 }
 
-},{"gsap":"fPSuC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["9CTwD"], null, "parcelRequire60dc", {})
+},{"gsap":"fPSuC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"eHkwM":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "initScrollReset", ()=>initScrollReset);
+function initScrollReset() {
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    if (window.scrollY !== 0) {
+        window.location.reload();
+        return;
+    }
+    document.body.style.overflow = 'hidden';
+    window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: 'instant'
+    });
+    requestAnimationFrame(()=>{
+        window.scrollTo(0, 0);
+        document.body.style.overflow = '';
+    });
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["9CTwD"], null, "parcelRequire60dc", {})
 
 //# sourceMappingURL=home.599f4e0e.js.map

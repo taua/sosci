@@ -4,7 +4,6 @@ import horizontalLoop from "./horizontalLoop";
 import { Observer } from "gsap/Observer";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
-import { initScrollReset } from './utils/scrollReset';
 
 gsap.registerPlugin(Observer, ScrollTrigger, SplitText);
 
@@ -16,8 +15,30 @@ window.addEventListener('mousemove', function(e) {
 
 // Entry point for home page JS
 export function initHomePage() {
-    initScrollReset();
-    
+    // Force scroll to top immediately
+    if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+    }
+
+    // Force reload if not at top
+    if (window.scrollY !== 0) {
+        window.location.reload();
+        return;
+    }
+
+    // Block and reset scroll
+    document.body.style.overflow = 'hidden';
+    window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: 'instant'
+    });
+
+    requestAnimationFrame(() => {
+        window.scrollTo(0, 0);
+        document.body.style.overflow = '';
+    });
+
     // Additional reset on DOM ready
     document.addEventListener('DOMContentLoaded', () => {
         window.scrollTo(0, 0);
