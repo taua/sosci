@@ -15,12 +15,43 @@ window.addEventListener('mousemove', function(e) {
 
 // Entry point for home page JS
 export function initHomePage() {
-    // Remove grain effect initialization
-    
+    // Force scroll to top immediately
+    if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+    }
+
+    // Force reload if not at top
+    if (window.scrollY !== 0) {
+        window.location.reload();
+        return;
+    }
+
+    // Block and reset scroll
+    document.body.style.overflow = 'hidden';
+    window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: 'instant'
+    });
+
+    requestAnimationFrame(() => {
+        window.scrollTo(0, 0);
+        document.body.style.overflow = '';
+    });
+
+    // Additional reset on DOM ready
+    document.addEventListener('DOMContentLoaded', () => {
+        window.scrollTo(0, 0);
+        ScrollTrigger.refresh();
+    });
+
     // Wait for all resources (images, fonts, etc.) to load
     window.addEventListener('load', () => {
-        // Ensure we start at the top of the page
-        window.scrollTo(0, 0);
+        // Force final check
+        if (window.scrollY !== 0) {
+            window.scrollTo(0, 0);
+        }
+        ScrollTrigger.refresh();
 
         // Set initial state of hero image
         gsap.set('.hero-img', { 
@@ -163,36 +194,21 @@ export function initHomePage() {
 
             const heroLoop = horizontalLoop(txtNodes, {
                 repeat: -1,
-                speed: 0 // Start paused
+                speed: baseSpeed // Start with base speed
             });
 
             let scrollTimeout;
-            let isInView = false;
 
-            // Create intersection observer
-            const observer = new IntersectionObserver(
-                (entries) => {
-                    isInView = entries[0].isIntersecting;
-                    if (!isInView) {
-                        gsap.killTweensOf(heroLoop);
-                        heroLoop.pause();
-                    } else {
-                        heroLoop.resume();
-                        heroLoop.timeScale(baseSpeed);
-                    }
-                },
-                { threshold: 0.1 }
-            );
-
-            // Observe the shell
-            observer.observe(shell);
-
+            // Remove isInView flag and simplify ScrollTrigger
             ScrollTrigger.create({
                 trigger: shell,
-                start: "top bottom",
-                end: "bottom top",
-                onUpdate: ({ getVelocity }) => {
-                    if (!isInView) return;
+                start: "top+=20% bottom",
+                end: "bottom-=20% top",
+                onUpdate: ({ isActive, getVelocity }) => {
+                    if (!isActive) {
+                        heroLoop.pause();
+                        return;
+                    }
                     
                     gsap.killTweensOf(heroLoop);
                     
@@ -200,6 +216,7 @@ export function initHomePage() {
                     const direction = Math.sign(scrollVelocity);
                     const boostSpeed = direction * Math.min(Math.abs(scrollVelocity * velocityMult), maxSpeed);
                     
+                    heroLoop.resume();
                     heroLoop.timeScale(baseSpeed * direction + boostSpeed);
                     
                     clearTimeout(scrollTimeout);
@@ -218,19 +235,13 @@ export function initHomePage() {
                 onEnter: () => {
                     heroLoop.resume();
                     heroLoop.timeScale(baseSpeed);
-                },
-                onLeaveBack: () => {
-                    gsap.killTweensOf(heroLoop);
-                    heroLoop.pause();
-                },
-                onEnterBack: () => {
-                    heroLoop.resume();
-                    heroLoop.timeScale(-baseSpeed);
                 }
             });
 
-            // Cleanup
-            return () => observer.disconnect();
+            return () => {
+                gsap.killTweensOf(heroLoop);
+                heroLoop.kill();
+            };
         }
 
         // Animate manifesto text words on scroll using GSAP SplitText
