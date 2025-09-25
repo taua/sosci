@@ -155,8 +155,6 @@ export function initHomePage() {
             onLeaveBack: disableEffect
         });
 
-        const speed = 5;
-
         // Loop through each ticker group container on the page
         document.querySelectorAll('.home-project-scroll-txt-shell').forEach((shell) => {
             const txts = shell.querySelectorAll('.home-project-txt');
@@ -173,19 +171,29 @@ export function initHomePage() {
 
             const heroLoop = horizontalLoop(txtNodes, {
                 repeat: -1,
-                speed: baseSpeed // Start with base speed
+                speed: baseSpeed
             });
 
+            // Store the scroll ID for cleanup
             let scrollTimeout;
+            // Pre-create function references for better garbage collection
+            const pauseLoop = () => {
+                gsap.killTweensOf(heroLoop);
+                heroLoop.pause();
+            };
+            
+            const resumeLoop = () => {
+                heroLoop.resume();
+                heroLoop.timeScale(baseSpeed);
+            };
 
-            // Remove isInView flag and simplify ScrollTrigger
             ScrollTrigger.create({
                 trigger: shell,
                 start: "top+=20% bottom",
                 end: "bottom-=20% top",
                 onUpdate: ({ isActive, getVelocity }) => {
                     if (!isActive) {
-                        heroLoop.pause();
+                        pauseLoop();
                         return;
                     }
                     
@@ -203,21 +211,17 @@ export function initHomePage() {
                         gsap.to(heroLoop, {
                             timeScale: baseSpeed * direction,
                             duration: 0.8,
-                            ease: "power2.out"
+                            ease: "power2.out",
+                            overwrite: "auto" // Add overwrite for better performance
                         });
                     }, 150);
                 },
-                onLeave: () => {
-                    gsap.killTweensOf(heroLoop);
-                    heroLoop.pause();
-                },
-                onEnter: () => {
-                    heroLoop.resume();
-                    heroLoop.timeScale(baseSpeed);
-                }
+                onLeave: pauseLoop,
+                onEnter: resumeLoop
             });
 
             return () => {
+                clearTimeout(scrollTimeout); // Clean up timeout on destruction
                 gsap.killTweensOf(heroLoop);
                 heroLoop.kill();
             };
