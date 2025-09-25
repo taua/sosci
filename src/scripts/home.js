@@ -246,5 +246,46 @@ export function initHomePage() {
                 });
             }
         }
+
+        // Add hover animations for featured projects
+        document.querySelectorAll('.home-featured-proj-img').forEach(container => {
+            const shell = container.querySelector('.home-featured-pj-shell');
+            const children = shell.children;
+            let isAnimating = false;
+            
+            container.addEventListener('mouseenter', () => {
+                gsap.killTweensOf([shell, children]);
+                
+                gsap.to(shell, {
+                    width: '92%',
+                    height: '92%',
+                    duration: 0.4,
+                    ease: 'power4.out'
+                });
+                
+                gsap.to(children, {
+                    scale: 1.3,
+                    duration: 0.4,
+                    ease: 'power4.out'
+                });
+            });
+
+            container.addEventListener('mouseleave', () => {
+                gsap.killTweensOf([shell, children]);
+                
+                gsap.to(shell, {
+                    width: '100%',
+                    height: '100%',
+                    duration: 0.4,
+                    ease: 'power4.out'
+                });
+                
+                gsap.to(children, {
+                    scale: 1,
+                    duration: 0.4,
+                    ease: 'power4.out'
+                });
+            });
+        });
     });
 }

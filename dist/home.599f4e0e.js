@@ -897,6 +897,46 @@ function initHomePage() {
                 });
             }
         }
+        // Add hover animations for featured projects
+        document.querySelectorAll('.home-featured-proj-img').forEach((container)=>{
+            const shell = container.querySelector('.home-featured-pj-shell');
+            const children = shell.children;
+            let isAnimating = false;
+            container.addEventListener('mouseenter', ()=>{
+                (0, _gsap.gsap).killTweensOf([
+                    shell,
+                    children
+                ]);
+                (0, _gsap.gsap).to(shell, {
+                    width: '92%',
+                    height: '92%',
+                    duration: 0.4,
+                    ease: 'power4.out'
+                });
+                (0, _gsap.gsap).to(children, {
+                    scale: 1.3,
+                    duration: 0.4,
+                    ease: 'power4.out'
+                });
+            });
+            container.addEventListener('mouseleave', ()=>{
+                (0, _gsap.gsap).killTweensOf([
+                    shell,
+                    children
+                ]);
+                (0, _gsap.gsap).to(shell, {
+                    width: '100%',
+                    height: '100%',
+                    duration: 0.4,
+                    ease: 'power4.out'
+                });
+                (0, _gsap.gsap).to(children, {
+                    scale: 1,
+                    duration: 0.4,
+                    ease: 'power4.out'
+                });
+            });
+        });
     });
 }
 
