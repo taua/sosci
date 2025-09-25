@@ -257,15 +257,15 @@ export function initHomePage() {
                 gsap.killTweensOf([shell, children]);
                 
                 gsap.to(shell, {
-                    width: '92%',
-                    height: '92%',
-                    duration: 0.4,
+                    width: '93%',
+                    height: '93%',
+                    duration: 0.6,
                     ease: 'power4.out'
                 });
                 
                 gsap.to(children, {
-                    scale: 1.3,
-                    duration: 0.4,
+                    scale: 1.2,
+                    duration: 0.6,
                     ease: 'power4.out'
                 });
             });
@@ -276,7 +276,7 @@ export function initHomePage() {
                 gsap.to(shell, {
                     width: '100%',
                     height: '100%',
-                    duration: 0.4,
+                    duration: 0.6,
                     ease: 'power4.out'
                 });
                 
