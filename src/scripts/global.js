@@ -100,6 +100,7 @@ function openNav() {
   const navElement = document.querySelector('.global-nav-takeover');
   const mainShell = document.querySelector('.main-shell');
   const logoNav = document.querySelector('.logo-nav');
+  const navNumbers = document.querySelectorAll('.takeover-nav-num-txt');
   
   // Improved text element selection for nav and footer
   const navTextElements = [];
@@ -177,6 +178,15 @@ function openNav() {
       console.log("Selected text elements:", navTextElements.length);
     }
     
+    // Animate nav numbers opacity without stagger
+    if (navNumbers.length) {
+      tl.to(navNumbers, {
+        opacity: 1,
+        duration: 0.8,
+        ease: 'power2.out'
+      }, 0.5); // Start after nav begins to open
+    }
+    
     // Once the nav is mostly open, animate the text
     const navLinks = document.querySelectorAll('.takeover-nav-link-txt');
     
@@ -216,9 +226,16 @@ function openNav() {
       }
     });
     
-    // Hide nav link text first
+    // Hide nav link text and numbers first
     const navLinks = document.querySelectorAll('.takeover-nav-link-txt');
     tl.to(navLinks, {
+      opacity: 0,
+      duration: 0.3,
+      ease: 'power2.in'
+    }, 0);
+    
+    // Animate nav numbers to hidden without stagger
+    tl.to(navNumbers, {
       opacity: 0,
       duration: 0.3,
       ease: 'power2.in'
@@ -230,7 +247,7 @@ function openNav() {
         color: '#ffffff',
         duration: 0.5,
         ease: 'power2.inOut'
-      }, 0);
+      }, .5);
     }
     
     // Animate all text elements back to white
@@ -239,7 +256,7 @@ function openNav() {
         color: '#ffffff',
         duration: 0.5,
         ease: 'power2.inOut'
-      }, 0);
+      }, .5);
     }
     
     // Then close the nav
