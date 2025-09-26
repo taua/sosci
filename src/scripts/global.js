@@ -90,6 +90,9 @@ window.addEventListener('DOMContentLoaded', () => {
 let navOpen = false;
 let navAnimating = false;
 
+// Store split text instances for cleanup
+let splitTextInstances = [];
+
 function openNav() {
   if (navAnimating) return;
   navAnimating = true;
@@ -103,6 +106,12 @@ function openNav() {
   }
   
   if (!navOpen) {
+    // Cleanup any existing split text instances first
+    splitTextInstances.forEach(splitText => {
+      splitText.revert();
+    });
+    splitTextInstances = [];
+    
     // Opening the navigation
     const tl = gsap.timeline({
       onComplete: () => {
@@ -111,6 +120,7 @@ function openNav() {
       }
     });
     
+    // First, open the nav and slide the main shell
     tl.to(navElement, {
       height: '100vh',
       duration: 1,
@@ -124,6 +134,37 @@ function openNav() {
         ease: 'expo.inOut'
       }, 0); // Start at the same time
     }
+    
+    // Once the nav is mostly open, animate the text
+    const navLinks = document.querySelectorAll('.takeover-nav-link-txt');
+    
+    navLinks.forEach((navLink, index) => {
+      // Create split text for each link
+      const splitText = new SplitText(navLink, { 
+        type: "chars",
+        position: "relative"
+      });
+      
+      // Store for later cleanup
+      splitTextInstances.push(splitText);
+      
+      // Set initial state
+      gsap.set(splitText.chars, { 
+        y: -150,
+        //opacity: 0
+      });
+      
+      // Animate chars with a slight delay after main animation starts
+      tl.to(splitText.chars, {
+        y: 0,
+        //opacity: 1,
+        duration: 1.2,
+        ease: "power4.out",
+        stagger: 0.02,
+        overwrite: "auto"
+      }, 0.32 + index * 0.1); // Start when the nav is already opening
+    });
+    
   } else {
     // Closing the navigation
     const tl = gsap.timeline({
@@ -133,18 +174,39 @@ function openNav() {
       }
     });
     
+    // Hide nav link text first
+    const navLinks = document.querySelectorAll('.takeover-nav-link-txt');
+    tl.to(navLinks, {
+      opacity: 0,
+      duration: 0.3,
+      ease: 'power2.in'
+    }, 0);
+    
+    // Then close the nav
     tl.to(navElement, {
       height: '0',
       duration: 1,
-      ease: 'expo.inOut'
-    });
+      ease: 'expo.inOut',
+      onComplete: () => {
+        // Clean up split text only after animation completes
+        splitTextInstances.forEach(splitText => {
+          splitText.revert();
+        });
+        splitTextInstances = [];
+        
+        // Reset opacity
+        navLinks.forEach(link => {
+          gsap.set(link, { opacity: 1 });
+        });
+      }
+    }, 0.0);
     
     if (mainShell) {
       tl.to(mainShell, {
         transform: 'translate3d(0, 0, 0)',
         duration: 1,
         ease: 'expo.inOut'
-      }, 0); // Start at the same time
+      }, 0.0);
     }
   }
 }
