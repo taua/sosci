@@ -749,6 +749,18 @@ function openNav() {
     navAnimating = true;
     const navElement = document.querySelector('.global-nav-takeover');
     const mainShell = document.querySelector('.main-shell');
+    const logoNav = document.querySelector('.logo-nav');
+    // Improved text element selection for nav and footer
+    const navTextElements = [];
+    // Add global-nav-shell text elements - using more specific selectors
+    document.querySelectorAll('.nav-copy-txt, .nav-copy-txt *, .nav-hover, .global-nav-shell a, .global-nav-shell span, .global-nav-shell div:not(.nav-hover):not(.logo-nav)').forEach((el)=>{
+        // Skip empty elements and elements without text
+        if (el.textContent.trim() !== '' && !el.querySelector('*')) navTextElements.push(el);
+    });
+    // Add footer text elements
+    document.querySelectorAll('.global-footer-shell *').forEach((el)=>{
+        if (el.childNodes.length === 1 && el.firstChild.nodeType === 3 && el.textContent.trim() !== '') navTextElements.push(el);
+    });
     if (!navElement) {
         navAnimating = false;
         return;
@@ -777,6 +789,22 @@ function openNav() {
             duration: 1,
             ease: 'expo.inOut'
         }, 0); // Start at the same time
+        // Animate logo to black
+        if (logoNav) tl.to(logoNav, {
+            color: '#000000',
+            duration: 0.5,
+            ease: 'power2.inOut'
+        }, 0.2);
+        // Animate all text elements to black
+        if (navTextElements.length) {
+            tl.to(navTextElements, {
+                color: '#000000',
+                duration: 0.5,
+                ease: 'power2.inOut'
+            }, 0.2);
+            // Debug log to see what's being selected
+            console.log("Selected text elements:", navTextElements.length);
+        }
         // Once the nav is mostly open, animate the text
         const navLinks = document.querySelectorAll('.takeover-nav-link-txt');
         navLinks.forEach((navLink, index)=>{
@@ -815,6 +843,18 @@ function openNav() {
             opacity: 0,
             duration: 0.3,
             ease: 'power2.in'
+        }, 0);
+        // Animate logo back to white
+        if (logoNav) tl.to(logoNav, {
+            color: '#ffffff',
+            duration: 0.5,
+            ease: 'power2.inOut'
+        }, 0);
+        // Animate all text elements back to white
+        if (navTextElements.length) tl.to(navTextElements, {
+            color: '#ffffff',
+            duration: 0.5,
+            ease: 'power2.inOut'
         }, 0);
         // Then close the nav
         tl.to(navElement, {
