@@ -86,6 +86,80 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+// Add navigation state and functionality
+let navOpen = false;
+let navAnimating = false;
+
+function openNav() {
+  if (navAnimating) return;
+  navAnimating = true;
+  
+  const navElement = document.querySelector('.global-nav-takeover');
+  const mainShell = document.querySelector('.main-shell');
+  
+  if (!navElement) {
+    navAnimating = false;
+    return;
+  }
+  
+  if (!navOpen) {
+    // Opening the navigation
+    const tl = gsap.timeline({
+      onComplete: () => {
+        navOpen = true;
+        navAnimating = false;
+      }
+    });
+    
+    tl.to(navElement, {
+      height: '100vh',
+      duration: 1,
+      ease: 'expo.inOut'
+    });
+    
+    if (mainShell) {
+      tl.to(mainShell, {
+        transform: 'translate3d(0, 30%, 0)',
+        duration: 1,
+        ease: 'expo.inOut'
+      }, 0); // Start at the same time
+    }
+  } else {
+    // Closing the navigation
+    const tl = gsap.timeline({
+      onComplete: () => {
+        navOpen = false;
+        navAnimating = false;
+      }
+    });
+    
+    tl.to(navElement, {
+      height: '0',
+      duration: 1,
+      ease: 'expo.inOut'
+    });
+    
+    if (mainShell) {
+      tl.to(mainShell, {
+        transform: 'translate3d(0, 0, 0)',
+        duration: 1,
+        ease: 'expo.inOut'
+      }, 0); // Start at the same time
+    }
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  // Setup nav click handler
+  document.addEventListener('click', (e) => {
+    const navTrigger = e.target.closest('.nav-hover');
+    if (navTrigger) {
+      openNav();
+      e.preventDefault();
+    }
+  });
+});
+
 // Page-specific imports
 if (window.location.pathname === '/' || window.location.pathname.includes('home')) {
   import('./home.js').then(module => {
