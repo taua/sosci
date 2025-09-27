@@ -739,6 +739,9 @@ window.addEventListener('DOMContentLoaded', ()=>{
         }
     });
 });
+// Declare missing tracking variables at the top of the file
+let navHoverSplit = null;
+let isNavHoverActive = false;
 // Add navigation state and functionality
 let navOpen = false;
 let navAnimating = false;
@@ -767,6 +770,8 @@ function openNav() {
         return;
     }
     if (!navOpen) {
+        // Set navOpen to true immediately when animation starts
+        navOpen = true;
         // Cleanup any existing split text instances first
         splitTextInstances.forEach((splitText)=>{
             splitText.revert();
@@ -775,8 +780,7 @@ function openNav() {
         // Opening the navigation
         const tl = (0, _gsap.gsap).timeline({
             onComplete: ()=>{
-                navOpen = true;
-                navAnimating = false;
+                navAnimating = false; // Only set animating to false when complete
             }
         });
         // First, open the nav and slide the main shell
@@ -797,15 +801,11 @@ function openNav() {
             ease: 'power2.inOut'
         }, 0.2);
         // Animate all text elements to black
-        if (navTextElements.length) {
-            tl.to(navTextElements, {
-                color: '#000000',
-                duration: 0.5,
-                ease: 'power2.inOut'
-            }, 0.2);
-            // Debug log to see what's being selected
-            console.log("Selected text elements:", navTextElements.length);
-        }
+        if (navTextElements.length) tl.to(navTextElements, {
+            color: '#000000',
+            duration: 0.5,
+            ease: 'power2.inOut'
+        }, 0.2);
         // Animate nav numbers opacity without stagger
         if (navNumbers.length) tl.to(navNumbers, {
             opacity: 1,
@@ -837,11 +837,12 @@ function openNav() {
             }, 0.32 + index * 0.1); // Start when the nav is already opening
         });
     } else {
+        // Set navOpen to false immediately when animation starts
+        navOpen = false;
         // Closing the navigation
         const tl = (0, _gsap.gsap).timeline({
             onComplete: ()=>{
-                navOpen = false;
-                navAnimating = false;
+                navAnimating = false; // Only set animating to false when complete
             }
         });
         // Hide nav link text and numbers first
@@ -904,6 +905,114 @@ window.addEventListener('DOMContentLoaded', ()=>{
             e.preventDefault();
         }
     });
+    // Add hover animation for nav-hover element after fonts are loaded
+    const navHoverEl = document.querySelector('.nav-hover');
+    if (navHoverEl) {
+        // Find both nav-wht-top and nav-wht-btm elements inside nav-hover
+        const navTopText = navHoverEl.querySelector('.nav-wht-top');
+        const navBtmText = navHoverEl.querySelector('.nav-wht-btm');
+        // Wait for fonts to load before applying SplitText
+        document.fonts.ready.then(()=>{
+            // Handle top text if it exists
+            if (navTopText) {
+                // Create parent container with overflow hidden if needed
+                const parentTop = navTopText.parentElement;
+                if (parentTop) {
+                    parentTop.style.overflow = 'hidden';
+                    parentTop.style.display = 'block';
+                }
+                // Split the text into characters for animation
+                try {
+                    navHoverSplit = new (0, _splitText.SplitText)(navTopText, {
+                        type: "chars",
+                        position: "relative"
+                    });
+                } catch (error) {
+                    console.error('SplitText error (top):', error);
+                }
+            }
+            // Handle bottom text if it exists
+            let navBtmSplit = null;
+            if (navBtmText) {
+                // Create parent container with overflow hidden if needed
+                const parentBtm = navBtmText.parentElement;
+                if (parentBtm) {
+                    parentBtm.style.overflow = 'hidden';
+                    parentBtm.style.display = 'block';
+                }
+                // Split the bottom text into characters
+                try {
+                    navBtmSplit = new (0, _splitText.SplitText)(navBtmText, {
+                        type: "chars",
+                        position: "relative"
+                    });
+                } catch (error) {
+                    console.error('SplitText error (bottom):', error);
+                }
+            }
+            // Set up hover listeners only if at least one split was successful
+            if (navHoverSplit?.chars?.length || navBtmSplit?.chars?.length) {
+                // Set up hover in animation
+                navHoverEl.addEventListener('mouseenter', ()=>{
+                    // Skip if nav is open or animation is already active
+                    if (navOpen || isNavHoverActive) return;
+                    isNavHoverActive = true;
+                    // Animate top text characters if they exist
+                    if (navHoverSplit?.chars?.length) {
+                        (0, _gsap.gsap).killTweensOf(navHoverSplit.chars);
+                        (0, _gsap.gsap).to(navHoverSplit.chars, {
+                            transform: 'translate3d(0, -100%, 0)',
+                            duration: 0.3,
+                            ease: "power3.out",
+                            stagger: 0.01,
+                            overwrite: true
+                        });
+                    }
+                    // Animate bottom text characters if they exist
+                    if (navBtmSplit?.chars?.length) {
+                        (0, _gsap.gsap).killTweensOf(navBtmSplit.chars);
+                        (0, _gsap.gsap).to(navBtmSplit.chars, {
+                            transform: 'translate3d(0, -100%, 0)',
+                            duration: 0.3,
+                            ease: "power3.out",
+                            stagger: 0.01,
+                            overwrite: true
+                        });
+                    }
+                });
+                // Set up hover out animation
+                navHoverEl.addEventListener('mouseleave', ()=>{
+                    // Skip if nav is open or animation is not active
+                    if (navOpen || !isNavHoverActive) return;
+                    isNavHoverActive = false;
+                    // Animate top text characters back if they exist
+                    if (navHoverSplit?.chars?.length) {
+                        (0, _gsap.gsap).killTweensOf(navHoverSplit.chars);
+                        (0, _gsap.gsap).to(navHoverSplit.chars, {
+                            transform: 'translate3d(0, 0, 0)',
+                            duration: 0.4,
+                            ease: "power3.out",
+                            stagger: 0.015,
+                            overwrite: true
+                        });
+                    }
+                    // Animate bottom text characters back if they exist
+                    if (navBtmSplit?.chars?.length) {
+                        (0, _gsap.gsap).killTweensOf(navBtmSplit.chars);
+                        (0, _gsap.gsap).to(navBtmSplit.chars, {
+                            transform: 'translate3d(0, 0, 0)',
+                            duration: 0.4,
+                            ease: "power3.out",
+                            stagger: 0.015,
+                            overwrite: true
+                        });
+                    }
+                });
+            }
+        }).catch((error)=>{
+            console.error('Font loading error:', error);
+        });
+    }
 });
 // Page-specific imports
 if (window.location.pathname === '/' || window.location.pathname.includes('home')) require("15f686a79e03c55a").then((module)=>{
