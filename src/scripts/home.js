@@ -155,28 +155,36 @@ export function initHomePage() {
             onLeaveBack: disableEffect
         });
 
-        // Loop through each ticker group container on the page
-        document.querySelectorAll('.home-project-scroll-txt-shell').forEach((shell) => {
+        // Loop through each ticker group container on the page with alternating directions
+        document.querySelectorAll('.home-project-scroll-txt-shell').forEach((shell, index) => {
             const txts = shell.querySelectorAll('.home-project-txt');
             if (txts.length > 0) {
-                introTicker(txts, shell);
+                // Alternate direction based on index (even = normal, odd = reversed)
+                const initialDirection = index % 2 === 0 ? 1 : -1;
+                introTicker(txts, shell, initialDirection);
             }
         });
 
-        // Simplified ticker function
-        function introTicker(txtNodes, shell) {
+        // Updated ticker function with proper direction handling
+        function introTicker(txtNodes, shell, initialDirection = 1) {
             const baseSpeed = 1.2;
             const maxSpeed = 8;
             const velocityMult = 0.005;
 
+            // Create horizontal loop with proper reversed setting
             const heroLoop = horizontalLoop(txtNodes, {
                 repeat: -1,
-                speed: baseSpeed
+                speed: baseSpeed,
+                reversed: initialDirection < 0 // This is crucial - set reversed based on initial direction
             });
 
-            // Store the scroll ID for cleanup
+            // Always use positive timeScale regardless of direction
+            const absBaseSpeed = Math.abs(baseSpeed);
+            heroLoop.timeScale(absBaseSpeed);
+
             let scrollTimeout;
-            // Pre-create function references for better garbage collection
+            let currentDirection = initialDirection;
+            
             const pauseLoop = () => {
                 gsap.killTweensOf(heroLoop);
                 heroLoop.pause();
@@ -184,7 +192,7 @@ export function initHomePage() {
             
             const resumeLoop = () => {
                 heroLoop.resume();
-                heroLoop.timeScale(baseSpeed);
+                heroLoop.timeScale(absBaseSpeed);
             };
 
             ScrollTrigger.create({
@@ -200,28 +208,38 @@ export function initHomePage() {
                     gsap.killTweensOf(heroLoop);
                     
                     const scrollVelocity = getVelocity();
-                    const direction = Math.sign(scrollVelocity);
-                    const boostSpeed = direction * Math.min(Math.abs(scrollVelocity * velocityMult), maxSpeed);
-                    
-                    heroLoop.resume();
-                    heroLoop.timeScale(baseSpeed * direction + boostSpeed);
+                    // Only consider significant movement
+                    if (Math.abs(scrollVelocity) > 0.5) {
+                        const scrollDirection = Math.sign(scrollVelocity);
+                        // Flip the scroll direction if this is a reversed ticker
+                        const effectiveDirection = initialDirection < 0 ? -scrollDirection : scrollDirection;
+                        currentDirection = effectiveDirection;
+                        
+                        const boostAmount = Math.min(Math.abs(scrollVelocity * velocityMult), maxSpeed);
+                        const effectiveSpeed = absBaseSpeed + (Math.abs(effectiveDirection) * boostAmount);
+                        
+                        heroLoop.timeScale(effectiveSpeed * Math.sign(effectiveDirection));
+                    }
                     
                     clearTimeout(scrollTimeout);
                     scrollTimeout = setTimeout(() => {
+                        // When scrolling stops, normalize speed but keep direction
                         gsap.to(heroLoop, {
-                            timeScale: baseSpeed * direction,
-                            duration: 0.8,
-                            ease: "power2.out",
-                            overwrite: "auto" // Add overwrite for better performance
+                            timeScale: absBaseSpeed * Math.sign(currentDirection),
+                            duration: 0.5,
+                            ease: "power1.out",
+                            overwrite: true
                         });
                     }, 150);
                 },
                 onLeave: pauseLoop,
-                onEnter: resumeLoop
+                onEnter: resumeLoop,
+                onLeaveBack: pauseLoop,
+                onEnterBack: resumeLoop
             });
 
             return () => {
-                clearTimeout(scrollTimeout); // Clean up timeout on destruction
+                clearTimeout(scrollTimeout);
                 gsap.killTweensOf(heroLoop);
                 heroLoop.kill();
             };
