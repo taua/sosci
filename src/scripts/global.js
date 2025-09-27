@@ -96,6 +96,7 @@ let navAnimating = false;
 
 // Store split text instances for cleanup
 let splitTextInstances = [];
+//let closeTxtSplit = null; // Add variable for close-txt split
 
 function openNav() {
   if (navAnimating) return;
@@ -132,7 +133,6 @@ function openNav() {
   }
   
   if (!navOpen) {
-    // Set navOpen to true immediately when animation starts
     navOpen = true;
     
     // Cleanup any existing split text instances first
@@ -144,7 +144,7 @@ function openNav() {
     // Opening the navigation
     const tl = gsap.timeline({
       onComplete: () => {
-        navAnimating = false; // Only set animating to false when complete
+        navAnimating = false;
       }
     });
     
@@ -220,6 +220,39 @@ function openNav() {
       }, 0.32 + index * 0.1); // Start when the nav is already opening
     });
     
+    // Animate .x-top scaleY from 0 to 1
+    const xTopEl = document.querySelector('.x-top');
+    const xBtmEl = document.querySelector('.x-bottom');
+    if (xTopEl) {
+      gsap.set(xTopEl, { scaleX: 0 });
+      tl.to(xTopEl, {
+        scaleX: 1,
+        duration: .8,
+        delay: 0.5,
+        ease: "power3.out"
+      }, 0); // Start at the beginning of the timeline
+    }
+
+    if (xBtmEl) {
+      gsap.set(xBtmEl, { scaleX: 0 });
+      tl.to(xBtmEl, {
+        scaleX: 1,
+        duration: .8,
+        delay: .8,
+        ease: "power3.out"
+      }, 0); // Start at the beginning of the timeline
+    }
+
+    // Fade opacity of .nav-wht-btm when nav opens
+    const navHoverEl = document.querySelector('.nav-hover');
+    const navBtmText = navHoverEl ? navHoverEl.querySelector('.nav-wht-btm') : null;
+    if (navBtmText) {
+      tl.to(navBtmText, {
+        opacity: 0,
+        duration: 0.4,
+        ease: "power2.out"
+      }, 0); // Start at the beginning of the timeline
+    }
   } else {
     // Set navOpen to false immediately when animation starts
     navOpen = false;
@@ -289,6 +322,17 @@ function openNav() {
         duration: 1,
         ease: 'expo.inOut'
       }, 0.0);
+    }
+    
+    // Fade opacity of .nav-wht-btm back in when nav closes
+    const navHoverEl = document.querySelector('.nav-hover');
+    const navBtmText = navHoverEl ? navHoverEl.querySelector('.nav-wht-btm') : null;
+    if (navBtmText) {
+      tl.to(navBtmText, {
+        opacity: 1,
+        duration: 0.4,
+        ease: "power2.out"
+      }, 0.5); // Start at the beginning of the timeline
     }
   }
 }
