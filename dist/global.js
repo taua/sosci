@@ -955,7 +955,12 @@ function playLoadingAnimation() {
     const transSpacer = document.querySelector('.trans-spacer');
     const transImgShell = document.querySelector('.trans-img-shell');
     const transImgs = transImgShell ? Array.from(transImgShell.querySelectorAll('.trans-img')).reverse() : [];
+    const globalTransition = document.querySelector('.global-transition');
     const tl = (0, _gsap.gsap).timeline();
+    // Wait 1 second before starting transLogoShell animation
+    tl.to({}, {
+        duration: .5
+    }); // dummy tween for delay
     // Fade and blur in trans-logo-shell
     if (transLogoShell) tl.fromTo(transLogoShell, {
         opacity: 0,
@@ -969,27 +974,43 @@ function playLoadingAnimation() {
     // Animate spacer and img-shell widths in parallel, after logo anim
     tl.to(transSpacer, {
         width: '7.7vw',
-        duration: 0.9,
+        duration: 0.8,
         ease: "expo.inOut"
-    }, 1);
+    }, ">");
     tl.to(transImgShell, {
         width: '6.6vw',
-        duration: 0.9,
+        duration: 0.8,
         ease: "expo.inOut"
     }, "<");
     // Animate all but the last .trans-img height from 100% to 0% with stagger, bottom to top
     if (transImgs.length > 1) tl.to(transImgs.slice(0, -1), {
         height: '0%',
-        duration: .7,
-        ease: "power4.inOut",
-        stagger: 0.35
+        duration: .8,
+        ease: "expo.inOut",
+        stagger: 0.22
     }, ">");
-    // If only one image, animate it directly
-    if (transImgs.length === 1) tl.to(transImgs[0], {
-        height: '0%',
-        duration: 1,
+    // Scale transSpacer and transImgShell back to 0vw after images animate
+    tl.to([
+        transSpacer,
+        transImgShell
+    ], {
+        width: '0vw',
+        duration: 0.7,
         ease: "expo.inOut"
     }, ">");
+    if (globalTransition) tl.to(globalTransition, {
+        height: '0vh',
+        duration: 1,
+        ease: "expo.inOut"
+    }, ">"); // start at same time as logo blur/fade
+    // Blur fade out transLogoShell and animate global-transition height to 0vh simultaneously
+    tl.to(transLogoShell, {
+        opacity: 0,
+        delay: 0.4,
+        filter: 'blur(20px)',
+        duration: .4,
+        ease: "power2.inOut"
+    }, "<");
 // ...existing code...
 }
 // ...existing code...
