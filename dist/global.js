@@ -950,7 +950,51 @@ function openNav() {
         }, 0.7); // Start at the beginning of the timeline
     }
 }
+function playLoadingAnimation() {
+    const transLogoShell = document.querySelector('.trans-logo-shell');
+    const transSpacer = document.querySelector('.trans-spacer');
+    const transImgShell = document.querySelector('.trans-img-shell');
+    const transImgs = transImgShell ? Array.from(transImgShell.querySelectorAll('.trans-img')).reverse() : [];
+    const tl = (0, _gsap.gsap).timeline();
+    // Fade and blur in trans-logo-shell
+    if (transLogoShell) tl.fromTo(transLogoShell, {
+        opacity: 0,
+        filter: 'blur(40px)'
+    }, {
+        opacity: 1,
+        filter: 'blur(0px)',
+        duration: 1.4,
+        ease: "power4.out"
+    });
+    // Animate spacer and img-shell widths in parallel, after logo anim
+    tl.to(transSpacer, {
+        width: '7.7vw',
+        duration: 0.9,
+        ease: "expo.inOut"
+    }, 1);
+    tl.to(transImgShell, {
+        width: '6.6vw',
+        duration: 0.9,
+        ease: "expo.inOut"
+    }, "<");
+    // Animate all but the last .trans-img height from 100% to 0% with stagger, bottom to top
+    if (transImgs.length > 1) tl.to(transImgs.slice(0, -1), {
+        height: '0%',
+        duration: .7,
+        ease: "power4.inOut",
+        stagger: 0.35
+    }, ">");
+    // If only one image, animate it directly
+    if (transImgs.length === 1) tl.to(transImgs[0], {
+        height: '0%',
+        duration: 1,
+        ease: "expo.inOut"
+    }, ">");
+// ...existing code...
+}
+// ...existing code...
 window.addEventListener('DOMContentLoaded', ()=>{
+    playLoadingAnimation();
     // Setup nav click handler
     document.addEventListener('click', (e)=>{
         const navTrigger = e.target.closest('.nav-hover');
