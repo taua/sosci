@@ -220,7 +220,7 @@ function openNav() {
       }, 0.32 + index * 0.1); // Start when the nav is already opening
     });
     
-    // Animate .x-top scaleY from 0 to 1
+    // Animate .x-top scaleX from 0 to 1
     const xTopEl = document.querySelector('.x-top');
     const xBtmEl = document.querySelector('.x-bottom');
     if (xTopEl) {
@@ -228,19 +228,18 @@ function openNav() {
       tl.to(xTopEl, {
         scaleX: 1,
         duration: .8,
-        delay: 0.5,
+        delay: 0.4,
         ease: "power3.out"
-      }, 0); // Start at the beginning of the timeline
+      }, 0);
     }
-
     if (xBtmEl) {
       gsap.set(xBtmEl, { scaleX: 0 });
       tl.to(xBtmEl, {
         scaleX: 1,
         duration: .8,
-        delay: .8,
+        delay: .7,
         ease: "power3.out"
-      }, 0); // Start at the beginning of the timeline
+      }, 0);
     }
 
     // Fade opacity of .nav-wht-btm when nav opens
@@ -249,9 +248,9 @@ function openNav() {
     if (navBtmText) {
       tl.to(navBtmText, {
         opacity: 0,
-        duration: 0.4,
+        duration: 0.3,
         ease: "power2.out"
-      }, 0); // Start at the beginning of the timeline
+      }, 0.2);
     }
   } else {
     // Set navOpen to false immediately when animation starts
@@ -324,6 +323,24 @@ function openNav() {
       }, 0.0);
     }
     
+    // Reverse .x-top and .x-bottom animations when nav closes
+    const xTopEl = document.querySelector('.x-top');
+    const xBtmEl = document.querySelector('.x-bottom');
+    if (xTopEl) {
+      tl.to(xTopEl, {
+        scaleX: 0,
+        duration: .5,
+        ease: "power3.in"
+      }, 0);
+    }
+    if (xBtmEl) {
+      tl.to(xBtmEl, {
+        scaleX: 0,
+        duration: .5,
+        ease: "power3.in"
+      }, 0);
+    }
+
     // Fade opacity of .nav-wht-btm back in when nav closes
     const navHoverEl = document.querySelector('.nav-hover');
     const navBtmText = navHoverEl ? navHoverEl.querySelector('.nav-wht-btm') : null;
@@ -332,7 +349,7 @@ function openNav() {
         opacity: 1,
         duration: 0.4,
         ease: "power2.out"
-      }, 0.5); // Start at the beginning of the timeline
+      }, 0.7); // Start at the beginning of the timeline
     }
   }
 }
