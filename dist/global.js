@@ -959,9 +959,7 @@ function playLoadingAnimation() {
     const globalTransition = document.querySelector('.global-transition');
     const tl = (0, _gsap.gsap).timeline();
     // Wait 1 second before starting transLogoShell animation
-    tl.to({}, {
-        duration: .5
-    }); // dummy tween for delay
+    //tl.to({}, { duration: .1 }); // dummy tween for delay
     // Fade and blur in trans-logo-shell
     if (transLogoShell) tl.fromTo(transLogoShell, {
         opacity: 0,
@@ -977,7 +975,7 @@ function playLoadingAnimation() {
         width: '7.7vw',
         duration: 0.8,
         ease: "expo.inOut"
-    }, ">");
+    }, "-=0.3");
     tl.to(transImgShell, {
         width: '6.6vw',
         duration: 0.8,
@@ -989,7 +987,7 @@ function playLoadingAnimation() {
         duration: .8,
         ease: "expo.inOut",
         stagger: 0.22
-    }, ">");
+    }, "-=0.4"); // starts 0.3s before previous tween ends
     // Scale transSpacer and transImgShell back to 0vw after images animate
     tl.to([
         transSpacer,
