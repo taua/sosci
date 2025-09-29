@@ -963,6 +963,15 @@ function initHomePage() {
 window.initPageTransitions = function() {
     // Your page-specific GSAP intro animation here
     console.log('Home Page transition animation triggered');
+    // Animate main-shell translateY from 30% to 0% using translate3d
+    const mainShell = document.querySelector('.main-shell');
+    if (mainShell) (0, _gsap.gsap).fromTo(mainShell, {
+        transform: "translate3d(0, 30%, 0)"
+    }, {
+        transform: "translate3d(0, 0, 0)",
+        duration: 1,
+        ease: "expo.inOut"
+    });
 };
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC","./imgTrailEffect":"jMsgH","./horizontalLoop":"02lVZ","gsap/Observer":"aAWxM","gsap/ScrollTrigger":"7wnFk","gsap/SplitText":"63tvY","./utils/scrollReset":"eHkwM"}],"jMsgH":[function(require,module,exports,__globalThis) {

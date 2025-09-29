@@ -672,7 +672,8 @@ parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initProjectPage", ()=>initProjectPage);
 var _gsap = require("gsap");
 var _scrollTrigger = require("gsap/ScrollTrigger");
-(0, _gsap.gsap).registerPlugin((0, _scrollTrigger.ScrollTrigger));
+var _splitText = require("gsap/SplitText");
+(0, _gsap.gsap).registerPlugin((0, _scrollTrigger.ScrollTrigger), (0, _splitText.SplitText));
 function initProjectPage() {
     const isProjectPage = window.location.pathname.includes('/projects');
     if (!isProjectPage) return;
@@ -766,10 +767,34 @@ function initProjectPage() {
     });
 }
 window.initPageTransitions = function() {
-    // Your page-specific GSAP intro animation here
+    // Animate "project-info-header" one character at a time sliding in from the bottom using GSAP SplitText
+    const header = document.querySelector('.project-info-header');
+    if (header) {
+        const split = new (0, _splitText.SplitText)(header, {
+            type: "chars"
+        });
+        (0, _gsap.gsap).fromTo(split.chars, {
+            transform: 'translate3d(0, 100%, 0)'
+        }, {
+            transform: 'translate3d(0, 0%, 0)',
+            duration: 1.2,
+            ease: "expo.out",
+            delay: 0.4,
+            stagger: 0.02
+        });
+    }
+    // Animate main-shell translateY from 30% to 0% using translate3d
+    const mainShell = document.querySelector('.main-shell');
+    if (mainShell) (0, _gsap.gsap).fromTo(mainShell, {
+        transform: "translate3d(0, 30%, 0)"
+    }, {
+        transform: "translate3d(0, 0, 0)",
+        duration: 1,
+        ease: "expo.inOut"
+    });
     console.log('Project Page transition animation triggered');
 };
 
-},{"gsap":"fPSuC","gsap/ScrollTrigger":"7wnFk","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["75bgu"], null, "parcelRequire60dc", {})
+},{"gsap":"fPSuC","gsap/ScrollTrigger":"7wnFk","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap/SplitText":"63tvY"}]},["75bgu"], null, "parcelRequire60dc", {})
 
 //# sourceMappingURL=project.b69fd999.js.map

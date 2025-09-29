@@ -1,7 +1,8 @@
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { SplitText } from "gsap/SplitText";
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, SplitText);
 
 export function initProjectPage() {
     const isProjectPage = window.location.pathname.includes('/projects');
@@ -95,7 +96,36 @@ export function initProjectPage() {
 }
 
 window.initPageTransitions = function() {
-  // Your page-specific GSAP intro animation here
+  // Animate "project-info-header" one character at a time sliding in from the bottom using GSAP SplitText
+  const header = document.querySelector('.project-info-header');
+  if (header) {
+    const split = new SplitText(header, { type: "chars" });
+    gsap.fromTo(split.chars,
+      {transform: 'translate3d(0, 100%, 0)' },
+      {
+        transform: 'translate3d(0, 0%, 0)',
+        duration: 1.2,
+        ease: "expo.out",
+        delay: 0.4,
+        stagger: 0.02
+      }
+    );
+  }
+
+  // Animate main-shell translateY from 30% to 0% using translate3d
+  const mainShell = document.querySelector('.main-shell');
+  if (mainShell) {
+    gsap.fromTo(
+      mainShell,
+      { transform: "translate3d(0, 30%, 0)" },
+      {
+        transform: "translate3d(0, 0, 0)",
+        duration: 1,
+        ease: "expo.inOut"
+      }
+    );
+  }
+
   console.log('Project Page transition animation triggered');
 };
 
