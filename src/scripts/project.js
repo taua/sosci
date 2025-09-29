@@ -94,6 +94,9 @@ export function initProjectPage() {
     });
 }
 
-
+window.initPageTransitions = function() {
+  // Your page-specific GSAP intro animation here
+  console.log('Project Page transition animation triggered');
+};
 
 

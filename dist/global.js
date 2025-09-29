@@ -1002,8 +1002,12 @@ function playLoadingAnimation() {
     if (globalTransition) tl.to(globalTransition, {
         height: '0vh',
         duration: 1,
-        ease: "expo.inOut"
-    }, ">"); // start at same time as logo blur/fade
+        ease: "expo.inOut",
+        onStart: ()=>{
+            // Call a global hook for page intro animation
+            if (typeof window.initPageTransitions === 'function') window.initPageTransitions();
+        }
+    }, ">");
     // Blur fade out transLogoShell and animate global-transition height to 0vh simultaneously
     tl.to(transLogoShell, {
         opacity: 0,

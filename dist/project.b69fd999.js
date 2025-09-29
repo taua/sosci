@@ -765,6 +765,10 @@ function initProjectPage() {
         });
     });
 }
+window.initPageTransitions = function() {
+    // Your page-specific GSAP intro animation here
+    console.log('Project Page transition animation triggered');
+};
 
 },{"gsap":"fPSuC","gsap/ScrollTrigger":"7wnFk","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["75bgu"], null, "parcelRequire60dc", {})
 

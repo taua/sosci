@@ -239,3 +239,8 @@ export function initWorkPage() {
     // Add one-time mousemove listener for initial position
     document.addEventListener('mousemove', checkInitialCursor);
 }
+
+window.initPageTransitions = function() {
+  // Your page-specific GSAP intro animation here
+  console.log('Work Page transition animation triggered');
+};

@@ -312,3 +312,7 @@ export function initHomePage() {
     });
 }
 
+window.initPageTransitions = function() {
+  // Your page-specific GSAP intro animation here
+  console.log('Home Page transition animation triggered');
+};

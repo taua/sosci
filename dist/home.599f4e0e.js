@@ -960,6 +960,10 @@ function initHomePage() {
         });
     });
 }
+window.initPageTransitions = function() {
+    // Your page-specific GSAP intro animation here
+    console.log('Home Page transition animation triggered');
+};
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC","./imgTrailEffect":"jMsgH","./horizontalLoop":"02lVZ","gsap/Observer":"aAWxM","gsap/ScrollTrigger":"7wnFk","gsap/SplitText":"63tvY","./utils/scrollReset":"eHkwM"}],"jMsgH":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
