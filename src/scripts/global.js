@@ -601,12 +601,13 @@ if (window.location.pathname === '/' || window.location.pathname.includes('home'
 function navigateToUrl(url) {
   const mainShell = document.querySelector('.main-shell');
   const globalTransition = document.querySelector('.global-transition');
-  if (globalTransition) {
-    // To animate height from the bottom, set position and anchor in CSS:
-    // Example: position: absolute; left: 0; right: 0; bottom: 0; top: auto;
-    // This makes height grow upward from the bottom.
 
-    //globalTransition.style.position = "absolute";
+  // Ensure url is absolute (starts with "/") to avoid relative navigation
+  if (url && !url.startsWith("/")) {
+    url = "/" + url.replace(/^\/+/, "");
+  }
+
+  if (globalTransition) {
     globalTransition.style.left = "0";
     globalTransition.style.right = "0";
     globalTransition.style.bottom = "0";
@@ -623,11 +624,10 @@ function navigateToUrl(url) {
       }
     });
     gsap.to(mainShell, {
-        transform: 'translate3d(0, -30%, 0)',
-        duration: 1,
-        ease: 'expo.inOut'
-      }); // Start at the same time
-
+      transform: 'translate3d(0, -30%, 0)',
+      duration: 1,
+      ease: 'expo.inOut'
+    });
   } else {
     window.location.href = url;
   }
