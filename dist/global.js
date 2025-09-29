@@ -1016,6 +1016,8 @@ function playLoadingAnimation() {
         duration: .4,
         ease: "power2.inOut"
     }, "<");
+// GSAP will animate vw values using decimals, not just whole numbers.
+// For example, animating width from '7.7vw' to '0vw' will interpolate with decimal precision.
 // ...existing code...
 }
 // ...existing code...
@@ -1154,7 +1156,34 @@ else if (window.location.pathname.includes('projects')) require("3281aad929e661e
 else // Home or default page logic
 console.log('Home page logic here');
 function navigateToUrl(url) {
-    console.log('Navigating to:', url);
+    const mainShell = document.querySelector('.main-shell');
+    const globalTransition = document.querySelector('.global-transition');
+    if (globalTransition) {
+        // To animate height from the bottom, set position and anchor in CSS:
+        // Example: position: absolute; left: 0; right: 0; bottom: 0; top: auto;
+        // This makes height grow upward from the bottom.
+        //globalTransition.style.position = "absolute";
+        globalTransition.style.left = "0";
+        globalTransition.style.right = "0";
+        globalTransition.style.bottom = "0";
+        globalTransition.style.top = "auto";
+        (0, _gsap.gsap).set(globalTransition, {
+            height: "0vh"
+        });
+        (0, _gsap.gsap).to(globalTransition, {
+            height: "100vh",
+            duration: 1,
+            ease: "expo.inOut",
+            onComplete: ()=>{
+                window.location.href = url;
+            }
+        });
+        (0, _gsap.gsap).to(mainShell, {
+            transform: 'translate3d(0, -30%, 0)',
+            duration: 1,
+            ease: 'expo.inOut'
+        }); // Start at the same time
+    } else window.location.href = url;
 }
 
 },{"9e5b3873cfad757a":"3UF59","fb0e6e5a4ade22e8":"fNrHc","15f686a79e03c55a":"an9pY","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC","gsap/ScrollSmoother":"cGoQX","gsap/ScrollTrigger":"7wnFk","gsap/SplitText":"63tvY","3281aad929e661e8":"iuGBB","./grainEffect":"gseYd"}],"3UF59":[function(require,module,exports,__globalThis) {

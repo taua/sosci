@@ -435,7 +435,9 @@ function playLoadingAnimation() {
     ease: "power2.inOut"
   }, "<");
 
-  // ...existing code...
+  // GSAP will animate vw values using decimals, not just whole numbers.
+// For example, animating width from '7.7vw' to '0vw' will interpolate with decimal precision.
+// ...existing code...
 }
 
 // ...existing code...
@@ -597,5 +599,36 @@ if (window.location.pathname === '/' || window.location.pathname.includes('home'
 }
 
 function navigateToUrl(url) {
-    console.log('Navigating to:', url);
+  const mainShell = document.querySelector('.main-shell');
+  const globalTransition = document.querySelector('.global-transition');
+  if (globalTransition) {
+    // To animate height from the bottom, set position and anchor in CSS:
+    // Example: position: absolute; left: 0; right: 0; bottom: 0; top: auto;
+    // This makes height grow upward from the bottom.
+
+    //globalTransition.style.position = "absolute";
+    globalTransition.style.left = "0";
+    globalTransition.style.right = "0";
+    globalTransition.style.bottom = "0";
+    globalTransition.style.top = "auto";
+
+    gsap.set(globalTransition, { height: "0vh" });
+
+    gsap.to(globalTransition, {
+      height: "100vh",
+      duration: 1,
+      ease: "expo.inOut",
+      onComplete: () => {
+        window.location.href = url;
+      }
+    });
+    gsap.to(mainShell, {
+        transform: 'translate3d(0, -30%, 0)',
+        duration: 1,
+        ease: 'expo.inOut'
+      }); // Start at the same time
+
+  } else {
+    window.location.href = url;
+  }
 }
