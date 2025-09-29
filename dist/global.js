@@ -950,6 +950,7 @@ function openNav() {
         }, 0.7); // Start at the beginning of the timeline
     }
 }
+// Remove this function from global.js
 function playLoadingAnimation() {
     const transLogoShell = document.querySelector('.trans-logo-shell');
     const transSpacer = document.querySelector('.trans-spacer');

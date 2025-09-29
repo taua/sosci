@@ -354,6 +354,8 @@ function openNav() {
   }
 }
 
+// Remove this function from global.js
+
 function playLoadingAnimation() {
   const transLogoShell = document.querySelector('.trans-logo-shell');
   const transSpacer = document.querySelector('.trans-spacer');
@@ -415,7 +417,7 @@ function playLoadingAnimation() {
     tl.to(globalTransition, {
       height: '0vh',
       duration: 1,
-      ease: "expo.inOut"
+      ease: "expo.inOut",
     }, ">"); // start at same time as logo blur/fade
   }
    // Blur fade out transLogoShell and animate global-transition height to 0vh simultaneously
