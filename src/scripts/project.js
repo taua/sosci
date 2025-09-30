@@ -4,10 +4,19 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 
 let projectScrollTriggers = [];
+let scrollCtaTimeline = null;
 
 function cleanupProjectPage() {
+  // Kill any ScrollTrigger instances for this page
   projectScrollTriggers.forEach(t => t && t.kill && t.kill());
   projectScrollTriggers = [];
+
+  // Kill CTA timeline if it exists to avoid duplicate timelines after navigation
+  if (scrollCtaTimeline) {
+    try { scrollCtaTimeline.kill && scrollCtaTimeline.kill(); } catch (e) {}
+    try { scrollCtaTimeline.pause && scrollCtaTimeline.pause(); } catch (e) {}
+    scrollCtaTimeline = null;
+  }
 }
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
@@ -29,7 +38,6 @@ function initProjectPage() {
     });
 
     // Delay creation to ensure DOM is ready and element exists
-    let scrollCtaTimeline = null;
     setTimeout(() => {
       const ctaLine = document.querySelector('.scroll-cta-line');
       const ctaTxt = document.querySelector('.scroll-cta-txt');
@@ -37,11 +45,12 @@ function initProjectPage() {
         console.log('[Project] CTA elements not found; skipping CTA timeline');
         return;
       }
+      // create/replace module-scoped CTA timeline
       scrollCtaTimeline = gsap.timeline({
         repeat: -1,
         defaults: { duration: 1, ease: "expo.inOut" }
       });
-      console.log('[Project] CTA timeline created');
+      
       scrollCtaTimeline
         .to(ctaLine, {
           scaleY: 1,
@@ -58,30 +67,76 @@ function initProjectPage() {
           ease: "expo.inOut"
         });
 
-      // Control visibility based on scroll position
-      projectScrollTriggers.push(
-        ScrollTrigger.create({
-          start: 1, // Trigger as soon as scrolling starts
-          end: 'max',
-          onUpdate: (self) => {
-            if (self.progress === 0) {
-              if (scrollCtaTimeline) scrollCtaTimeline.play();
-              gsap.to(['.scroll-cta-line', '.scroll-cta-txt'], {
-                opacity: 1,
-                duration: 0.3,
-                stagger: 0.1
-              });
-            } else {
-              if (scrollCtaTimeline) scrollCtaTimeline.pause();
-              gsap.to(['.scroll-cta-line', '.scroll-cta-txt'], {
-                opacity: 0,
-                duration: 0.2,
-                stagger: 0.1
-              });
-            }
+      // Control visibility using enter/back handlers similar to the Home page CTA logic.
+      // Choose a sensible trigger element: prefer projects section, fall back to content shell or body.
+      const triggerEl = document.querySelector('.projects-section-shell') || document.querySelector('.content-shell') || document.body;
+      const ctaTrigger = ScrollTrigger.create({
+        trigger: triggerEl,
+        start: 'top bottom',
+        // When the trigger enters the viewport (i.e., page scrolled down), hide/pause CTA
+        onEnter: () => {
+          // Avoid pausing on transient refreshes when user is effectively at top
+          const sc = (window.scrollY || window.pageYOffset || 0);
+          console.log('[Project] CTA onEnter - scrolly:', sc);
+          if (sc <= 20) {
+            console.log('[Project] CTA onEnter - near top, skip pause');
+            return;
           }
-        })
-      );
+          if (scrollCtaTimeline) {
+            console.log('[Project] CTA - pause() called');
+            scrollCtaTimeline.pause();
+          }
+          gsap.to(['.scroll-cta-line', '.scroll-cta-txt'], { opacity: 0, duration: 0.3, stagger: 0.1 });
+        },
+        // When leaving back to the top (entering back), show/play CTA
+        onLeaveBack: () => {
+          console.log('[Project] CTA onLeaveBack - playing CTA, scrollY:', window.scrollY);
+          if (scrollCtaTimeline) {
+            console.log('[Project] CTA - play() called');
+            scrollCtaTimeline.play();
+          }
+          gsap.to(['.scroll-cta-line', '.scroll-cta-txt'], { opacity: 1, duration: 0.3, stagger: 0.1 });
+        },
+        // Re-evaluate CTA state on ScrollTrigger refresh (important when ScrollSmoother re-inits)
+        onRefresh: (self) => {
+          try {
+            const rect = triggerEl.getBoundingClientRect();
+            const entered = rect.top <= window.innerHeight;
+            console.log('[Project] CTA onRefresh rect.top=', rect.top, 'vh=', window.innerHeight, 'entered=', entered);
+            if (entered) {
+              if (scrollCtaTimeline) scrollCtaTimeline.pause();
+              gsap.set(['.scroll-cta-line', '.scroll-cta-txt'], { opacity: 0 });
+            } else {
+              if (scrollCtaTimeline) scrollCtaTimeline.play();
+              gsap.set(['.scroll-cta-line', '.scroll-cta-txt'], { opacity: 1 });
+            }
+          } catch (e) { console.warn('[Project] CTA onRefresh error', e); }
+        }
+      });
+  projectScrollTriggers.push(ctaTrigger);
+
+  // Schedule a delayed refresh so ScrollTrigger recalculates once ScrollSmoother/Barba settle.
+  // This helps the CTA initial visibility on first landing.
+  setTimeout(() => { try { ScrollTrigger.refresh(true); } catch (e) { /* ignore */ } }, 120);
+
+  // Ensure initial CTA state matches current element position AFTER layout settles.
+  // Using getBoundingClientRect gives a reliable viewport-relative position even when
+  // ScrollSmoother applies transforms. Run inside rAF to ensure layout is ready.
+  requestAnimationFrame(() => {
+        try {
+          const rect = triggerEl.getBoundingClientRect();
+          const entered = rect.top <= window.innerHeight; // matches `start: 'top bottom'`
+          if (entered) {
+            if (scrollCtaTimeline) { scrollCtaTimeline.pause(); }
+            gsap.set(['.scroll-cta-line', '.scroll-cta-txt'], { opacity: 0 });
+          } else {
+            if (scrollCtaTimeline) { scrollCtaTimeline.play(); }
+            gsap.set(['.scroll-cta-line', '.scroll-cta-txt'], { opacity: 1 });
+          }
+        } catch (e) {
+          /* ignore */
+        }
+      });
     }, 50);
 
     // Control visibility based on scroll position (moved inside setTimeout)
