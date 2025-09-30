@@ -670,7 +670,26 @@ function hmrAccept(bundle /*: ParcelRequire */ , id /*: string */ ) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initWorkPage", ()=>initWorkPage);
+parcelHelpers.export(exports, "cleanupWorkPage", ()=>cleanupWorkPage);
 var _gsap = require("gsap");
+// Module-scoped references so cleanup can remove listeners and stop effects
+let _workState = {
+    workImgShell: null,
+    workLinksShell: null,
+    workLinks: null,
+    workImgMasks: null,
+    currentIndex: 1000,
+    currentVideo: null,
+    currentMask: null,
+    xTo: null,
+    yTo: null,
+    onMouseMovePos: null,
+    onMouseMoveLastY: null,
+    onLinksMouseEnterLeave: [],
+    onWorkShellEnter: null,
+    onWorkShellLeave: null,
+    onInitialMouseMove: null
+};
 function initWorkPage() {
     // Pause all videos on work page
     document.querySelectorAll('video').forEach((video)=>{
@@ -680,9 +699,10 @@ function initWorkPage() {
     const workLinksShell = document.querySelector('.work-links-shell');
     const workLinks = document.querySelectorAll('.work-links-item');
     const workImgMasks = document.querySelectorAll('.work-img-mask');
-    let currentIndex = 1000; // Starting z-index
-    let currentVideo = null; // Track currently playing video
-    let currentMask = null; // Track currently visible mask
+    _workState.workImgShell = workImgShell;
+    _workState.workLinksShell = workLinksShell;
+    _workState.workLinks = workLinks;
+    _workState.workImgMasks = workImgMasks;
     // Add debug info
     console.log('Work init:', {
         shellExists: !!workImgShell,
@@ -695,7 +715,7 @@ function initWorkPage() {
     if (workImgMasks.length > 0) {
         const firstMask = workImgMasks[0];
         (0, _gsap.gsap).set(firstMask, {
-            zIndex: currentIndex
+            zIndex: _workState.currentIndex
         });
         const firstAnimeElement = firstMask.querySelector('.work-img-mask-anime');
         if (firstAnimeElement) {
@@ -707,12 +727,12 @@ function initWorkPage() {
                 height: '100%',
                 overflow: 'hidden'
             });
-            currentMask = firstMask;
+            _workState.currentMask = firstMask;
             // Play first video if exists
             const firstVideo = firstMask.querySelector('video');
             if (firstVideo) {
                 firstVideo.play();
-                currentVideo = firstVideo;
+                _workState.currentVideo = firstVideo;
             }
         }
     }
@@ -740,12 +760,16 @@ function initWorkPage() {
         duration: 1.2,
         ease: "expo.out"
     });
+    _workState.xTo = xTo;
+    _workState.yTo = yTo;
     // Mouse move handler using content-shell position
-    window.addEventListener("mousemove", (e)=>{
+    const onMouseMovePos = (e)=>{
         const shellYoffset = document.querySelector('.content-shell').getBoundingClientRect().top;
         xTo(e.clientX);
         yTo(e.clientY - shellYoffset);
-    });
+    };
+    _workState.onMouseMovePos = onMouseMovePos;
+    window.addEventListener("mousemove", onMouseMovePos);
     // Container hover handling for both shells
     const handleContainerHover = (enter)=>{
         (0, _gsap.gsap).killTweensOf(workImgShell, "opacity");
@@ -755,30 +779,34 @@ function initWorkPage() {
             duration: enter ? 0.6 : 0.3,
             ease: "expo.out"
         });
-        if (enter && currentMask) {
-            const video = currentMask.querySelector('video');
+        if (enter && _workState.currentMask) {
+            const video = _workState.currentMask.querySelector('video');
             if (video) {
                 video.play();
-                currentVideo = video;
+                _workState.currentVideo = video;
             }
-        } else if (!enter && currentVideo) {
-            currentVideo.pause();
-            currentVideo = null;
+        } else if (!enter && _workState.currentVideo) {
+            _workState.currentVideo.pause();
+            _workState.currentVideo = null;
         }
     };
-    workLinksShell.addEventListener('mouseenter', ()=>handleContainerHover(true));
-    workLinksShell.addEventListener('mouseleave', ()=>handleContainerHover(false));
-    workImgShell.addEventListener('mouseenter', ()=>handleContainerHover(true));
-    workImgShell.addEventListener('mouseleave', ()=>handleContainerHover(false));
+    _workState.onWorkShellEnter = ()=>handleContainerHover(true);
+    _workState.onWorkShellLeave = ()=>handleContainerHover(false);
+    workLinksShell.addEventListener('mouseenter', _workState.onWorkShellEnter);
+    workLinksShell.addEventListener('mouseleave', _workState.onWorkShellLeave);
+    workImgShell.addEventListener('mouseenter', _workState.onWorkShellEnter);
+    workImgShell.addEventListener('mouseleave', _workState.onWorkShellLeave);
     // Add mouse position tracking
     let lastMouseY = 0;
-    window.addEventListener('mousemove', (e)=>{
+    const onMouseMoveLastY = (e)=>{
         lastMouseY = e.clientY;
-    });
+    };
+    _workState.onMouseMoveLastY = onMouseMoveLastY;
+    window.addEventListener('mousemove', onMouseMoveLastY);
     // Handle matching z-index updates and video control
     workLinks.forEach((link, index)=>{
         link.addEventListener('mouseenter', (e)=>{
-            currentIndex++;
+            _workState.currentIndex++;
             // Animate links-bg with directional scale
             const linksBg = link.querySelector('.links-bg');
             if (linksBg) {
@@ -797,14 +825,14 @@ function initWorkPage() {
                 });
             }
             // Skip animation if it's the first item and we're just starting
-            if (index === 0 && currentMask === workImgMasks[0]) return;
+            if (index === 0 && _workState.currentMask === workImgMasks[0]) return;
             // Pause current video if exists
-            if (currentVideo) currentVideo.pause();
+            if (_workState.currentVideo) _workState.currentVideo.pause();
             const correspondingMask = workImgMasks[index];
-            if (correspondingMask && correspondingMask !== currentMask) {
-                currentMask = correspondingMask; // Update current mask
+            if (correspondingMask && correspondingMask !== _workState.currentMask) {
+                _workState.currentMask = correspondingMask; // Update current mask
                 (0, _gsap.gsap).set(correspondingMask, {
-                    zIndex: currentIndex
+                    zIndex: _workState.currentIndex
                 });
                 const animeElement = correspondingMask.querySelector('.work-img-mask-anime');
                 if (animeElement) {
@@ -838,7 +866,7 @@ function initWorkPage() {
                 const video = correspondingMask.querySelector('video');
                 if (video) {
                     video.play();
-                    currentVideo = video;
+                    _workState.currentVideo = video;
                 }
             }
         });
@@ -864,8 +892,8 @@ function initWorkPage() {
     // Handle z-index updates for individual links
     workLinks.forEach((link, index) => {
         link.addEventListener('mouseenter', () => {
-            currentIndex++;
-            gsap.set(link, { zIndex: currentIndex });
+            _workState.currentIndex++;
+            gsap.set(link, { zIndex: _workState.currentIndex });
         });
     });
     */ // Add function to check if cursor is over element
@@ -879,7 +907,68 @@ function initWorkPage() {
         document.removeEventListener('mousemove', checkInitialCursor);
     };
     // Add one-time mousemove listener for initial position
-    document.addEventListener('mousemove', checkInitialCursor);
+    const onInitialMouseMove = checkInitialCursor;
+    _workState.onInitialMouseMove = onInitialMouseMove;
+    document.addEventListener('mousemove', onInitialMouseMove);
+}
+function cleanupWorkPage() {
+    try {
+        // Pause all videos on page
+        document.querySelectorAll('video').forEach((video)=>{
+            try {
+                video.pause();
+            } catch (e) {}
+        });
+        // Remove named window listeners
+        if (_workState.onMouseMovePos) window.removeEventListener('mousemove', _workState.onMouseMovePos);
+        if (_workState.onMouseMoveLastY) window.removeEventListener('mousemove', _workState.onMouseMoveLastY);
+        // Remove initial mousemove
+        if (_workState.onInitialMouseMove) document.removeEventListener('mousemove', _workState.onInitialMouseMove);
+        // Remove shell listeners
+        if (_workState.workLinksShell) {
+            _workState.workLinksShell.removeEventListener('mouseenter', _workState.onWorkShellEnter);
+            _workState.workLinksShell.removeEventListener('mouseleave', _workState.onWorkShellLeave);
+        }
+        if (_workState.workImgShell) {
+            _workState.workImgShell.removeEventListener('mouseenter', _workState.onWorkShellEnter);
+            _workState.workImgShell.removeEventListener('mouseleave', _workState.onWorkShellLeave);
+        }
+        // Remove per-link listeners and clear arrays (best-effort)
+        if (_workState.workLinks && _workState.workLinks.length) _workState.workLinks.forEach((link)=>{
+            // We don't have direct references to the exact anonymous handlers on links; attempt to clone to clear listeners
+            try {
+                const clone = link.cloneNode(true);
+                link.parentNode.replaceChild(clone, link);
+            } catch (e) {}
+        });
+        // Kill tweens related to workImgShell
+        try {
+            (0, _gsap.gsap).killTweensOf(_workState.workImgShell);
+        } catch (e) {}
+        try {
+            (0, _gsap.gsap).killTweensOf(_workState.workImgShell && _workState.workImgShell.children);
+        } catch (e) {}
+        // Clear state
+        _workState = {
+            workImgShell: null,
+            workLinksShell: null,
+            workLinks: null,
+            workImgMasks: null,
+            currentIndex: 1000,
+            currentVideo: null,
+            currentMask: null,
+            xTo: null,
+            yTo: null,
+            onMouseMovePos: null,
+            onMouseMoveLastY: null,
+            onLinksMouseEnterLeave: [],
+            onWorkShellEnter: null,
+            onWorkShellLeave: null,
+            onInitialMouseMove: null
+        };
+    } catch (e) {
+        console.warn('cleanupWorkPage error', e);
+    }
 }
 window.initPageTransitions = function() {
     // Your page-specific GSAP intro animation here
@@ -895,6 +984,6 @@ window.initPageTransitions = function() {
     });
 };
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC"}]},["2tWFu"], null, "parcelRequire60dc", {})
+},{"gsap":"fPSuC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["2tWFu"], null, "parcelRequire60dc", {})
 
 //# sourceMappingURL=work.88846810.js.map

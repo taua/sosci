@@ -1,8 +1,10 @@
+
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ScrollSmoother } from "gsap/ScrollSmoother";
 import { SplitText } from "gsap/SplitText";
 import grainEffect from "./grainEffect";
+import barba from '@barba/core';
 
 gsap.registerPlugin(ScrollTrigger, ScrollSmoother, SplitText);
 
@@ -12,68 +14,135 @@ export function greet(page) {
 
 // Remove console.log Global JS loaded
 
-window.addEventListener('DOMContentLoaded', () => {
+
+// --- Barba.js Integration ---
+// Track the current grain cleanup so we don't create multiple canvases
+let _grainCleanup = null;
+function initGrain() {
+  // Initialize the grain effect only once on the first full page load.
+  // If a grain instance already exists, do nothing.
   try {
-    const grainCleanup = grainEffect({
-      // Visual settings
-      opacity: 1,         // Full strength to see pattern
-      grainAlpha: 32,     // Lower alpha for finer grain
-      grainScale: 3.4,    // Higher scale for more density
-      fps: 6,            // Slightly slower for better performance
-      blendMode: 'hard-light', // Sharp contrast like the image
-      greyness: 90        // Mid-grey like the reference
+    if (typeof _grainCleanup === 'function') {
+      // Already initialized — no-op
+      return;
+    }
+
+    _grainCleanup = grainEffect({
+      opacity: 1,
+      grainAlpha: 32,
+      grainScale: 3.4,
+      fps: 6,
+      blendMode: 'hard-light',
+      greyness: 90
     });
 
-    // Cleanup on page unload
-    window.addEventListener('unload', () => {
-      if (typeof grainCleanup === 'function') {
-        grainCleanup();
-      }
-    });
+    // Intentionally do not install an unload listener here so the grain canvas
+    // persists across Barba transitions and remains until the browser fully
+    // unloads the page. The browser will clean up DOM/CSS/JS on full reload.
   } catch (error) {
     console.error('Failed to initialize grain effect:', error);
   }
+}
 
-  // Initialize video visibility control
-  function initVideoVisibility() {
-    // Skip video control on work page
-    if (window.location.pathname.includes('work')) return;
-
-    const videos = document.querySelectorAll('.bg-proj-video video');
-    if (!videos.length) return;
-
-    videos.forEach((video) => {
-      video.muted = true;
-      video.playsInline = true;
-      video.loop = true;
-
-      ScrollTrigger.create({
-        trigger: video.parentElement,
-        start: 'top bottom',
-        end: 'bottom top',
-        onEnter: () => video.play().catch(console.error),
-        onLeave: () => video.pause(),
-        onEnterBack: () => video.play().catch(console.error),
-        onLeaveBack: () => video.pause()
-      });
+let videoScrollTriggers = [];
+function initVideoVisibility() {
+  // Kill only video-specific ScrollTriggers
+  if (Array.isArray(videoScrollTriggers)) {
+    videoScrollTriggers.forEach(trigger => {
+      if (trigger && typeof trigger.kill === 'function') trigger.kill();
     });
+    videoScrollTriggers = [];
   }
+  if (window.location.pathname.includes('work')) return;
+  const videos = document.querySelectorAll('.bg-proj-video video');
+  if (!videos.length) return;
+  videos.forEach((video) => {
+    video.muted = true;
+    video.playsInline = true;
+    video.loop = true;
+    const trigger = ScrollTrigger.create({
+      trigger: video.parentElement,
+      start: 'top bottom',
+      end: 'bottom top',
+      onEnter: () => video.play().catch(console.error),
+      onLeave: () => video.pause(),
+      onEnterBack: () => video.play().catch(console.error),
+      onLeaveBack: () => video.pause()
+    });
+    videoScrollTriggers.push(trigger);
+  });
+}
 
+let smootherInstance = null;
+function initScrollSmoother() {
+  // Kill previous ScrollSmoother instance if it exists
+  if (smootherInstance && typeof smootherInstance.kill === 'function') {
+    console.log('[ScrollSmoother] Killing previous instance');
+    smootherInstance.kill();
+    smootherInstance = null;
+  }
   const wrapper = document.querySelector('.main-shell');
   const content = document.querySelector('.content-shell');
+  const mainShells = document.querySelectorAll('.main-shell');
+  const contentShells = document.querySelectorAll('.content-shell');
+  console.log('[ScrollSmoother] wrapper:', wrapper, 'content:', content);
+  console.log(`[ScrollSmoother] .main-shell count: ${mainShells.length}, .content-shell count: ${contentShells.length}`);
   if (wrapper && content) {
-    ScrollSmoother.create({
+    smootherInstance = ScrollSmoother.create({
       wrapper: ".main-shell",
       content: ".content-shell",
-      smooth: 1.2, // Adjust smoothness as needed
+      smooth: 1.2,
       effects: true
     });
+    console.log('[ScrollSmoother] Initialized!');
+    // Force GSAP to recalculate layout
+    if (typeof ScrollSmoother.refresh === 'function') {
+      ScrollSmoother.refresh();
+      console.log('[ScrollSmoother] Refreshed!');
+    }
   } else {
     console.warn('ScrollSmoother: .main-shell or .content-shell not found in DOM.');
   }
+}
 
-  initVideoVisibility();
+function initPageScripts() {
+  // Page-specific imports
+  // Run any existing cleanup first
+  if (typeof currentPageCleanup === 'function') {
+    try { currentPageCleanup(); } catch (e) { console.warn('currentPageCleanup failed', e); }
+    currentPageCleanup = null;
+  }
 
+  if (window.location.pathname === '/' || window.location.pathname.includes('home')) {
+    import('./home.js').then(module => {
+      if (typeof module.initHomePage === 'function') module.initHomePage();
+      if (typeof module.cleanupHomePage === 'function') currentPageCleanup = module.cleanupHomePage;
+    });
+  } else if (window.location.pathname.includes('about')) {
+    import('./about.js').then(module => {
+      if (typeof module.initAboutPage === 'function') module.initAboutPage();
+      if (typeof module.cleanupAboutPage === 'function') currentPageCleanup = module.cleanupAboutPage;
+    });
+  } else if (window.location.pathname.includes('work')) {
+    import('./work.js').then(module => {
+      if (typeof module.initWorkPage === 'function') module.initWorkPage();
+      if (typeof module.cleanupWorkPage === 'function') currentPageCleanup = module.cleanupWorkPage;
+    });
+  } else if (window.location.pathname.includes('projects')) {
+    import('./project.js').then(module => {
+      if (typeof module.initProjectPage === 'function') module.initProjectPage();
+      if (typeof module.cleanupProjectPage === 'function') currentPageCleanup = module.cleanupProjectPage;
+    });
+  } else {
+    // default
+  }
+}
+
+// current page cleanup reference (set by page modules when they export a cleanup)
+let currentPageCleanup = null;
+
+/*
+function initGlobalListeners() {
   // Add click listener for all sosci-links
   document.addEventListener('click', (e) => {
     const link = e.target.closest('.sosci-link');
@@ -84,7 +153,68 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     }
   });
+}
+  */
+
+// Barba.js initialization
+barba.init({
+  transitions: [{
+    name: 'default-transition',
+    async leave(data) {
+      console.log('[Barba] leave — running page cleanup (if any)');
+      // Call page-specific cleanup if available before removing the container
+      try {
+        if (typeof currentPageCleanup === 'function') {
+          console.log('[Barba] invoking currentPageCleanup');
+          await Promise.resolve(currentPageCleanup());
+          console.log('[Barba] currentPageCleanup finished');
+        }
+      } catch (e) {
+        console.warn('Error running page cleanup:', e);
+      }
+      // Optionally animate out old content
+      return gsap.to(data.current.container, { opacity: 0, duration: 0.4 });
+    },
+    async enter(data) {
+      console.log('[Barba] enter — scheduling smoother init + page scripts');
+      // Animate in new content
+      gsap.from(data.next.container, { opacity: 0, duration: 0.4 });
+      // Re-initialize scripts and effects
+      initVideoVisibility();
+
+      // Ensure ScrollSmoother is created/refreshed before page scripts run.
+      // Use two frames: one to run/refresh the smoother, next to initialize page scripts
+      requestAnimationFrame(() => {
+        console.log('[Barba] Running initScrollSmoother after transition');
+        initScrollSmoother();
+        requestAnimationFrame(() => {
+          console.log('[Barba] Running initPageScripts after smoother init');
+          initPageScripts();
+          // Give GSAP a moment to register triggers
+          ScrollTrigger.refresh();
+        });
+      });
+    },
+    async after() {
+      // Re-attach global listeners if needed
+      //initGlobalListeners();
+    }
+  }]
 });
+
+// Initial load
+initGrain();
+initVideoVisibility();
+initScrollSmoother();
+// Initialize page scripts after the smoother has initialized so ScrollTrigger
+// and other scroll-driven plugins can bind correctly on first load.
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    initPageScripts();
+    ScrollTrigger.refresh();
+  });
+});
+//initGlobalListeners();
 
 // Declare missing tracking variables at the top of the file
 let navHoverSplit = null;
@@ -421,7 +551,7 @@ function playLoadingAnimation() {
       onStart: () => {
         // Call a global hook for page intro animation
         if (typeof window.initPageTransitions === 'function') {
-          window.initPageTransitions();
+          //window.initPageTransitions();
         }
       }
     }, ">");
@@ -576,28 +706,8 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Page-specific imports
-if (window.location.pathname === '/' || window.location.pathname.includes('home')) {
-  import('./home.js').then(module => {
-    module.initHomePage();
-  });
-} else if (window.location.pathname.includes('about')) {
-  import('./about.js').then(module => {
-    module.initAboutPage();
-  });
-} else if (window.location.pathname.includes('work')) {
-  import('./work.js').then(module => {
-    module.initWorkPage();
-  });
-} else if (window.location.pathname.includes('projects')) {
-  import('./project.js').then(module => {
-    module.initProjectPage();
-  });
-} else {
-  // Home or default page logic
-  console.log('Home page logic here');
-}
-
+// Page scripts are initialized via initPageScripts() after ScrollSmoother is ready.
+/*
 function navigateToUrl(url) {
   const mainShell = document.querySelector('.main-shell');
   const globalTransition = document.querySelector('.global-transition');
@@ -631,4 +741,4 @@ function navigateToUrl(url) {
   } else {
     window.location.href = url;
   }
-}
+} */

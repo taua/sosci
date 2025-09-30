@@ -670,15 +670,22 @@ function hmrAccept(bundle /*: ParcelRequire */ , id /*: string */ ) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initProjectPage", ()=>initProjectPage);
+parcelHelpers.export(exports, "cleanupProjectPage", ()=>cleanupProjectPage);
 var _gsap = require("gsap");
 var _scrollTrigger = require("gsap/ScrollTrigger");
 var _splitText = require("gsap/SplitText");
+let projectScrollTriggers = [];
+function cleanupProjectPage() {
+    projectScrollTriggers.forEach((t)=>t && t.kill && t.kill());
+    projectScrollTriggers = [];
+}
 (0, _gsap.gsap).registerPlugin((0, _scrollTrigger.ScrollTrigger), (0, _splitText.SplitText));
 function initProjectPage() {
-    const isProjectPage = window.location.pathname.includes('/projects');
-    if (!isProjectPage) return;
-    // Initialize scroll CTA animation
-    window.addEventListener('load', ()=>{
+    console.log('[Project] initProjectPage called');
+    const run = ()=>{
+        cleanupProjectPage();
+        const isProjectPage = window.location.pathname.includes('/projects');
+        if (!isProjectPage) return;
         // Set initial states separately
         (0, _gsap.gsap).set('.scroll-cta-txt', {
             opacity: 1
@@ -688,113 +695,107 @@ function initProjectPage() {
             scaleY: 0,
             transformOrigin: 'top center'
         });
-        // Create looping animation
-        const scrollCtaTimeline = (0, _gsap.gsap).timeline({
-            repeat: -1,
-            defaults: {
+        // Delay creation to ensure DOM is ready and element exists
+        let scrollCtaTimeline = null;
+        setTimeout(()=>{
+            const ctaLine = document.querySelector('.scroll-cta-line');
+            const ctaTxt = document.querySelector('.scroll-cta-txt');
+            if (!ctaLine || !ctaTxt) {
+                console.log('[Project] CTA elements not found; skipping CTA timeline');
+                return;
+            }
+            scrollCtaTimeline = (0, _gsap.gsap).timeline({
+                repeat: -1,
+                defaults: {
+                    duration: 1,
+                    ease: "expo.inOut"
+                }
+            });
+            console.log('[Project] CTA timeline created');
+            scrollCtaTimeline.to(ctaLine, {
+                scaleY: 1,
                 duration: 1,
                 ease: "expo.inOut"
-            }
-        });
-        scrollCtaTimeline.to('.scroll-cta-line', {
-            scaleY: 1,
-            duration: 1,
-            ease: "expo.inOut"
-        }).set('.scroll-cta-line', {
-            transformOrigin: 'bottom center',
-            immediateRender: false
-        }).to('.scroll-cta-line', {
-            scaleY: 0,
-            duration: 1,
-            ease: "expo.inOut"
-        });
-        // Control visibility based on scroll position
-        (0, _scrollTrigger.ScrollTrigger).create({
-            start: 1,
-            end: 'max',
-            onUpdate: (self)=>{
-                if (self.progress === 0) {
-                    // At the top - show and play animation
-                    scrollCtaTimeline.play();
-                    (0, _gsap.gsap).to([
-                        '.scroll-cta-line',
-                        '.scroll-cta-txt'
-                    ], {
-                        opacity: 1,
-                        duration: 0.3,
-                        stagger: 0.1
+            }).set(ctaLine, {
+                transformOrigin: 'bottom center',
+                immediateRender: false
+            }).to(ctaLine, {
+                scaleY: 0,
+                duration: 1,
+                ease: "expo.inOut"
+            });
+            // Control visibility based on scroll position
+            projectScrollTriggers.push((0, _scrollTrigger.ScrollTrigger).create({
+                start: 1,
+                end: 'max',
+                onUpdate: (self)=>{
+                    if (self.progress === 0) {
+                        if (scrollCtaTimeline) scrollCtaTimeline.play();
+                        (0, _gsap.gsap).to([
+                            '.scroll-cta-line',
+                            '.scroll-cta-txt'
+                        ], {
+                            opacity: 1,
+                            duration: 0.3,
+                            stagger: 0.1
+                        });
+                    } else {
+                        if (scrollCtaTimeline) scrollCtaTimeline.pause();
+                        (0, _gsap.gsap).to([
+                            '.scroll-cta-line',
+                            '.scroll-cta-txt'
+                        ], {
+                            opacity: 0,
+                            duration: 0.2,
+                            stagger: 0.1
+                        });
+                    }
+                }
+            }));
+        }, 50);
+        // Control visibility based on scroll position (moved inside setTimeout)
+        // Add indicator items animation only if element exists
+        const indicatorShells = document.querySelectorAll('.indicator-item-shell');
+        const projectsSectionShell = document.querySelector('.projects-section-shell');
+        if (indicatorShells.length && projectsSectionShell) {
+            (0, _gsap.gsap).set(indicatorShells, {
+                x: -150
+            });
+            projectScrollTriggers.push((0, _scrollTrigger.ScrollTrigger).create({
+                trigger: projectsSectionShell,
+                start: 'top 35%',
+                onEnter: ()=>{
+                    (0, _gsap.gsap).killTweensOf(indicatorShells);
+                    (0, _gsap.gsap).to(indicatorShells, {
+                        x: 0,
+                        duration: 1,
+                        stagger: 0.15,
+                        ease: "expo.out"
                     });
-                } else {
-                    // Any scroll - hide and pause animation
-                    scrollCtaTimeline.pause();
-                    (0, _gsap.gsap).to([
-                        '.scroll-cta-line',
-                        '.scroll-cta-txt'
-                    ], {
-                        opacity: 0,
-                        duration: 0.2,
-                        stagger: 0.1
+                },
+                onLeaveBack: ()=>{
+                    (0, _gsap.gsap).killTweensOf(indicatorShells);
+                    (0, _gsap.gsap).to(indicatorShells, {
+                        x: -150,
+                        duration: 0.6,
+                        stagger: 0.1,
+                        ease: "expo.in"
                     });
                 }
-            }
-        });
-        // Add indicator items animation
-        (0, _gsap.gsap).set('.indicator-item-shell', {
-            x: -150
-        });
-        (0, _scrollTrigger.ScrollTrigger).create({
-            trigger: '.projects-section-shell',
-            start: 'top 35%',
-            onEnter: ()=>{
-                (0, _gsap.gsap).killTweensOf('.indicator-item-shell');
-                (0, _gsap.gsap).to('.indicator-item-shell', {
-                    x: 0,
-                    duration: 1,
-                    stagger: 0.15,
-                    ease: "expo.out"
-                });
-            },
-            onLeaveBack: ()=>{
-                (0, _gsap.gsap).killTweensOf('.indicator-item-shell');
-                (0, _gsap.gsap).to('.indicator-item-shell', {
-                    x: -150,
-                    duration: 0.6,
-                    stagger: 0.1,
-                    ease: "expo.in"
-                });
-            }
-        });
-    });
+            }));
+        }
+        // Ensure ScrollTrigger recalculates after DOM is ready
+        setTimeout(()=>{
+            (0, _scrollTrigger.ScrollTrigger).refresh(true);
+        }, 50);
+    // Attach to window for global access
+    // No need to attach to window; use ES module exports
+    };
+    // If DOM is already loaded (Barba transition), run immediately; otherwise, wait for DOMContentLoaded
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+    else run();
 }
-window.initPageTransitions = function() {
-    // Animate "project-info-header" one character at a time sliding in from the bottom using GSAP SplitText
-    const header = document.querySelector('.project-info-header');
-    if (header) {
-        const split = new (0, _splitText.SplitText)(header, {
-            type: "chars"
-        });
-        (0, _gsap.gsap).fromTo(split.chars, {
-            transform: 'translate3d(0, 100%, 0)'
-        }, {
-            transform: 'translate3d(0, 0%, 0)',
-            duration: 1.2,
-            ease: "expo.out",
-            delay: 0.4,
-            stagger: 0.02
-        });
-    }
-    // Animate main-shell translateY from 30% to 0% using translate3d
-    const mainShell = document.querySelector('.main-shell');
-    if (mainShell) (0, _gsap.gsap).fromTo(mainShell, {
-        transform: "translate3d(0, 30%, 0)"
-    }, {
-        transform: "translate3d(0, 0, 0)",
-        duration: 1,
-        ease: "expo.inOut"
-    });
-    console.log('Project Page transition animation triggered');
-};
 
-},{"gsap":"fPSuC","gsap/ScrollTrigger":"7wnFk","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap/SplitText":"63tvY"}]},["75bgu"], null, "parcelRequire60dc", {})
+},{"gsap":"fPSuC","gsap/ScrollTrigger":"7wnFk","gsap/SplitText":"63tvY","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["75bgu"], null, "parcelRequire60dc", {})
 
 //# sourceMappingURL=project.b69fd999.js.map

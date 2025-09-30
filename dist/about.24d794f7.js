@@ -670,6 +670,7 @@ function hmrAccept(bundle /*: ParcelRequire */ , id /*: string */ ) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initAboutPage", ()=>initAboutPage);
+parcelHelpers.export(exports, "cleanupAboutPage", ()=>cleanupAboutPage);
 var _gsap = require("gsap");
 function initAboutPage() {
     console.log('About page JS loaded!');
@@ -679,7 +680,10 @@ window.initPageTransitions = function() {
     // Your page-specific GSAP intro animation here
     console.log('Project Page transition animation triggered');
 };
+function cleanupAboutPage() {
+// No-op cleanup for about page; placeholder for symmetry with other pages
+}
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC"}]},["fMX4k"], null, "parcelRequire60dc", {})
+},{"gsap":"fPSuC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["fMX4k"], null, "parcelRequire60dc", {})
 
 //# sourceMappingURL=about.24d794f7.js.map
