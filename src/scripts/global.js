@@ -179,16 +179,15 @@ barba.init({
       console.log('[Barba] enter — scheduling smoother init + page scripts');
       // Animate in new content
       gsap.from(data.next.container, { opacity: 0, duration: 0.4 });
-      // Re-initialize scripts and effects
-      initVideoVisibility();
-
       // Ensure ScrollSmoother is created/refreshed before page scripts run.
-      // Use two frames: one to run/refresh the smoother, next to initialize page scripts
+      // Use two frames: one to run/refresh the smoother, next to initialize video triggers and page scripts
       requestAnimationFrame(() => {
         console.log('[Barba] Running initScrollSmoother after transition');
         initScrollSmoother();
         requestAnimationFrame(() => {
-          console.log('[Barba] Running initPageScripts after smoother init');
+          console.log('[Barba] Running initVideoVisibility + initPageScripts after smoother init');
+          // Initialize video visibility triggers after smoother is ready
+          initVideoVisibility();
           initPageScripts();
           // Give GSAP a moment to register triggers
           ScrollTrigger.refresh();
@@ -210,8 +209,13 @@ initScrollSmoother();
 // and other scroll-driven plugins can bind correctly on first load.
 requestAnimationFrame(() => {
   requestAnimationFrame(() => {
-    initPageScripts();
-    ScrollTrigger.refresh();
+    // Ensure smoother is initialized first
+    initScrollSmoother();
+    requestAnimationFrame(() => {
+      initVideoVisibility();
+      initPageScripts();
+      ScrollTrigger.refresh();
+    });
   });
 });
 //initGlobalListeners();
