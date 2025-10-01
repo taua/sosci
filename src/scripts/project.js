@@ -29,13 +29,19 @@ function initProjectPage() {
     const isProjectPage = window.location.pathname.includes('/projects');
     if (!isProjectPage) return;
 
-    // Set initial states separately
-    gsap.set('.scroll-cta-txt', { opacity: 1 });
-    gsap.set('.scroll-cta-line', {
-      opacity: 1,
-      scaleY: 0,
-      transformOrigin: 'top center'
-    });
+    // Set initial states separately (only if elements exist to avoid GSAP warnings)
+    const preCtaLine = document.querySelector('.scroll-cta-line');
+    const preCtaTxt = document.querySelector('.scroll-cta-txt');
+    if (preCtaTxt) {
+      gsap.set(preCtaTxt, { opacity: 1 });
+    }
+    if (preCtaLine) {
+      gsap.set(preCtaLine, {
+        opacity: 1,
+        scaleY: 0,
+        transformOrigin: 'top center'
+      });
+    }
 
     // Delay creation to ensure DOM is ready and element exists
     setTimeout(() => {
@@ -86,7 +92,10 @@ function initProjectPage() {
             // CTA - pause() called
             scrollCtaTimeline.pause();
           }
-          gsap.to(['.scroll-cta-line', '.scroll-cta-txt'], { opacity: 0, duration: 0.3, stagger: 0.1 });
+          const hideTargets = Array.from(document.querySelectorAll('.scroll-cta-line, .scroll-cta-txt'));
+          if (hideTargets.length) {
+            gsap.to(hideTargets, { opacity: 0, duration: 0.3, stagger: 0.1 });
+          }
         },
         // When leaving back to the top (entering back), show/play CTA
         onLeaveBack: () => {
@@ -95,7 +104,10 @@ function initProjectPage() {
             // CTA - play() called
             scrollCtaTimeline.play();
           }
-          gsap.to(['.scroll-cta-line', '.scroll-cta-txt'], { opacity: 1, duration: 0.3, stagger: 0.1 });
+          const showTargets = Array.from(document.querySelectorAll('.scroll-cta-line, .scroll-cta-txt'));
+          if (showTargets.length) {
+            gsap.to(showTargets, { opacity: 1, duration: 0.3, stagger: 0.1 });
+          }
         },
         // Re-evaluate CTA state on ScrollTrigger refresh (important when ScrollSmoother re-inits)
         onRefresh: (self) => {
@@ -103,12 +115,13 @@ function initProjectPage() {
             const rect = triggerEl.getBoundingClientRect();
             const entered = rect.top <= window.innerHeight;
             // CTA onRefresh rect.top
+            const refreshTargets = Array.from(document.querySelectorAll('.scroll-cta-line, .scroll-cta-txt'));
             if (entered) {
               if (scrollCtaTimeline) scrollCtaTimeline.pause();
-              gsap.set(['.scroll-cta-line', '.scroll-cta-txt'], { opacity: 0 });
+              if (refreshTargets.length) gsap.set(refreshTargets, { opacity: 0 });
             } else {
               if (scrollCtaTimeline) scrollCtaTimeline.play();
-              gsap.set(['.scroll-cta-line', '.scroll-cta-txt'], { opacity: 1 });
+              if (refreshTargets.length) gsap.set(refreshTargets, { opacity: 1 });
             }
           } catch (e) { console.warn('[Project] CTA onRefresh error', e); }
         }

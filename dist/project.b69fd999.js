@@ -698,11 +698,13 @@ function initProjectPage() {
         cleanupProjectPage();
         const isProjectPage = window.location.pathname.includes('/projects');
         if (!isProjectPage) return;
-        // Set initial states separately
-        (0, _gsap.gsap).set('.scroll-cta-txt', {
+        // Set initial states separately (only if elements exist to avoid GSAP warnings)
+        const preCtaLine = document.querySelector('.scroll-cta-line');
+        const preCtaTxt = document.querySelector('.scroll-cta-txt');
+        if (preCtaTxt) (0, _gsap.gsap).set(preCtaTxt, {
             opacity: 1
         });
-        (0, _gsap.gsap).set('.scroll-cta-line', {
+        if (preCtaLine) (0, _gsap.gsap).set(preCtaLine, {
             opacity: 1,
             scaleY: 0,
             transformOrigin: 'top center'
@@ -748,10 +750,8 @@ function initProjectPage() {
                     return;
                     if (scrollCtaTimeline) // CTA - pause() called
                     scrollCtaTimeline.pause();
-                    (0, _gsap.gsap).to([
-                        '.scroll-cta-line',
-                        '.scroll-cta-txt'
-                    ], {
+                    const hideTargets = Array.from(document.querySelectorAll('.scroll-cta-line, .scroll-cta-txt'));
+                    if (hideTargets.length) (0, _gsap.gsap).to(hideTargets, {
                         opacity: 0,
                         duration: 0.3,
                         stagger: 0.1
@@ -762,10 +762,8 @@ function initProjectPage() {
                     // CTA onLeaveBack - playing CTA
                     if (scrollCtaTimeline) // CTA - play() called
                     scrollCtaTimeline.play();
-                    (0, _gsap.gsap).to([
-                        '.scroll-cta-line',
-                        '.scroll-cta-txt'
-                    ], {
+                    const showTargets = Array.from(document.querySelectorAll('.scroll-cta-line, .scroll-cta-txt'));
+                    if (showTargets.length) (0, _gsap.gsap).to(showTargets, {
                         opacity: 1,
                         duration: 0.3,
                         stagger: 0.1
@@ -777,20 +775,15 @@ function initProjectPage() {
                         const rect = triggerEl.getBoundingClientRect();
                         const entered = rect.top <= window.innerHeight;
                         // CTA onRefresh rect.top
+                        const refreshTargets = Array.from(document.querySelectorAll('.scroll-cta-line, .scroll-cta-txt'));
                         if (entered) {
                             if (scrollCtaTimeline) scrollCtaTimeline.pause();
-                            (0, _gsap.gsap).set([
-                                '.scroll-cta-line',
-                                '.scroll-cta-txt'
-                            ], {
+                            if (refreshTargets.length) (0, _gsap.gsap).set(refreshTargets, {
                                 opacity: 0
                             });
                         } else {
                             if (scrollCtaTimeline) scrollCtaTimeline.play();
-                            (0, _gsap.gsap).set([
-                                '.scroll-cta-line',
-                                '.scroll-cta-txt'
-                            ], {
+                            if (refreshTargets.length) (0, _gsap.gsap).set(refreshTargets, {
                                 opacity: 1
                             });
                         }
