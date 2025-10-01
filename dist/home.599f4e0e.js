@@ -728,21 +728,21 @@ function initHomePage() {
         }).to(ctaLineEl, {
             scaleY: 0
         });
-    } else console.log('[Home] .scroll-cta-line not found; skipping CTA animation');
-    // Control scroll CTA visibility based on hero section
-    (0, _scrollTrigger.ScrollTrigger).create({
+    }
+    // Control scroll CTA visibility based on hero section (only if CTA and hero trigger exist)
+    if (ctaLineEl && document.querySelector('.hero-ticker-shell')) (0, _scrollTrigger.ScrollTrigger).create({
         trigger: '.hero-ticker-shell',
         start: 'top bottom',
         onEnter: ()=>{
             if (scrollCtaTimeline) scrollCtaTimeline.pause();
-            (0, _gsap.gsap).to('.scroll-cta-line', {
+            (0, _gsap.gsap).to(ctaLineEl, {
                 opacity: 0,
                 duration: 0.3
             });
         },
         onLeaveBack: ()=>{
             if (scrollCtaTimeline) scrollCtaTimeline.play();
-            (0, _gsap.gsap).to('.scroll-cta-line', {
+            (0, _gsap.gsap).to(ctaLineEl, {
                 opacity: 1,
                 duration: 0.3
             });
@@ -990,7 +990,7 @@ function cleanupHomePage() {
 }
 window.initPageTransitions = function() {
     // Your page-specific GSAP intro animation here
-    console.log('Home Page transition animation triggered');
+    // Home Page transition animation triggered
     // Animate main-shell translateY from 30% to 0% using translate3d
     const mainShell = document.querySelector('.main-shell');
     if (mainShell) (0, _gsap.gsap).fromTo(mainShell, {

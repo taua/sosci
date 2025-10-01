@@ -693,7 +693,7 @@ function cleanupProjectPage() {
 }
 (0, _gsap.gsap).registerPlugin((0, _scrollTrigger.ScrollTrigger), (0, _splitText.SplitText));
 function initProjectPage() {
-    console.log('[Project] initProjectPage called');
+    // initProjectPage called
     const run = ()=>{
         cleanupProjectPage();
         const isProjectPage = window.location.pathname.includes('/projects');
@@ -711,10 +711,8 @@ function initProjectPage() {
         setTimeout(()=>{
             const ctaLine = document.querySelector('.scroll-cta-line');
             const ctaTxt = document.querySelector('.scroll-cta-txt');
-            if (!ctaLine || !ctaTxt) {
-                console.log('[Project] CTA elements not found; skipping CTA timeline');
-                return;
-            }
+            if (!ctaLine || !ctaTxt) // CTA elements not found; skipping CTA timeline
+            return;
             // create/replace module-scoped CTA timeline
             scrollCtaTimeline = (0, _gsap.gsap).timeline({
                 repeat: -1,
@@ -745,15 +743,11 @@ function initProjectPage() {
                 onEnter: ()=>{
                     // Avoid pausing on transient refreshes when user is effectively at top
                     const sc = window.scrollY || window.pageYOffset || 0;
-                    console.log('[Project] CTA onEnter - scrolly:', sc);
-                    if (sc <= 20) {
-                        console.log('[Project] CTA onEnter - near top, skip pause');
-                        return;
-                    }
-                    if (scrollCtaTimeline) {
-                        console.log('[Project] CTA - pause() called');
-                        scrollCtaTimeline.pause();
-                    }
+                    // CTA onEnter - scrolly
+                    if (sc <= 20) // CTA onEnter - near top, skip pause
+                    return;
+                    if (scrollCtaTimeline) // CTA - pause() called
+                    scrollCtaTimeline.pause();
                     (0, _gsap.gsap).to([
                         '.scroll-cta-line',
                         '.scroll-cta-txt'
@@ -765,11 +759,9 @@ function initProjectPage() {
                 },
                 // When leaving back to the top (entering back), show/play CTA
                 onLeaveBack: ()=>{
-                    console.log('[Project] CTA onLeaveBack - playing CTA, scrollY:', window.scrollY);
-                    if (scrollCtaTimeline) {
-                        console.log('[Project] CTA - play() called');
-                        scrollCtaTimeline.play();
-                    }
+                    // CTA onLeaveBack - playing CTA
+                    if (scrollCtaTimeline) // CTA - play() called
+                    scrollCtaTimeline.play();
                     (0, _gsap.gsap).to([
                         '.scroll-cta-line',
                         '.scroll-cta-txt'
@@ -784,7 +776,7 @@ function initProjectPage() {
                     try {
                         const rect = triggerEl.getBoundingClientRect();
                         const entered = rect.top <= window.innerHeight;
-                        console.log('[Project] CTA onRefresh rect.top=', rect.top, 'vh=', window.innerHeight, 'entered=', entered);
+                        // CTA onRefresh rect.top
                         if (entered) {
                             if (scrollCtaTimeline) scrollCtaTimeline.pause();
                             (0, _gsap.gsap).set([

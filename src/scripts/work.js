@@ -34,13 +34,7 @@ export function initWorkPage() {
     _workState.workLinks = workLinks;
     _workState.workImgMasks = workImgMasks;
 
-    // Add debug info
-    console.log('Work init:', {
-        shellExists: !!workImgShell,
-        shellDisplay: workImgShell?.style.display,
-        shellPosition: workImgShell?.style.position,
-        shellParent: workImgShell?.parentElement
-    });
+    // Debug info removed for cleaner console output
 
     if (!workImgShell || !workLinksShell) return;
 
@@ -330,7 +324,6 @@ export function cleanupWorkPage() {
 
 window.initPageTransitions = function() {
   // Your page-specific GSAP intro animation here
-  console.log('Work Page transition animation triggered');
   // Animate main-shell translateY from 30% to 0% using translate3d
   const mainShell = document.querySelector('.main-shell');
   if (mainShell) {

@@ -60,14 +60,39 @@ function initVideoVisibility() {
     video.muted = true;
     video.playsInline = true;
     video.loop = true;
+
+    // Safe play/pause wrappers: suppress benign AbortError logs when a
+    // play() is immediately interrupted by pause(). Only log unexpected errors.
+    const safePlay = () => {
+      try {
+        return video.play().catch(err => {
+          try {
+            const name = err && err.name;
+            const msg = err && err.message;
+            if (name === 'AbortError' || (msg && msg.includes('interrupted'))) {
+              return; // ignore common benign error
+            }
+          } catch (e) {}
+          console.error(err);
+        });
+      } catch (e) {
+        try {
+          if (e && e.name === 'AbortError') return;
+        } catch (ee) {}
+        console.error(e);
+      }
+    };
+
+    const safePause = () => { try { video.pause(); } catch (e) { /* ignore */ } };
+
     const trigger = ScrollTrigger.create({
       trigger: video.parentElement,
       start: 'top bottom',
       end: 'bottom top',
-      onEnter: () => video.play().catch(console.error),
-      onLeave: () => video.pause(),
-      onEnterBack: () => video.play().catch(console.error),
-      onLeaveBack: () => video.pause()
+      onEnter: safePlay,
+      onLeave: safePause,
+      onEnterBack: safePlay,
+      onLeaveBack: safePause
     });
     videoScrollTriggers.push(trigger);
   });
@@ -77,7 +102,6 @@ let smootherInstance = null;
 function initScrollSmoother() {
   // Kill previous ScrollSmoother instance if it exists
   if (smootherInstance && typeof smootherInstance.kill === 'function') {
-    console.log('[ScrollSmoother] Killing previous instance');
     smootherInstance.kill();
     smootherInstance = null;
   }
@@ -85,8 +109,7 @@ function initScrollSmoother() {
   const content = document.querySelector('.content-shell');
   const mainShells = document.querySelectorAll('.main-shell');
   const contentShells = document.querySelectorAll('.content-shell');
-  console.log('[ScrollSmoother] wrapper:', wrapper, 'content:', content);
-  console.log(`[ScrollSmoother] .main-shell count: ${mainShells.length}, .content-shell count: ${contentShells.length}`);
+  // Debug info removed
   if (wrapper && content) {
     smootherInstance = ScrollSmoother.create({
       wrapper: ".main-shell",
@@ -94,11 +117,11 @@ function initScrollSmoother() {
       smooth: 1.2,
       effects: true
     });
-    console.log('[ScrollSmoother] Initialized!');
+  // ScrollSmoother initialized
     // Force GSAP to recalculate layout
     if (typeof ScrollSmoother.refresh === 'function') {
       ScrollSmoother.refresh();
-      console.log('[ScrollSmoother] Refreshed!');
+  // ScrollSmoother refreshed
     }
   } else {
     console.warn('ScrollSmoother: .main-shell or .content-shell not found in DOM.');
@@ -161,13 +184,13 @@ barba.init({
   transitions: [{
     name: 'default-transition',
     async leave(data) {
-      console.log('[Barba] leave — running page cleanup (if any)');
+  // Barba leave: page cleanup (if any)
       // Call page-specific cleanup if available before removing the container
       try {
         if (typeof currentPageCleanup === 'function') {
-          console.log('[Barba] invoking currentPageCleanup');
+          // invoking currentPageCleanup
           await Promise.resolve(currentPageCleanup());
-          console.log('[Barba] currentPageCleanup finished');
+          // currentPageCleanup finished
         }
       } catch (e) {
         console.warn('Error running page cleanup:', e);
@@ -177,28 +200,29 @@ barba.init({
       tl.fromTo(
         document.querySelector('.global-transition'),
         { y: '100%' },
-        { y: '0%', duration: 0.8, ease: 'expo.inOut' }
+        { y: '0%', duration: 0.8, ease: 'expo.inOut', force3D: true }
+      );
+      tl.to(
+        document.querySelector('.main-shell'),
+        { y: '-30%', duration: 0.8, ease: 'expo.inOut', force3D: true },
+        0 // start at the same time as the global-transition animation
       );
       return tl;
     },
     async enter(data) {
-      console.log('[Barba] enter — scheduling smoother init + page scripts');
+  // Barba enter: scheduling smoother init + page scripts
       // Animate in new content
-      gsap.fromTo(
-        document.querySelector('.global-transition'),
-        { y: '0%' },
-        { y: '-100%', duration: .8, ease: 'expo.inOut' }
-      );
+     
       const projectInfoHeader = document.querySelector('.project-info-header');
       if (projectInfoHeader) {
         // Create a wrapper parent with overflow hidden for bottom-up animation
-        const wrapper = document.createElement('span');
-        wrapper.style.overflow = 'hidden';
-        wrapper.style.display = 'inline-block';
-        wrapper.style.verticalAlign = 'bottom';
-        // Insert wrapper before the text element and move the text inside
-        projectInfoHeader.parentNode.insertBefore(wrapper, projectInfoHeader);
-        wrapper.appendChild(projectInfoHeader);
+        const txtWrapper = document.createElement('span');
+        txtWrapper.style.overflow = 'hidden';
+        txtWrapper.style.display = 'inline-block';
+        txtWrapper.style.verticalAlign = 'bottom';
+        // Insert txtWrapper before the text element and move the text inside
+        projectInfoHeader.parentNode.insertBefore(txtWrapper, projectInfoHeader);
+        txtWrapper.appendChild(projectInfoHeader);
 
         let projectSplit = null;
         try {
@@ -223,10 +247,10 @@ barba.init({
       // Ensure ScrollSmoother is created/refreshed before page scripts run.
       // Use two frames: one to run/refresh the smoother, next to initialize video triggers and page scripts
       requestAnimationFrame(() => {
-        console.log('[Barba] Running initScrollSmoother after transition');
+  // initScrollSmoother after transition
         initScrollSmoother();
         requestAnimationFrame(() => {
-          console.log('[Barba] Running initVideoVisibility + initPageScripts after smoother init');
+          // initVideoVisibility + initPageScripts after smoother init
           // Initialize video visibility triggers after smoother is ready
           initVideoVisibility();
           initPageScripts();
@@ -236,13 +260,87 @@ barba.init({
       });
     },
     async after() {
-      console.log('[Barba] after — transition complete');
+  // Barba after — transition complete
+       const tl = gsap.timeline();
+      tl.fromTo(
+        document.querySelector('.global-transition'),
+        { y: '0%' },
+        { y: '-100%', duration: 0.8, ease: 'expo.inOut', force3D: true }
+      );
+      
+      const mainShellEl = document.querySelector('.main-shell');
+      if (mainShellEl) {
+  // main shell exists
+        gsap.killTweensOf(mainShellEl);
+        // Preserve any existing transform (inline or computed) so we don't
+        // wipe out ScrollSmoother's transform. We'll restore it after the
+        // animation finishes.
+        const prevInlineTransform = mainShellEl.style.transform;
+        let prevComputedTransform = '';
+        try {
+          prevComputedTransform = window.getComputedStyle ? window.getComputedStyle(mainShellEl).transform : '';
+        } catch (e) { prevComputedTransform = ''; }
+        const prevTransform = prevInlineTransform && prevInlineTransform.trim() !== ''
+          ? prevInlineTransform
+          : (prevComputedTransform && prevComputedTransform !== 'none' ? prevComputedTransform : '');
+
+        tl.fromTo(
+          mainShellEl,
+          { yPercent: 30 },
+          {
+            yPercent: 0,
+            duration: 0.8,
+            ease: 'expo.inOut',
+            force3D: true,
+            onComplete: () => {
+              try {
+                // Clear GSAP-applied y/yPercent props so we don't leave stale styles
+                gsap.set(mainShellEl, { clearProps: 'y,yPercent' });
+              } catch (e) {}
+
+              try {
+                if (prevTransform) {
+                  // Restore the previous transform (inline or computed)
+                  mainShellEl.style.transform = prevTransform;
+                } else {
+                  // If there was no previous transform, remove the inline style
+                  mainShellEl.style.removeProperty('transform');
+                }
+              } catch (e) {}
+
+              // Refresh ScrollTrigger and the smoother so scroll behavior returns
+              try { ScrollTrigger.refresh(); } catch (e) {}
+              try { if (smootherInstance && typeof smootherInstance.refresh === 'function') smootherInstance.refresh(); } catch (e) {}
+            }
+          },
+          "<"
+        );
+      }
+      return tl;
       
       // Re-attach global listeners if needed
       //initGlobalListeners();
     }
   }]
 });
+
+// Helper: ensure ScrollTrigger/ScrollSmoother are aware of the current layout
+// and clear any temporary transforms that can block pointer/scroll behavior.
+function restoreScrolling() {
+  try { ScrollTrigger.refresh(); } catch (e) {}
+  try {
+    if (smootherInstance && typeof smootherInstance.refresh === 'function') {
+      try { smootherInstance.refresh(); } catch (e) {}
+    }
+  } catch (e) {}
+  try {
+    const main = document.querySelector('.main-shell');
+    if (main) main.style.transform = '';
+  } catch (e) {}
+}
+
+// Run restore on initial load too (safeguard for direct page loads)
+requestAnimationFrame(() => requestAnimationFrame(() => restoreScrolling()));
 
 // Initial load
 initGrain();
@@ -620,17 +718,17 @@ function playLoadingAnimation() {
   const soulScienceTxt = document.querySelector('.soul-science-txt');
   if (soulScienceTxt) {
     // Create a wrapper parent with overflow hidden for bottom-up animation
-    const wrapper = document.createElement('span');
-    wrapper.style.overflow = 'hidden';
-    wrapper.style.marginLeft = '-.5vw';
-    wrapper.style.mixBlendMode = 'difference';
-    wrapper.style.zIndex = '2';
-    //wrapper.style.display = 'inline-block';
-    //wrapper.style.position = 'relative'; // Adjust as needed based on font size
+    const soulTxtWrapper = document.createElement('span');
+    soulTxtWrapper.style.overflow = 'hidden';
+    soulTxtWrapper.style.marginLeft = '-.5vw';
+    soulTxtWrapper.style.mixBlendMode = 'difference';
+    soulTxtWrapper.style.zIndex = '2';
+    //soulTxtWrapper.style.display = 'inline-block';
+    //soulTxtWrapper.style.position = 'relative'; // Adjust as needed based on font size
 
-    // Insert wrapper before the text element and move the text inside
-    soulScienceTxt.parentNode.insertBefore(wrapper, soulScienceTxt);
-    wrapper.appendChild(soulScienceTxt);
+    // Insert soulTxtWrapper before the text element and move the text inside
+    soulScienceTxt.parentNode.insertBefore(soulTxtWrapper, soulScienceTxt);
+    soulTxtWrapper.appendChild(soulScienceTxt);
 
     let soulSplit = null;
     try {

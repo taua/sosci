@@ -60,28 +60,30 @@ export function initHomePage() {
                 scaleY: 0
             });
     } else {
-        console.log('[Home] .scroll-cta-line not found; skipping CTA animation');
+    // .scroll-cta-line not found; skipping CTA animation
     }
 
-    // Control scroll CTA visibility based on hero section
-    ScrollTrigger.create({
-        trigger: '.hero-ticker-shell',
-        start: 'top bottom', // Triggers as soon as the section enters viewport
-        onEnter: () => {
-            if (scrollCtaTimeline) scrollCtaTimeline.pause();
-            gsap.to('.scroll-cta-line', {
-                opacity: 0,
-                duration: 0.3
-            });
-        },
-        onLeaveBack: () => {
-            if (scrollCtaTimeline) scrollCtaTimeline.play();
-            gsap.to('.scroll-cta-line', {
-                opacity: 1,
-                duration: 0.3
-            });
-        }
-    });
+    // Control scroll CTA visibility based on hero section (only if CTA and hero trigger exist)
+    if (ctaLineEl && document.querySelector('.hero-ticker-shell')) {
+        ScrollTrigger.create({
+            trigger: '.hero-ticker-shell',
+            start: 'top bottom', // Triggers as soon as the section enters viewport
+            onEnter: () => {
+                if (scrollCtaTimeline) scrollCtaTimeline.pause();
+                gsap.to(ctaLineEl, {
+                    opacity: 0,
+                    duration: 0.3
+                });
+            },
+            onLeaveBack: () => {
+                if (scrollCtaTimeline) scrollCtaTimeline.play();
+                gsap.to(ctaLineEl, {
+                    opacity: 1,
+                    duration: 0.3
+                });
+            }
+        });
+    }
 
 
     // Create opacity and scale animations only if both elements exist
@@ -340,7 +342,7 @@ export function cleanupHomePage() {
 
 window.initPageTransitions = function() {
   // Your page-specific GSAP intro animation here
-  console.log('Home Page transition animation triggered');
+    // Home Page transition animation triggered
   // Animate main-shell translateY from 30% to 0% using translate3d
   const mainShell = document.querySelector('.main-shell');
   if (mainShell) {

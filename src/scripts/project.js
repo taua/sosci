@@ -23,7 +23,7 @@ gsap.registerPlugin(ScrollTrigger, SplitText);
 
 
 function initProjectPage() {
-  console.log('[Project] initProjectPage called');
+  // initProjectPage called
   const run = () => {
     cleanupProjectPage();
     const isProjectPage = window.location.pathname.includes('/projects');
@@ -42,7 +42,7 @@ function initProjectPage() {
       const ctaLine = document.querySelector('.scroll-cta-line');
       const ctaTxt = document.querySelector('.scroll-cta-txt');
       if (!ctaLine || !ctaTxt) {
-        console.log('[Project] CTA elements not found; skipping CTA timeline');
+  // CTA elements not found; skipping CTA timeline
         return;
       }
       // create/replace module-scoped CTA timeline
@@ -77,22 +77,22 @@ function initProjectPage() {
         onEnter: () => {
           // Avoid pausing on transient refreshes when user is effectively at top
           const sc = (window.scrollY || window.pageYOffset || 0);
-          console.log('[Project] CTA onEnter - scrolly:', sc);
+          // CTA onEnter - scrolly
           if (sc <= 20) {
-            console.log('[Project] CTA onEnter - near top, skip pause');
+            // CTA onEnter - near top, skip pause
             return;
           }
           if (scrollCtaTimeline) {
-            console.log('[Project] CTA - pause() called');
+            // CTA - pause() called
             scrollCtaTimeline.pause();
           }
           gsap.to(['.scroll-cta-line', '.scroll-cta-txt'], { opacity: 0, duration: 0.3, stagger: 0.1 });
         },
         // When leaving back to the top (entering back), show/play CTA
         onLeaveBack: () => {
-          console.log('[Project] CTA onLeaveBack - playing CTA, scrollY:', window.scrollY);
+          // CTA onLeaveBack - playing CTA
           if (scrollCtaTimeline) {
-            console.log('[Project] CTA - play() called');
+            // CTA - play() called
             scrollCtaTimeline.play();
           }
           gsap.to(['.scroll-cta-line', '.scroll-cta-txt'], { opacity: 1, duration: 0.3, stagger: 0.1 });
@@ -102,7 +102,7 @@ function initProjectPage() {
           try {
             const rect = triggerEl.getBoundingClientRect();
             const entered = rect.top <= window.innerHeight;
-            console.log('[Project] CTA onRefresh rect.top=', rect.top, 'vh=', window.innerHeight, 'entered=', entered);
+            // CTA onRefresh rect.top
             if (entered) {
               if (scrollCtaTimeline) scrollCtaTimeline.pause();
               gsap.set(['.scroll-cta-line', '.scroll-cta-txt'], { opacity: 0 });
