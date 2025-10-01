@@ -189,6 +189,35 @@ barba.init({
         { y: '0%' },
         { y: '-100%', duration: .8, ease: 'expo.inOut' }
       );
+      const projectInfoHeader = document.querySelector('.project-info-header');
+      if (projectInfoHeader) {
+        // Create a wrapper parent with overflow hidden for bottom-up animation
+        const wrapper = document.createElement('span');
+        wrapper.style.overflow = 'hidden';
+        wrapper.style.display = 'inline-block';
+        wrapper.style.verticalAlign = 'bottom';
+        // Insert wrapper before the text element and move the text inside
+        projectInfoHeader.parentNode.insertBefore(wrapper, projectInfoHeader);
+        wrapper.appendChild(projectInfoHeader);
+
+        let projectSplit = null;
+        try {
+          projectSplit = new SplitText(projectInfoHeader, { type: "chars", position: "relative" });
+        } catch (error) {
+          console.error('SplitText error (project-info-header):', error);
+        }
+        if (projectSplit?.chars?.length) {
+          gsap.set(projectSplit.chars, { transform: 'translate3d(0,100%,0)'});
+          gsap.to(projectSplit.chars, {
+            transform: 'translate3d(0,0%,0)',
+            duration: 1,
+            ease: "expo.out",
+            stagger: 0.015,
+            delay: 0.3,
+            overwrite: "auto"
+          });
+        }
+      }
       
       //gsap.from(data.next.container, { opacity: 0, duration: 0.4 });
       // Ensure ScrollSmoother is created/refreshed before page scripts run.
