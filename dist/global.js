@@ -1091,6 +1091,7 @@ function openNav() {
 // Remove this function from global.js
 function playLoadingAnimation() {
     const transLogoShell = document.querySelector('.trans-logo-shell');
+    const transMainShell = document.querySelector('.main-shell');
     const transSpacer = document.querySelector('.trans-spacer');
     const transImgShell = document.querySelector('.trans-img-shell');
     const transImgs = transImgShell ? Array.from(transImgShell.querySelectorAll('.trans-img')).reverse() : [];
@@ -1110,7 +1111,7 @@ function playLoadingAnimation() {
     });
     // Animate spacer and img-shell widths in parallel, after logo anim
     tl.to(transSpacer, {
-        width: '7.7vw',
+        width: '7.8vw',
         duration: 0.8,
         ease: "expo.inOut"
     }, "-=0.3");
@@ -1136,14 +1137,58 @@ function playLoadingAnimation() {
         ease: "expo.inOut"
     }, ">");
     if (globalTransition) tl.to(globalTransition, {
-        height: '0vh',
-        duration: 1,
+        transform: 'translate3d(0, -100%, 0)',
+        duration: 1.2,
         ease: "expo.inOut",
         onStart: ()=>{
             // Call a global hook for page intro animation
             typeof window.initPageTransitions;
         }
     }, ">");
+    if (transMainShell) tl.from(transMainShell, {
+        transform: 'translate3d(0, 40%, 0)',
+        duration: 1.2,
+        ease: "expo.inOut",
+        onStart: ()=>{
+            // Call a global hook for page intro animation
+            typeof window.initPageTransitions;
+        }
+    }, "<");
+    const soulScienceTxt = document.querySelector('.soul-science-txt');
+    if (soulScienceTxt) {
+        // Create a wrapper parent with overflow hidden for bottom-up animation
+        const wrapper = document.createElement('span');
+        wrapper.style.overflow = 'hidden';
+        wrapper.style.marginLeft = '-.5vw';
+        wrapper.style.mixBlendMode = 'difference';
+        wrapper.style.zIndex = '2';
+        //wrapper.style.display = 'inline-block';
+        //wrapper.style.position = 'relative'; // Adjust as needed based on font size
+        // Insert wrapper before the text element and move the text inside
+        soulScienceTxt.parentNode.insertBefore(wrapper, soulScienceTxt);
+        wrapper.appendChild(soulScienceTxt);
+        let soulSplit = null;
+        try {
+            soulSplit = new (0, _splitText.SplitText)(soulScienceTxt, {
+                type: "chars",
+                position: "relative"
+            });
+        } catch (error) {
+            console.error('SplitText error (soul-science-txt):', error);
+        }
+        if (soulSplit?.chars?.length) {
+            (0, _gsap.gsap).set(soulSplit.chars, {
+                y: 100
+            });
+            tl.to(soulSplit.chars, {
+                y: 0,
+                duration: 1.2,
+                ease: "power3.out",
+                stagger: 0.02,
+                overwrite: "auto"
+            }, "-=.85");
+        }
+    }
     // Blur fade out transLogoShell and animate global-transition height to 0vh simultaneously
     tl.to(transLogoShell, {
         opacity: 0,
