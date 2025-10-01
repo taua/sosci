@@ -173,12 +173,24 @@ barba.init({
         console.warn('Error running page cleanup:', e);
       }
       // Optionally animate out old content
-      return gsap.to(data.current.container, { opacity: 0, duration: 0.4 });
+      const tl = gsap.timeline();
+      tl.fromTo(
+        document.querySelector('.global-transition'),
+        { y: '100%' },
+        { y: '0%', duration: 0.8, ease: 'expo.inOut' }
+      );
+      return tl;
     },
     async enter(data) {
       console.log('[Barba] enter — scheduling smoother init + page scripts');
       // Animate in new content
-      gsap.from(data.next.container, { opacity: 0, duration: 0.4 });
+      gsap.fromTo(
+        document.querySelector('.global-transition'),
+        { y: '0%' },
+        { y: '-100%', duration: .8, ease: 'expo.inOut' }
+      );
+      
+      //gsap.from(data.next.container, { opacity: 0, duration: 0.4 });
       // Ensure ScrollSmoother is created/refreshed before page scripts run.
       // Use two frames: one to run/refresh the smoother, next to initialize video triggers and page scripts
       requestAnimationFrame(() => {
@@ -195,6 +207,8 @@ barba.init({
       });
     },
     async after() {
+      console.log('[Barba] after — transition complete');
+      
       // Re-attach global listeners if needed
       //initGlobalListeners();
     }
