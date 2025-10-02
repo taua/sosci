@@ -707,6 +707,7 @@ function initHomePage() {
     });
     // Add scroll CTA line animation (only if element exists)
     const ctaLineEl = document.querySelector('.scroll-cta-line');
+    const ctaShellEl = document.querySelector('.scroll-cta-shell');
     let scrollCtaTimeline = null;
     if (ctaLineEl) {
         (0, _gsap.gsap).set(ctaLineEl, {
@@ -729,20 +730,22 @@ function initHomePage() {
             scaleY: 0
         });
     }
-    // Control scroll CTA visibility based on hero section (only if CTA and hero trigger exist)
-    if (ctaLineEl && document.querySelector('.hero-ticker-shell')) (0, _scrollTrigger.ScrollTrigger).create({
+    // Control scroll CTA visibility based on hero section (fade the whole .scroll-cta-shell when available)
+    const heroTickerExists = !!document.querySelector('.hero-ticker-shell');
+    const fadeTarget = ctaShellEl || ctaLineEl; // prefer shell, fallback to line
+    if (fadeTarget && heroTickerExists) (0, _scrollTrigger.ScrollTrigger).create({
         trigger: '.hero-ticker-shell',
         start: 'top bottom',
         onEnter: ()=>{
             if (scrollCtaTimeline) scrollCtaTimeline.pause();
-            (0, _gsap.gsap).to(ctaLineEl, {
+            (0, _gsap.gsap).to(fadeTarget, {
                 opacity: 0,
                 duration: 0.3
             });
         },
         onLeaveBack: ()=>{
             if (scrollCtaTimeline) scrollCtaTimeline.play();
-            (0, _gsap.gsap).to(ctaLineEl, {
+            (0, _gsap.gsap).to(fadeTarget, {
                 opacity: 1,
                 duration: 0.3
             });
