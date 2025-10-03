@@ -214,12 +214,13 @@ barba.init({
   // Barba enter: scheduling smoother init + page scripts
       // Animate in new content
      
-      const projectInfoHeader = document.querySelector('.project-info-header');
-      if (projectInfoHeader) {
+  const projectInfoHeader = document.querySelector('.proj-rich-headline-shell');
+  if (projectInfoHeader) {
         // Create a wrapper parent with overflow hidden for bottom-up animation
         const txtWrapper = document.createElement('span');
         txtWrapper.style.overflow = 'hidden';
         txtWrapper.style.width = '100%';
+        //txtWrapper.style.marginBottom = '0px';
         txtWrapper.style.display = 'inline-block';
         txtWrapper.style.verticalAlign = 'bottom';
         // Insert txtWrapper before the text element and move the text inside
@@ -230,7 +231,7 @@ barba.init({
         try {
           projectSplit = new SplitText(projectInfoHeader, { type: "chars", position: "relative" });
         } catch (error) {
-          console.error('SplitText error (project-info-header):', error);
+          console.error('SplitText error (proj-rich-headline-shell):', error);
         }
         if (projectSplit?.chars?.length) {
           gsap.set(projectSplit.chars, { transform: 'translate3d(0,100%,0)'});
