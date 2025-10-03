@@ -778,6 +778,7 @@ function initScrollSmoother() {
             smooth: 1.2,
             effects: true
         });
+        console.log('[smoother] ScrollSmoother created');
         // ScrollSmoother initialized
         // Force GSAP to recalculate layout
         if (typeof (0, _scrollSmoother.ScrollSmoother).refresh === 'function') (0, _scrollSmoother.ScrollSmoother).refresh();
@@ -1223,6 +1224,7 @@ function openNav() {
 }
 // Remove this function from global.js
 function playLoadingAnimation() {
+    console.log('[loader] playLoadingAnimation start');
     const transLogoShell = document.querySelector('.trans-logo-shell');
     const transMainShell = document.querySelector('.main-shell');
     const transSpacer = document.querySelector('.trans-spacer');
@@ -1240,8 +1242,21 @@ function playLoadingAnimation() {
         opacity: 1,
         filter: 'blur(0px)',
         duration: 1.4,
-        ease: "power4.out"
+        ease: "power4.out",
+        onComplete: ()=>{
+            console.log("[loader] logo animation complete \u2014 resetting scroll");
+            // Use smoother if available; fallback to native scrollTo
+            try {
+                if (smootherInstance && typeof smootherInstance.scrollTo === 'function') try {
+                    smootherInstance.scrollTo(0, true);
+                } catch (e) {}
+                else try {
+                    window.scrollTo(0, 0);
+                } catch (e) {}
+            } catch (e) {}
+        }
     });
+    tl.call(()=>console.log('[loader] playLoadingAnimation timeline running'));
     // Animate spacer and img-shell widths in parallel, after logo anim
     tl.to(transSpacer, {
         width: '7.8vw',
