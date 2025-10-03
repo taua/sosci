@@ -26,6 +26,32 @@ function initProjectPage() {
   // initProjectPage called
   const run = () => {
     cleanupProjectPage();
+    // Ensure page is at top on initial run (fix preserved scroll on refresh)
+    try {
+      console.log('[project] initProjectPage: attempting robust scroll reset');
+      const tryReset = () => {
+        try {
+          if (typeof window !== 'undefined' && window._smootherInstance && typeof window._smootherInstance.scrollTo === 'function') {
+            window._smootherInstance.scrollTo(0, true);
+            return true;
+          }
+        } catch (e) {}
+        try {
+          window.scrollTo(0, 0);
+          return true;
+        } catch (e) { return false; }
+      };
+
+      // immediate attempt
+      tryReset();
+      // after paint (double rAF)
+      requestAnimationFrame(() => requestAnimationFrame(() => tryReset()));
+      // short timeout in case smoother initializes slightly later
+      setTimeout(() => tryReset(), 120);
+      // final attempt on full load (once)
+      const onLoad = () => { tryReset(); window.removeEventListener('load', onLoad); };
+      try { window.addEventListener('load', onLoad); } catch (e) {}
+    } catch (e) {}
     const isProjectPage = window.location.pathname.includes('/projects');
     if (!isProjectPage) return;
 

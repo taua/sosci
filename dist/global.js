@@ -991,12 +991,50 @@ function restoreScrolling() {
         if (main) main.style.transform = '';
     } catch (e) {}
 }
+// Centralized robust scroll reset used across pages. Tries smoother.scrollTo when
+// available and falls back to window.scrollTo. Uses multiple attempts (immediate,
+// double rAF, timeout, and load event) to cover timing races with browser
+// restoration or smoother initialization.
+function robustScrollReset() {
+    const tryReset = ()=>{
+        try {
+            if (smootherInstance && typeof smootherInstance.scrollTo === 'function') {
+                try {
+                    smootherInstance.scrollTo(0, true);
+                } catch (e) {}
+                return true;
+            }
+        } catch (e) {}
+        try {
+            window.scrollTo(0, 0);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    };
+    try {
+        tryReset();
+        requestAnimationFrame(()=>requestAnimationFrame(()=>tryReset()));
+        setTimeout(()=>tryReset(), 120);
+        const onLoad = ()=>{
+            tryReset();
+            window.removeEventListener('load', onLoad);
+        };
+        try {
+            window.addEventListener('load', onLoad);
+        } catch (e) {}
+    } catch (e) {}
+}
 // Run restore on initial load too (safeguard for direct page loads)
 requestAnimationFrame(()=>requestAnimationFrame(()=>restoreScrolling()));
 // Initial load
 initGrain();
 initVideoVisibility();
 initScrollSmoother();
+// Ensure page starts at top using robust reset (covers all pages)
+try {
+    robustScrollReset();
+} catch (e) {}
 // Initialize page scripts after the smoother has initialized so ScrollTrigger
 // and other scroll-driven plugins can bind correctly on first load.
 requestAnimationFrame(()=>{
@@ -1007,9 +1045,33 @@ requestAnimationFrame(()=>{
             initVideoVisibility();
             initPageScripts();
             (0, _scrollTrigger.ScrollTrigger).refresh();
+            try {
+                robustScrollReset();
+            } catch (e) {}
         });
     });
 });
+// Ensure Barba lifecycle uses the same robust reset on first load and after navigation
+try {
+    if ((0, _coreDefault.default) && (0, _coreDefault.default).hooks) {
+        (0, _coreDefault.default).hooks.once(()=>{
+            try {
+                robustScrollReset();
+            } catch (e) {}
+        });
+        (0, _coreDefault.default).hooks.afterEnter(()=>{
+            // run after paint/layout and let ScrollTrigger refresh first
+            requestAnimationFrame(()=>requestAnimationFrame(()=>{
+                    try {
+                        (0, _scrollTrigger.ScrollTrigger).refresh();
+                    } catch (e) {}
+                    try {
+                        robustScrollReset();
+                    } catch (e) {}
+                }));
+        });
+    }
+} catch (e) {}
 //initGlobalListeners();
 // Declare missing tracking variables at the top of the file
 let navHoverSplit = null;
