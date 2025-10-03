@@ -158,31 +158,37 @@ function initProjectPage() {
     const indicatorShells = document.querySelectorAll('.indicator-item-shell');
     const projectsSectionShell = document.querySelector('.projects-section-shell');
     if (indicatorShells.length && projectsSectionShell) {
+      // Initialize position
       gsap.set(indicatorShells, { x: -150 });
-      projectScrollTriggers.push(
-        ScrollTrigger.create({
-          trigger: projectsSectionShell,
-          start: 'top 35%',
-          onEnter: () => {
-            gsap.killTweensOf(indicatorShells);
-            gsap.to(indicatorShells, {
-              x: 0,
-              duration: 1,
-              stagger: 0.15,
-              ease: "expo.out"
-            });
-          },
-          onLeaveBack: () => {
-            gsap.killTweensOf(indicatorShells);
-            gsap.to(indicatorShells, {
-              x: -150,
-              duration: 0.6,
-              stagger: 0.1,
-              ease: "expo.in"
-            });
-          }
-        })
-      );
+
+      // Use guarded gsap.to calls and kill overlapping tweens to avoid snapping/popping
+      const st = ScrollTrigger.create({
+        trigger: projectsSectionShell,
+        start: 'top 35%',
+        onEnter: () => {
+          try { gsap.killTweensOf(indicatorShells); } catch (e) {}
+          gsap.to(indicatorShells, {
+            x: 0,
+            duration: 1,
+            stagger: 0.15,
+            ease: "expo.out",
+            overwrite: 'auto',
+            immediateRender: false
+          });
+        },
+        onLeaveBack: () => {
+          try { gsap.killTweensOf(indicatorShells); } catch (e) {}
+          gsap.to(indicatorShells, {
+            x: -150,
+            duration: 0.6,
+            stagger: 0.1,
+            ease: "expo.in",
+            overwrite: 'auto',
+            immediateRender: false
+          });
+        }
+      });
+      projectScrollTriggers.push(st);
     }
 
     // Ensure ScrollTrigger recalculates after DOM is ready
