@@ -366,6 +366,9 @@ function robustScrollReset() {
 
 // Run restore on initial load too (safeguard for direct page loads)
 requestAnimationFrame(() => requestAnimationFrame(() => restoreScrolling()));
+// Mark that the page is bootstrapping (initial load/refresh). Pages can skip
+// first-load entrance animations until this is cleared.
+try { window._pageBootstrapping = true; } catch (e) {}
 
 // Initial load
 initGrain();
@@ -384,6 +387,9 @@ requestAnimationFrame(() => {
       initPageScripts();
       ScrollTrigger.refresh();
       try { robustScrollReset(); } catch (e) {}
+      // Clear bootstrapping after a short delay so per-page logic has time to
+      // measure layout and set initial states. 150ms is generous but small.
+      setTimeout(() => { try { window._pageBootstrapping = false; } catch (e) {} }, 150);
     });
   });
 });

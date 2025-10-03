@@ -865,20 +865,26 @@ function initProjectPage() {
         const indicatorShells = document.querySelectorAll('.indicator-item-shell');
         const projectsSectionShell = document.querySelector('.projects-section-shell');
         if (indicatorShells.length && projectsSectionShell) {
-            // Initialize position
-            (0, _gsap.gsap).set(indicatorShells, {
-                x: -150
-            });
+            // Initialize position and hide them until after bootstrapping completes
+            try {
+                (0, _gsap.gsap).set(indicatorShells, {
+                    x: -150,
+                    autoAlpha: 0
+                });
+            } catch (e) {}
             // Use guarded gsap.to calls and kill overlapping tweens to avoid snapping/popping
             const st = (0, _scrollTrigger.ScrollTrigger).create({
                 trigger: projectsSectionShell,
                 start: 'top 35%',
                 onEnter: ()=>{
+                    // If the page is still bootstrapping (initial refresh), skip animating in
+                    if (typeof window !== 'undefined' && window._pageBootstrapping) return;
                     try {
                         (0, _gsap.gsap).killTweensOf(indicatorShells);
                     } catch (e) {}
                     (0, _gsap.gsap).to(indicatorShells, {
                         x: 0,
+                        autoAlpha: 1,
                         duration: 1,
                         stagger: 0.15,
                         ease: "expo.out",
@@ -892,12 +898,27 @@ function initProjectPage() {
                     } catch (e) {}
                     (0, _gsap.gsap).to(indicatorShells, {
                         x: -150,
+                        autoAlpha: 0,
                         duration: 0.6,
                         stagger: 0.1,
                         ease: "expo.in",
                         overwrite: 'auto',
                         immediateRender: false
                     });
+                },
+                onRefresh: ()=>{
+                    // If still bootstrapping, ensure they're hidden
+                    if (typeof window !== 'undefined' && window._pageBootstrapping) {
+                        try {
+                            (0, _gsap.gsap).killTweensOf(indicatorShells);
+                        } catch (e) {}
+                        try {
+                            (0, _gsap.gsap).set(indicatorShells, {
+                                x: -150,
+                                autoAlpha: 0
+                            });
+                        } catch (e) {}
+                    }
                 }
             });
             projectScrollTriggers.push(st);
