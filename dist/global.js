@@ -868,6 +868,7 @@ function initGlobalListeners() {
                     // Create a wrapper parent with overflow hidden for bottom-up animation
                     const txtWrapper = document.createElement('span');
                     txtWrapper.style.overflow = 'hidden';
+                    txtWrapper.style.width = '100%';
                     txtWrapper.style.display = 'inline-block';
                     txtWrapper.style.verticalAlign = 'bottom';
                     // Insert txtWrapper before the text element and move the text inside
