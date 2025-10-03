@@ -705,6 +705,68 @@ function initHomePage() {
         filter: 'blur(20px)',
         transformOrigin: 'center center'
     });
+    // Slide-in top nav (.global-nav-links) when user starts scrolling on Home
+    const globalNavLinks = document.querySelector('.global-nav-links');
+    if (globalNavLinks) {
+        // Calculate hide offset (element height + its computed top margin). This accounts for a 30px top margin.
+        const cs = getComputedStyle(globalNavLinks);
+        const marginTop = parseFloat(cs.marginTop) || 0;
+        const hideY = -(globalNavLinks.offsetHeight + marginTop);
+        // Start hidden above the viewport using translate3d with pixel offset
+        (0, _gsap.gsap).set(globalNavLinks, {
+            transform: `translate3d(0, ${hideY}px, 0)`
+        });
+        const navShowTrigger = (0, _scrollTrigger.ScrollTrigger).create({
+            trigger: document.body,
+            start: '120px top',
+            onEnter: ()=>{
+                (0, _gsap.gsap).to(globalNavLinks, {
+                    transform: 'translate3d(0, 0, 0)',
+                    duration: 1,
+                    ease: 'power4.out'
+                });
+            },
+            onLeaveBack: ()=>{
+                (0, _gsap.gsap).to(globalNavLinks, {
+                    transform: `translate3d(0, ${hideY}px, 0)`,
+                    duration: 1,
+                    ease: 'power4.out'
+                });
+            }
+        });
+        homeScrollTriggers.push(navShowTrigger);
+    }
+    // Slide-in bottom footer (.global-footer-shell) from below viewport using same timings/trigger
+    const globalFooter = document.querySelector('.global-footer-shell');
+    if (globalFooter) {
+        // Calculate hide offset (element height + its computed bottom margin)
+        const fcs = getComputedStyle(globalFooter);
+        const marginBottom = parseFloat(fcs.marginBottom) || 0;
+        const hideFooterY = globalFooter.offsetHeight + marginBottom; // positive Y to move below
+        // Start hidden below the viewport using translate3d with pixel offset
+        (0, _gsap.gsap).set(globalFooter, {
+            transform: `translate3d(0, ${hideFooterY}px, 0)`
+        });
+        const footerShowTrigger = (0, _scrollTrigger.ScrollTrigger).create({
+            trigger: document.body,
+            start: '120px top',
+            onEnter: ()=>{
+                (0, _gsap.gsap).to(globalFooter, {
+                    transform: 'translate3d(0, 0, 0)',
+                    duration: 1,
+                    ease: 'power4.out'
+                });
+            },
+            onLeaveBack: ()=>{
+                (0, _gsap.gsap).to(globalFooter, {
+                    transform: `translate3d(0, ${hideFooterY}px, 0)`,
+                    duration: 1,
+                    ease: 'power4.out'
+                });
+            }
+        });
+        homeScrollTriggers.push(footerShowTrigger);
+    }
     // Add scroll CTA line animation (only if element exists)
     const ctaLineEl = document.querySelector('.scroll-cta-line');
     const ctaShellEl = document.querySelector('.scroll-cta-shell');
@@ -757,9 +819,10 @@ function initHomePage() {
     if (heroImg && heroTickerShell) {
         const opacityTimeline = (0, _gsap.gsap).timeline({
             scrollTrigger: {
-                trigger: heroTickerShell,
-                start: 'top bottom',
-                end: 'bottom -50%',
+                trigger: '.img-trail-hero-shell',
+                start: 'top top',
+                endTrigger: '.manifesto-shell',
+                end: 'bottom top',
                 scrub: 1,
                 onUpdate: (self)=>{
                     const progress = self.progress;
@@ -779,9 +842,9 @@ function initHomePage() {
         const scaleTween = (0, _gsap.gsap).to(heroImg, {
             scale: 1,
             scrollTrigger: {
-                trigger: heroTickerShell,
-                start: 'top bottom',
-                end: 'center center',
+                trigger: '.img-trail-hero-shell',
+                start: 'top top',
+                end: 'bottom top',
                 scrub: true
             }
         });
