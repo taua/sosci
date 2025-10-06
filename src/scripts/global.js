@@ -545,9 +545,9 @@ function openNav() {
     if (navNumbers.length) {
       tl.to(navNumbers, {
         opacity: 1,
-        duration: 0.8,
+        duration: 0.6,
         ease: 'power2.out'
-      }, 0.5); // Start after nav begins to open
+      }, 0.7); // Start after nav begins to open
     }
     
     // Once the nav is mostly open, animate the text
@@ -559,25 +559,23 @@ function openNav() {
         type: "chars",
         position: "relative"
       });
-      
+
       // Store for later cleanup
       splitTextInstances.push(splitText);
-      
-      // Set initial state
+
+      // Set initial state using translate3d
       gsap.set(splitText.chars, { 
-        y: -150,
-        //opacity: 0
+        transform: 'translate3d(0, -150%, 0)'
       });
-      
+
       // Animate chars with a slight delay after main animation starts
       tl.to(splitText.chars, {
-        y: 0,
-        //opacity: 1,
-        duration: 1.2,
-        ease: "power4.out",
-        stagger: 0.02,
+        transform: 'translate3d(0, 0%, 0)',
+        duration: .8,
+        ease: "power3.out",
+        stagger: 0.018,
         overwrite: "auto"
-      }, 0.32 + index * 0.1); // Start when the nav is already opening
+      }, 0.36 + index * 0.1); // Start when the nav is already opening
     });
     
     // Animate .x-top scaleX from 0 to 1
