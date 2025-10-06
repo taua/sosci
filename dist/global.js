@@ -858,6 +858,31 @@ function initGlobalListeners() {
                     force3D: true
                 }, 0 // start at the same time as the global-transition animation
                 );
+                const logoLetters = document.querySelectorAll('.split-logo-shell .logo-letter-svg');
+                const splitLogoShell = document.querySelector('.split-logo-shell');
+                const copyrightSymbol = document.querySelector('.split-logo-shell .copyright-symbol');
+                if (splitLogoShell) splitLogoShell.style.visibility = 'visible';
+                if (logoLetters.length) {
+                    (0, _gsap.gsap).set(logoLetters, {
+                        transform: 'translate3d(0,110%,0)'
+                    });
+                    (0, _gsap.gsap).set(copyrightSymbol, {
+                        transform: 'translate3d(0,-100%,0)'
+                    });
+                    tl.to(logoLetters, {
+                        transform: 'translate3d(0,0%,0)',
+                        duration: 1,
+                        ease: 'expo.inOut',
+                        stagger: 0.05,
+                        overwrite: 'auto'
+                    }, 0.16); // start slightly after transition begins
+                    tl.to(copyrightSymbol, {
+                        transform: 'translate3d(0,0%,0)',
+                        duration: .6,
+                        ease: 'expo.inOut',
+                        overwrite: 'auto'
+                    }, "<.45"); // start slightly after letters begin
+                }
                 return tl;
             },
             async enter (data) {
@@ -922,6 +947,7 @@ function initGlobalListeners() {
                 }, {
                     y: '-100%',
                     duration: 0.8,
+                    delay: .2,
                     ease: 'expo.inOut',
                     force3D: true
                 });
