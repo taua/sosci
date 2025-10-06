@@ -729,13 +729,13 @@ function playLoadingAnimation() {
 
   // Animate spacer and img-shell widths in parallel, after logo anim
   tl.to(transSpacer, {
-    width: '7.8vw',
+    width: '8vw',
     duration: 0.8,
     ease: "expo.inOut"
   }, "-=0.3");
 
   tl.to(transImgShell, {
-    width: '6.6vw',
+    width: '6.8vw',
     duration: 0.8,
     ease: "expo.inOut"
   }, "<");
