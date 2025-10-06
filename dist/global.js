@@ -888,40 +888,15 @@ function initGlobalListeners() {
             async enter (data) {
                 // Barba enter: scheduling smoother init + page scripts
                 // Animate in new content
-                const projectInfoHeader = document.querySelector('.proj-rich-headline-shell');
-                if (projectInfoHeader) {
-                    // Create a wrapper parent with overflow hidden for bottom-up animation
-                    const txtWrapper = document.createElement('span');
-                    txtWrapper.style.overflow = 'hidden';
-                    txtWrapper.style.width = '100%';
-                    //txtWrapper.style.marginBottom = '0px';
-                    txtWrapper.style.display = 'inline-block';
-                    txtWrapper.style.verticalAlign = 'bottom';
-                    // Insert txtWrapper before the text element and move the text inside
-                    projectInfoHeader.parentNode.insertBefore(txtWrapper, projectInfoHeader);
-                    txtWrapper.appendChild(projectInfoHeader);
-                    let projectSplit = null;
-                    try {
-                        projectSplit = new (0, _splitText.SplitText)(projectInfoHeader, {
-                            type: "chars",
-                            position: "relative"
-                        });
-                    } catch (error) {
-                        console.error('SplitText error (proj-rich-headline-shell):', error);
-                    }
-                    if (projectSplit?.chars?.length) {
-                        (0, _gsap.gsap).set(projectSplit.chars, {
-                            transform: 'translate3d(0,100%,0)'
-                        });
-                        (0, _gsap.gsap).to(projectSplit.chars, {
-                            transform: 'translate3d(0,0%,0)',
-                            duration: 1,
-                            ease: "expo.out",
-                            stagger: 0.015,
-                            delay: 0.3,
-                            overwrite: "auto"
-                        });
-                    }
+                // Determine which animation to play based on the page
+                if (window.location.pathname === '/' || window.location.pathname.includes('home')) {
+                    if (typeof window.playHomeEnterAnimation === 'function') window.playHomeEnterAnimation(data);
+                } else if (window.location.pathname.includes('about')) {
+                    if (typeof window.playAboutEnterAnimation === 'function') window.playAboutEnterAnimation(data);
+                } else if (window.location.pathname.includes('work')) {
+                    if (typeof window.playWorkEnterAnimation === 'function') window.playWorkEnterAnimation(data);
+                } else if (window.location.pathname.includes('projects')) {
+                    if (typeof window.playProjectEnterAnimation === 'function') window.playProjectEnterAnimation(data);
                 }
                 //gsap.from(data.next.container, { opacity: 0, duration: 0.4 });
                 // Ensure ScrollSmoother is created/refreshed before page scripts run.
@@ -1003,6 +978,44 @@ function initGlobalListeners() {
         }
     ]
 });
+window.playProjectEnterAnimation = function(data) {
+    console.log('Project Page enter animation triggered');
+    const projectInfoHeader = document.querySelector('.proj-rich-headline-shell');
+    if (projectInfoHeader) {
+        // Create a wrapper parent with overflow hidden for bottom-up animation
+        const txtWrapper = document.createElement('span');
+        txtWrapper.style.overflow = 'hidden';
+        txtWrapper.style.width = '100%';
+        //txtWrapper.style.marginBottom = '0px';
+        txtWrapper.style.display = 'inline-block';
+        txtWrapper.style.verticalAlign = 'bottom';
+        // Insert txtWrapper before the text element and move the text inside
+        projectInfoHeader.parentNode.insertBefore(txtWrapper, projectInfoHeader);
+        txtWrapper.appendChild(projectInfoHeader);
+        let projectSplit = null;
+        try {
+            projectSplit = new (0, _splitText.SplitText)(projectInfoHeader, {
+                type: "chars",
+                position: "relative"
+            });
+        } catch (error) {
+            console.error('SplitText error (proj-rich-headline-shell):', error);
+        }
+        if (projectSplit?.chars?.length) {
+            (0, _gsap.gsap).set(projectSplit.chars, {
+                transform: 'translate3d(0,100%,0)'
+            });
+            (0, _gsap.gsap).to(projectSplit.chars, {
+                transform: 'translate3d(0,0%,0)',
+                duration: 1,
+                ease: "expo.out",
+                stagger: 0.015,
+                delay: 0.5,
+                overwrite: "auto"
+            });
+        }
+    }
+};
 // Helper: ensure ScrollTrigger/ScrollSmoother are aware of the current layout
 // and clear any temporary transforms that can block pointer/scroll behavior.
 function restoreScrolling() {
@@ -1392,7 +1405,16 @@ function playLoadingAnimation() {
         ease: "expo.inOut",
         onStart: ()=>{
             // Call a global hook for page intro animation
-            typeof window.initPageTransitions;
+            // Determine which animation to play based on the page
+            if (window.location.pathname === '/' || window.location.pathname.includes('home')) {
+                if (typeof window.playHomeEnterAnimation === 'function') window.playHomeEnterAnimation();
+            } else if (window.location.pathname.includes('about')) {
+                if (typeof window.playAboutEnterAnimation === 'function') window.playAboutEnterAnimation();
+            } else if (window.location.pathname.includes('work')) {
+                if (typeof window.playWorkEnterAnimation === 'function') window.playWorkEnterAnimation();
+            } else if (window.location.pathname.includes('projects')) {
+                if (typeof window.playProjectEnterAnimation === 'function') window.playProjectEnterAnimation();
+            }
         }
     }, ">");
     if (transMainShell) tl.from(transMainShell, {
