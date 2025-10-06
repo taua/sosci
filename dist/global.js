@@ -1165,19 +1165,26 @@ function openNav() {
             duration: 1,
             ease: 'expo.inOut'
         }, 0); // Start at the same time
-        // Animate logo to black
-        if (logoNav) tl.to(logoNav, {
-            color: '#000000',
-            duration: 0.5,
-            ease: 'power2.inOut'
-        }, 0.2);
-        // Animate all text elements to black
-        if (navTextElements.length) tl.to(navTextElements, {
-            color: '#000000',
-            duration: 0.5,
-            ease: 'power2.inOut'
-        }, 0.2);
-        // Animate nav numbers opacity without stagger
+        /*
+    // Animate logo to black
+    if (logoNav) {
+      tl.to(logoNav, {
+        color: '#000000',
+        duration: 0.5,
+        ease: 'power2.inOut'
+      }, 0.2);
+    }
+      
+    
+    // Animate all text elements to black
+    if (navTextElements.length) {
+      tl.to(navTextElements, {
+        color: '#000000',
+        duration: 0.5,
+        ease: 'power2.inOut'
+      }, 0.2);
+    }
+      */ // Animate nav numbers opacity without stagger
         if (navNumbers.length) tl.to(navNumbers, {
             opacity: 1,
             duration: 0.6,
@@ -1261,19 +1268,25 @@ function openNav() {
             duration: 0.3,
             ease: 'power2.in'
         }, 0);
-        // Animate logo back to white
-        if (logoNav) tl.to(logoNav, {
-            color: '#ffffff',
-            duration: 0.5,
-            ease: 'power2.inOut'
-        }, .5);
-        // Animate all text elements back to white
-        if (navTextElements.length) tl.to(navTextElements, {
-            color: '#ffffff',
-            duration: 0.5,
-            ease: 'power2.inOut'
-        }, .5);
-        // Then close the nav using the same .global-nav-bg scaleY approach
+        /*
+    // Animate logo back to white
+    if (logoNav) {
+      tl.to(logoNav, {
+        color: '#ffffff',
+        duration: 0.5,
+        ease: 'power2.inOut'
+      }, .5);
+    }
+    
+    // Animate all text elements back to white
+    if (navTextElements.length) {
+      tl.to(navTextElements, {
+        color: '#ffffff',
+        duration: 0.5,
+        ease: 'power2.inOut'
+      }, .5);
+    }
+      */ // Then close the nav using the same .global-nav-bg scaleY approach
         const navBgClose = document.querySelector('.global-nav-bg');
         const closeComplete = ()=>{
             // Clean up split text only after animation completes

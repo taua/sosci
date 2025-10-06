@@ -522,7 +522,7 @@ function openNav() {
         ease: 'expo.inOut'
       }, 0); // Start at the same time
     }
-    
+    /*
     // Animate logo to black
     if (logoNav) {
       tl.to(logoNav, {
@@ -531,6 +531,7 @@ function openNav() {
         ease: 'power2.inOut'
       }, 0.2);
     }
+      
     
     // Animate all text elements to black
     if (navTextElements.length) {
@@ -540,6 +541,7 @@ function openNav() {
         ease: 'power2.inOut'
       }, 0.2);
     }
+      */
     
     // Animate nav numbers opacity without stagger
     if (navNumbers.length) {
@@ -636,6 +638,7 @@ function openNav() {
       ease: 'power2.in'
     }, 0);
     
+    /*
     // Animate logo back to white
     if (logoNav) {
       tl.to(logoNav, {
@@ -653,6 +656,7 @@ function openNav() {
         ease: 'power2.inOut'
       }, .5);
     }
+      */
     
     // Then close the nav using the same .global-nav-bg scaleY approach
     const navBgClose = document.querySelector('.global-nav-bg');
