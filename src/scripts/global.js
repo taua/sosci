@@ -489,9 +489,28 @@ function openNav() {
       }
     });
     
-    // First, open the nav and slide the main shell
-    tl.to(navElement, {
-      height: '100vh',
+    // First, open the nav using a scaleY reveal on .global-nav-bg (better GPU perf)
+  const navBg = document.querySelector('.global-nav-bg');
+  const linksShell = document.querySelector('.takeover-nav-links-shell');
+  const xShell = document.querySelector('.x-shell');
+  // Ensure links container and x-shell are visible before the nav opens (helps prevent FOUC)
+  if (linksShell) gsap.set(linksShell, { visibility: 'visible' });
+  if (xShell) gsap.set(xShell, { visibility: 'visible' });
+
+    if (!navBg) {
+      // If the required background element is missing, abort the nav open and reset flags
+      console.warn('openNav: .global-nav-bg element not found — aborting nav open');
+  // hide linksShell and xShell again since we aborted
+  if (linksShell) gsap.set(linksShell, { visibility: 'hidden' });
+  if (xShell) gsap.set(xShell, { visibility: 'hidden' });
+      navOpen = false;
+      navAnimating = false;
+      return;
+    }
+    // ensure origin and start state
+    gsap.set(navBg, { transformOrigin: 'top center', scaleY: 0, force3D: true });
+    tl.to(navBg, {
+      scaleY: 1,
       duration: 1,
       ease: 'expo.inOut'
     });
@@ -637,24 +656,38 @@ function openNav() {
       }, .5);
     }
     
-    // Then close the nav
-    tl.to(navElement, {
-      height: '0',
-      duration: 1,
-      ease: 'expo.inOut',
-      onComplete: () => {
-        // Clean up split text only after animation completes
-        splitTextInstances.forEach(splitText => {
-          splitText.revert();
-        });
-        splitTextInstances = [];
-        
-        // Reset opacity
-        navLinks.forEach(link => {
-          gsap.set(link, { opacity: 1 });
-        });
-      }
-    }, 0.0);
+    // Then close the nav using the same .global-nav-bg scaleY approach
+    const navBgClose = document.querySelector('.global-nav-bg');
+    const closeComplete = () => {
+      // Clean up split text only after animation completes
+      splitTextInstances.forEach(splitText => {
+        splitText.revert();
+      });
+      splitTextInstances = [];
+      
+      // Reset opacity
+      navLinks.forEach(link => {
+        gsap.set(link, { opacity: 1 });
+      });
+  // Hide link shell and x-shell after nav closes to prevent interaction/FOUC
+  const linksShellClose = document.querySelector('.takeover-nav-links-shell');
+  if (linksShellClose) gsap.set(linksShellClose, { visibility: 'hidden' });
+  const xShellClose = document.querySelector('.x-shell');
+  if (xShellClose) gsap.set(xShellClose, { visibility: 'hidden' });
+    };
+
+    if (!navBgClose) {
+      console.warn('closeNav: .global-nav-bg element not found — running cleanup');
+      // Run cleanup immediately and continue timeline (no scale animation available)
+      try { closeComplete(); } catch (e) { console.warn('closeComplete failed', e); }
+    } else {
+      tl.to(navBgClose, {
+        scaleY: 0,
+        duration: 1,
+        ease: 'expo.inOut',
+        onComplete: closeComplete
+      }, 0.0);
+    }
     
     if (mainShell) {
       tl.to(mainShell, {

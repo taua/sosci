@@ -1124,9 +1124,39 @@ function openNav() {
                 navAnimating = false;
             }
         });
-        // First, open the nav and slide the main shell
-        tl.to(navElement, {
-            height: '100vh',
+        // First, open the nav using a scaleY reveal on .global-nav-bg (better GPU perf)
+        const navBg = document.querySelector('.global-nav-bg');
+        const linksShell = document.querySelector('.takeover-nav-links-shell');
+        const xShell = document.querySelector('.x-shell');
+        // Ensure links container and x-shell are visible before the nav opens (helps prevent FOUC)
+        if (linksShell) (0, _gsap.gsap).set(linksShell, {
+            visibility: 'visible'
+        });
+        if (xShell) (0, _gsap.gsap).set(xShell, {
+            visibility: 'visible'
+        });
+        if (!navBg) {
+            // If the required background element is missing, abort the nav open and reset flags
+            console.warn("openNav: .global-nav-bg element not found \u2014 aborting nav open");
+            // hide linksShell and xShell again since we aborted
+            if (linksShell) (0, _gsap.gsap).set(linksShell, {
+                visibility: 'hidden'
+            });
+            if (xShell) (0, _gsap.gsap).set(xShell, {
+                visibility: 'hidden'
+            });
+            navOpen = false;
+            navAnimating = false;
+            return;
+        }
+        // ensure origin and start state
+        (0, _gsap.gsap).set(navBg, {
+            transformOrigin: 'top center',
+            scaleY: 0,
+            force3D: true
+        });
+        tl.to(navBg, {
+            scaleY: 1,
             duration: 1,
             ease: 'expo.inOut'
         });
@@ -1244,24 +1274,43 @@ function openNav() {
             duration: 0.5,
             ease: 'power2.inOut'
         }, .5);
-        // Then close the nav
-        tl.to(navElement, {
-            height: '0',
+        // Then close the nav using the same .global-nav-bg scaleY approach
+        const navBgClose = document.querySelector('.global-nav-bg');
+        const closeComplete = ()=>{
+            // Clean up split text only after animation completes
+            splitTextInstances.forEach((splitText)=>{
+                splitText.revert();
+            });
+            splitTextInstances = [];
+            // Reset opacity
+            navLinks.forEach((link)=>{
+                (0, _gsap.gsap).set(link, {
+                    opacity: 1
+                });
+            });
+            // Hide link shell and x-shell after nav closes to prevent interaction/FOUC
+            const linksShellClose = document.querySelector('.takeover-nav-links-shell');
+            if (linksShellClose) (0, _gsap.gsap).set(linksShellClose, {
+                visibility: 'hidden'
+            });
+            const xShellClose = document.querySelector('.x-shell');
+            if (xShellClose) (0, _gsap.gsap).set(xShellClose, {
+                visibility: 'hidden'
+            });
+        };
+        if (!navBgClose) {
+            console.warn("closeNav: .global-nav-bg element not found \u2014 running cleanup");
+            // Run cleanup immediately and continue timeline (no scale animation available)
+            try {
+                closeComplete();
+            } catch (e) {
+                console.warn('closeComplete failed', e);
+            }
+        } else tl.to(navBgClose, {
+            scaleY: 0,
             duration: 1,
             ease: 'expo.inOut',
-            onComplete: ()=>{
-                // Clean up split text only after animation completes
-                splitTextInstances.forEach((splitText)=>{
-                    splitText.revert();
-                });
-                splitTextInstances = [];
-                // Reset opacity
-                navLinks.forEach((link)=>{
-                    (0, _gsap.gsap).set(link, {
-                        opacity: 1
-                    });
-                });
-            }
+            onComplete: closeComplete
         }, 0.0);
         if (mainShell) tl.to(mainShell, {
             transform: 'translate3d(0, 0, 0)',
