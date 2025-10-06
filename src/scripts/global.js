@@ -340,40 +340,6 @@ barba.init({
 });
 
 
-window.playProjectEnterAnimation = function(data) {
-    console.log('Project Page enter animation triggered');
-    const projectInfoHeader = document.querySelector('.proj-rich-headline-shell');
-    if (projectInfoHeader) {
-      // Create a wrapper parent with overflow hidden for bottom-up animation
-      const txtWrapper = document.createElement('span');
-      txtWrapper.style.overflow = 'hidden';
-      txtWrapper.style.width = '100%';
-      //txtWrapper.style.marginBottom = '0px';
-      txtWrapper.style.display = 'inline-block';
-      txtWrapper.style.verticalAlign = 'bottom';
-      // Insert txtWrapper before the text element and move the text inside
-      projectInfoHeader.parentNode.insertBefore(txtWrapper, projectInfoHeader);
-      txtWrapper.appendChild(projectInfoHeader);
-
-      let projectSplit = null;
-      try {
-        projectSplit = new SplitText(projectInfoHeader, { type: "chars", position: "relative" });
-      } catch (error) {
-        console.error('SplitText error (proj-rich-headline-shell):', error);
-      }
-      if (projectSplit?.chars?.length) {
-        gsap.set(projectSplit.chars, { transform: 'translate3d(0,100%,0)'});
-        gsap.to(projectSplit.chars, {
-          transform: 'translate3d(0,0%,0)',
-          duration: 1,
-          ease: "expo.out",
-          stagger: 0.015,
-          delay: 0.5,
-          overwrite: "auto"
-        });
-      }
-    }
-  };
 
 // Helper: ensure ScrollTrigger/ScrollSmoother are aware of the current layout
 // and clear any temporary transforms that can block pointer/scroll behavior.
@@ -804,8 +770,6 @@ function playLoadingAnimation() {
     duration: 0.7,
     ease: "expo.inOut"
   }, ">");
-  
- 
 
   if (globalTransition) {
     tl.to(globalTransition, {
@@ -851,44 +815,7 @@ function playLoadingAnimation() {
       }
     }, "<");
   }
-  const soulScienceTxt = document.querySelector('.soul-science-txt');
-  if (soulScienceTxt) {
-    // Create a wrapper parent with overflow hidden for bottom-up animation
-    const soulTxtWrapper = document.createElement('span');
-    soulTxtWrapper.style.overflow = 'hidden';
-    soulTxtWrapper.style.marginLeft = '-.5vw';
-    soulTxtWrapper.style.mixBlendMode = 'difference';
-    soulTxtWrapper.style.zIndex = '2';
-    //soulTxtWrapper.style.display = 'inline-block';
-    //soulTxtWrapper.style.position = 'relative'; // Adjust as needed based on font size
-
-    // Insert soulTxtWrapper before the text element and move the text inside
-    soulScienceTxt.parentNode.insertBefore(soulTxtWrapper, soulScienceTxt);
-    soulTxtWrapper.appendChild(soulScienceTxt);
-
-    let soulSplit = null;
-    try {
-      soulSplit = new SplitText(soulScienceTxt, { type: "chars", position: "relative" });
-    } catch (error) {
-      console.error('SplitText error (soul-science-txt):', error);
-    }
-    if (soulSplit?.chars?.length) {
-      gsap.set(soulSplit.chars, { y: 100 });
-      tl.to(soulSplit.chars, {
-        y: 0,
-        duration: 1.2,
-        ease: "power3.out",
-        stagger: 0.02,
-        overwrite: "auto"
-      }, "-=.85");
-    }
-  }
-
-
   
-
-
-
 
 
    // Blur fade out transLogoShell and animate global-transition height to 0vh simultaneously
@@ -1040,6 +967,81 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+
+
+
+window.playProjectEnterAnimation = function(data) {
+    console.log('Project Page enter animation triggered');
+    const projectInfoHeader = document.querySelector('.proj-rich-headline-shell');
+    if (projectInfoHeader) {
+      // Create a wrapper parent with overflow hidden for bottom-up animation
+      const txtWrapper = document.createElement('span');
+      txtWrapper.style.overflow = 'hidden';
+      txtWrapper.style.width = '100%';
+      //txtWrapper.style.marginBottom = '0px';
+      txtWrapper.style.display = 'inline-block';
+      txtWrapper.style.verticalAlign = 'bottom';
+      // Insert txtWrapper before the text element and move the text inside
+      projectInfoHeader.parentNode.insertBefore(txtWrapper, projectInfoHeader);
+      txtWrapper.appendChild(projectInfoHeader);
+
+      let projectSplit = null;
+      try {
+        projectSplit = new SplitText(projectInfoHeader, { type: "chars", position: "relative" });
+      } catch (error) {
+        console.error('SplitText error (proj-rich-headline-shell):', error);
+      }
+      if (projectSplit?.chars?.length) {
+        gsap.set(projectSplit.chars, { transform: 'translate3d(0,100%,0)'});
+        gsap.to(projectSplit.chars, {
+          transform: 'translate3d(0,0%,0)',
+          duration: 1,
+          ease: "expo.out",
+          stagger: 0.015,
+          delay: 0.5,
+          overwrite: "auto"
+        });
+      }
+    }
+  };
+  window.playWorkEnterAnimation = function(data) {
+    console.log('Work Page enter animation triggered');
+    const workHeader = document.querySelector('.work-intro-header-txt');
+    if (workHeader) {
+      // Create a wrapper parent with overflow hidden for bottom-up animation
+      const txtWrapper = document.createElement('span');
+      txtWrapper.style.overflow = 'hidden';
+      txtWrapper.style.width = '100%';
+      txtWrapper.style.display = 'inline-block';
+      txtWrapper.style.verticalAlign = 'bottom';
+      // Insert txtWrapper before the text element and move the text inside
+      workHeader.parentNode.insertBefore(txtWrapper, workHeader);
+      txtWrapper.appendChild(workHeader);
+      let workSplit = null;
+      try {
+        workSplit = new SplitText(workHeader, { type: "chars", position: "relative" });
+      } catch (error) {
+        console.error('SplitText error (work-intro-header-txt):', error);
+      }
+      if (workSplit?.chars?.length) {
+        gsap.set(workSplit.chars, { transform: 'translate3d(0,100%,0)'});
+        gsap.to(workSplit.chars, {
+          transform: 'translate3d(0,0%,0)',
+          duration: 1,
+          ease: "expo.out",
+          stagger: 0.02,
+          delay: 0.5,
+          overwrite: "auto"
+        });
+      }
+    }
+  };
+  window.playHomeEnterAnimation = function(data) {
+    console.log('Home Page enter animation triggered');
+    
+  };
+
 
 // Page scripts are initialized via initPageScripts() after ScrollSmoother is ready.
 /*
