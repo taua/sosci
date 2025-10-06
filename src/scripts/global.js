@@ -165,20 +165,6 @@ function initPageScripts() {
 // current page cleanup reference (set by page modules when they export a cleanup)
 let currentPageCleanup = null;
 
-/*
-function initGlobalListeners() {
-  // Add click listener for all sosci-links
-  document.addEventListener('click', (e) => {
-    const link = e.target.closest('.sosci-link');
-    if (link) {
-      const url = link.getAttribute('link-url');
-      if (url) {
-        navigateToUrl(url);
-      }
-    }
-  });
-}
-  */
 
 // Barba.js initialization
 barba.init({
@@ -197,6 +183,10 @@ barba.init({
         console.warn('Error running page cleanup:', e);
       }
       // Optionally animate out old content
+      if (navOpen) {
+        // If nav is open, skip the transition animation
+        return;
+      }
       const tl = gsap.timeline();
       tl.fromTo(
         document.querySelector('.global-transition'),
@@ -276,62 +266,72 @@ barba.init({
     },
     async after() {
   // Barba after — transition complete
-       const tl = gsap.timeline();
+  let tl;
+  if (!navOpen) {
+    tl = gsap.timeline();
+    tl.fromTo(
+      document.querySelector('.global-transition'),
+      { y: '0%' },
+      { y: '-100%', duration: 0.8, delay: .2, ease: 'expo.inOut', force3D: true }
+    );
+    const mainShellEl = document.querySelector('.main-shell');
+    if (mainShellEl) {
+      // main shell exists
+      gsap.killTweensOf(mainShellEl);
+      // Preserve any existing transform (inline or computed) so we don't
+      // wipe out ScrollSmoother's transform. We'll restore it after the
+      // animation finishes.
+      const prevInlineTransform = mainShellEl.style.transform;
+      let prevComputedTransform = '';
+      try {
+        prevComputedTransform = window.getComputedStyle ? window.getComputedStyle(mainShellEl).transform : '';
+      } catch (e) { prevComputedTransform = ''; }
+      const prevTransform = prevInlineTransform && prevInlineTransform.trim() !== ''
+        ? prevInlineTransform
+        : (prevComputedTransform && prevComputedTransform !== 'none' ? prevComputedTransform : '');
+
       tl.fromTo(
-        document.querySelector('.global-transition'),
-        { y: '0%' },
-        { y: '-100%', duration: 0.8, delay: .2, ease: 'expo.inOut', force3D: true }
+        mainShellEl,
+        { yPercent: 30 },
+        {
+          yPercent: 0,
+          duration: 0.8,
+          ease: 'expo.inOut',
+          force3D: true,
+          onComplete: () => {
+            try {
+              // Clear GSAP-applied y/yPercent props so we don't leave stale styles
+              gsap.set(mainShellEl, { clearProps: 'y,yPercent' });
+            } catch (e) {}
+
+            try {
+              if (prevTransform) {
+                // Restore the previous transform (inline or computed)
+                mainShellEl.style.transform = prevTransform;
+              } else {
+                // If there was no previous transform, remove the inline style
+                mainShellEl.style.removeProperty('transform');
+              }
+            } catch (e) {}
+
+            // Refresh ScrollTrigger and the smoother so scroll behavior returns
+            try { ScrollTrigger.refresh(); } catch (e) {}
+            try { if (smootherInstance && typeof smootherInstance.refresh === 'function') smootherInstance.refresh(); } catch (e) {}
+          }
+        },
+        "<"
       );
-      
-      const mainShellEl = document.querySelector('.main-shell');
-      if (mainShellEl) {
-  // main shell exists
-        gsap.killTweensOf(mainShellEl);
-        // Preserve any existing transform (inline or computed) so we don't
-        // wipe out ScrollSmoother's transform. We'll restore it after the
-        // animation finishes.
-        const prevInlineTransform = mainShellEl.style.transform;
-        let prevComputedTransform = '';
-        try {
-          prevComputedTransform = window.getComputedStyle ? window.getComputedStyle(mainShellEl).transform : '';
-        } catch (e) { prevComputedTransform = ''; }
-        const prevTransform = prevInlineTransform && prevInlineTransform.trim() !== ''
-          ? prevInlineTransform
-          : (prevComputedTransform && prevComputedTransform !== 'none' ? prevComputedTransform : '');
-
-        tl.fromTo(
-          mainShellEl,
-          { yPercent: 30 },
-          {
-            yPercent: 0,
-            duration: 0.8,
-            ease: 'expo.inOut',
-            force3D: true,
-            onComplete: () => {
-              try {
-                // Clear GSAP-applied y/yPercent props so we don't leave stale styles
-                gsap.set(mainShellEl, { clearProps: 'y,yPercent' });
-              } catch (e) {}
-
-              try {
-                if (prevTransform) {
-                  // Restore the previous transform (inline or computed)
-                  mainShellEl.style.transform = prevTransform;
-                } else {
-                  // If there was no previous transform, remove the inline style
-                  mainShellEl.style.removeProperty('transform');
-                }
-              } catch (e) {}
-
-              // Refresh ScrollTrigger and the smoother so scroll behavior returns
-              try { ScrollTrigger.refresh(); } catch (e) {}
-              try { if (smootherInstance && typeof smootherInstance.refresh === 'function') smootherInstance.refresh(); } catch (e) {}
-            }
-          },
-          "<"
-        );
-      }
-      return tl;
+    }
+  } else {
+    console.log('Nav is open, skipping default after transition animation');
+    // If nav is open, use a different animation (for example, just fade out the global transition)
+    //tl = gsap.timeline();
+    //tl.to(
+      //document.querySelector('.global-transition'),
+      //{ opacity: 0, duration: 0.5, ease: 'power1.out' }
+    //);
+  }
+  return tl;
       
       // Re-attach global listeners if needed
       //initGlobalListeners();
@@ -1041,41 +1041,3 @@ window.playProjectEnterAnimation = function(data) {
     console.log('Home Page enter animation triggered');
     
   };
-
-
-// Page scripts are initialized via initPageScripts() after ScrollSmoother is ready.
-/*
-function navigateToUrl(url) {
-  const mainShell = document.querySelector('.main-shell');
-  const globalTransition = document.querySelector('.global-transition');
-
-  // Ensure url is absolute (starts with "/") to avoid relative navigation
-  if (url && !url.startsWith("/")) {
-    url = "/" + url.replace(/^\/+/, "");
-  }
-
-  if (globalTransition) {
-    globalTransition.style.left = "0";
-    globalTransition.style.right = "0";
-    globalTransition.style.bottom = "0";
-    globalTransition.style.top = "auto";
-
-    gsap.set(globalTransition, { height: "0vh" });
-
-    gsap.to(globalTransition, {
-      height: "100vh",
-      duration: 1,
-      ease: "expo.inOut",
-      onComplete: () => {
-        window.location.href = url;
-      }
-    });
-    gsap.to(mainShell, {
-      transform: 'translate3d(0, -30%, 0)',
-      duration: 1,
-      ease: 'expo.inOut'
-    });
-  } else {
-    window.location.href = url;
-  }
-} */
