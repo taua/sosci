@@ -7,14 +7,6 @@ import grainEffect from "./grainEffect";
 import barba from '@barba/core';
 
 gsap.registerPlugin(ScrollTrigger, ScrollSmoother, SplitText);
-// Debug logging helper - set `window.__DEBUG_LOGS = true` in the console to enable
-const debugLog = (...args) => {
-  try {
-    if (typeof window !== 'undefined' && window.__DEBUG_LOGS && console && typeof console.log === 'function') {
-      console.log(...args);
-    }
-  } catch (e) {}
-};
 
 export function greet(page) {
   // Remove console.log
@@ -125,7 +117,7 @@ function initScrollSmoother() {
       smooth: 1.2,
       effects: true
     });
-  debugLog('[smoother] ScrollSmoother created');
+    console.log('[smoother] ScrollSmoother created');
   // ScrollSmoother initialized
     // Force GSAP to recalculate layout
     if (typeof ScrollSmoother.refresh === 'function') {
@@ -331,7 +323,7 @@ barba.init({
       );
     }
   } else {
-  debugLog('Nav is open, skipping default after transition animation');
+    console.log('Nav is open, skipping default after transition animation');
     // If nav is open, wait for the active underline animation to complete, then close the nav
     (async () => {
       try {
@@ -433,30 +425,11 @@ try {
     });
 
     barba.hooks.afterEnter(() => {
-      // Prevent a visible pop: hide the entire nav-hover synchronously; we'll animate it in below
-      try {
-        const _navHoverEl = document.querySelector('.nav-hover');
-        if (_navHoverEl) _navHoverEl.style.opacity = '0';
-      } catch (e) {}
-      // Also ensure the takeover links shell and x-shell are hidden synchronously to avoid flashes
-      try {
-        const _linksShell = document.querySelector('.takeover-nav-links-shell');
-        if (_linksShell) _linksShell.style.visibility = 'hidden';
-        const _xShell = document.querySelector('.x-shell');
-        if (_xShell) _xShell.style.visibility = 'hidden';
-      } catch (e) {}
       // run after paint/layout and let ScrollTrigger refresh first
       requestAnimationFrame(() => requestAnimationFrame(() => {
         try { ScrollTrigger.refresh(); } catch (e) {}
         try { robustScrollReset(); } catch (e) {}
           try { updateActiveFromLocation(); } catch (e) {}
-          try { initNavHover(); } catch (e) {}
-          // Play the same close/open visuals for the menu button so it doesn't pop in
-          try {
-            if (!navOpen && typeof animateMenuButtonCloseVisuals === 'function') {
-              animateMenuButtonCloseVisuals();
-            }
-          } catch (e) {}
       }));
     });
   }
@@ -465,7 +438,6 @@ try {
 
 // Declare missing tracking variables at the top of the file
 let navHoverSplit = null;
-let navBtmSplit = null;
 let isNavHoverActive = false;
 
 // Add navigation state and functionality
@@ -537,21 +509,6 @@ function setActiveContainer(newContainer, options) {
     if (newAnchor && newAnchor.setAttribute) newAnchor.setAttribute('aria-current', 'page');
     const newLine = newContainer.querySelector && newContainer.querySelector('.strike-through-line');
     animateUnderlineIn(newLine);
-    // Ensure nav hover visual state resets when user explicitly selects a link
-    try { resetNavHoverState(); } catch (e) {}
-  } catch (e) {}
-}
-
-// Reset nav hover split transforms and active flag so hover can start from baseline
-function resetNavHoverState() {
-  try {
-    isNavHoverActive = false;
-    if (navHoverSplit && navHoverSplit.chars && navHoverSplit.chars.length) {
-      try { gsap.set(navHoverSplit.chars, { transform: 'translate3d(0,0,0)' }); } catch (e) {}
-    }
-    if (navBtmSplit && navBtmSplit.chars && navBtmSplit.chars.length) {
-      try { gsap.set(navBtmSplit.chars, { transform: 'translate3d(0,0,0)' }); } catch (e) {}
-    }
   } catch (e) {}
 }
 
@@ -747,13 +704,13 @@ function openNav() {
   // Normalize current path: prefer '/' for root instead of empty string
   let currentPath = (window.location && window.location.pathname) ? window.location.pathname.replace(/\/+$/, '') : '';
   if (!currentPath) currentPath = '/';
-  debugLog('[nav-active] currentPath ->', '"' + currentPath + '"');
+  console.log('[nav-active] currentPath ->', '"' + currentPath + '"');
         const linksShellEl = document.querySelector('.takeover-nav-links-shell');
-  debugLog('[nav-active] linksShellEl ->', linksShellEl);
+        console.log('[nav-active] linksShellEl ->', linksShellEl);
         const linkContainers = document.querySelectorAll('.takeover-nav-link');
-  debugLog('[nav-active] found linkContainers length ->', linkContainers.length);
+        console.log('[nav-active] found linkContainers length ->', linkContainers.length);
         linkContainers.forEach((container, idx) => {
-          try { debugLog('[nav-active] container idx ->', idx, 'outerHTML snippet ->', (container.outerHTML || '').slice(0,200)); } catch (e) {}
+          try { console.log('[nav-active] container idx ->', idx, 'outerHTML snippet ->', (container.outerHTML || '').slice(0,200)); } catch (e) {}
           try {
             // The .takeover-nav-link may be the anchor itself (an <a>), or a container that contains an <a>.
             let anchor = null;
@@ -763,7 +720,7 @@ function openNav() {
               anchor = container.querySelector ? container.querySelector('a[href]') : null;
             }
             if (!anchor) {
-              debugLog('[nav-active] container', idx, 'has no anchor[href] — skipping');
+              console.log('[nav-active] container', idx, 'has no anchor[href] — skipping');
               return;
             }
             let anchorPath = '';
@@ -773,7 +730,7 @@ function openNav() {
               anchorPath = anchor.getAttribute('href') || '';
             }
             if (!anchorPath) anchorPath = '/';
-            debugLog('[nav-active] comparing anchor ->', '"' + (anchor.href || anchorPath) + '"', 'normalized ->', '"' + anchorPath + '"');
+            console.log('[nav-active] comparing anchor ->', '"' + (anchor.href || anchorPath) + '"', 'normalized ->', '"' + anchorPath + '"');
             // Strict matching rules:
             // - If anchor is root '/', only match when currentPath is '/'.
             // - Otherwise match exact path or prefix match where the prefix boundary is a slash (to avoid '/' matching everything).
@@ -784,18 +741,18 @@ function openNav() {
               isMatch = (currentPath === anchorPath) || currentPath.startsWith(anchorPath + '/') || anchorPath.startsWith(currentPath + '/');
             }
             if (isMatch) {
-              debugLog('[nav-active] matched active anchor ->', anchor.href || anchorPath);
+              console.log('[nav-active] matched active anchor ->', anchor.href || anchorPath);
               container.classList.add('active');
               // disable pointer events for hover interactions (hover handlers check .active)
               const line = container.querySelector('.strike-through-line');
               if (line) {
                 try { gsap.killTweensOf(line); } catch (e) {}
                 try {
-                  debugLog('[nav-active] about to animate line element:', line, 'computedTransform:', window.getComputedStyle(line).transform);
+                  console.log('[nav-active] about to animate line element:', line, 'computedTransform:', window.getComputedStyle(line).transform);
                 } catch (e) {}
                 gsap.set(line, { transformOrigin: 'left center' });
                 gsap.to(line, { scaleX: 1, duration: 0.5, ease: 'expo.out', onComplete: () => {
-                  try { debugLog('[nav-active] line animation complete, computedTransform:', window.getComputedStyle(line).transform); } catch (e) {}
+                  try { console.log('[nav-active] line animation complete, computedTransform:', window.getComputedStyle(line).transform); } catch (e) {}
                 } });
               }
             }
@@ -890,17 +847,16 @@ function openNav() {
         splitText.revert();
       });
       splitTextInstances = [];
-      // Hide link shell and x-shell before restoring nav link opacity to avoid a flash
-      const linksShellClose = document.querySelector('.takeover-nav-links-shell');
-      if (linksShellClose) gsap.set(linksShellClose, { visibility: 'hidden' });
-      const xShellClose = document.querySelector('.x-shell');
-      if (xShellClose) gsap.set(xShellClose, { visibility: 'hidden' });
-      // Reset opacity for nav link text after shells are hidden
-      try {
-        const navLinksReset = document.querySelectorAll('.takeover-nav-link-txt');
-        navLinksReset.forEach(link => { gsap.set(link, { opacity: 1 }); });
-      } catch (e) {}
-      try { resetNavHoverState(); } catch (e) {}
+      
+      // Reset opacity
+      navLinks.forEach(link => {
+        gsap.set(link, { opacity: 1 });
+      });
+  // Hide link shell and x-shell after nav closes to prevent interaction/FOUC
+  const linksShellClose = document.querySelector('.takeover-nav-links-shell');
+  if (linksShellClose) gsap.set(linksShellClose, { visibility: 'hidden' });
+  const xShellClose = document.querySelector('.x-shell');
+  if (xShellClose) gsap.set(xShellClose, { visibility: 'hidden' });
     };
 
     if (!navBgClose) {
@@ -914,7 +870,6 @@ function openNav() {
         ease: 'expo.inOut',
         onComplete: closeComplete
       }, 0.0);
-      // Do not animate nav link text in the timeline (prevents flash). We'll reset opacity after hide.
       // Ensure underline lines collapse at the same time as the nav closes / text fades
       try {
         const allLines = document.querySelectorAll('.strike-through-line');
@@ -959,10 +914,6 @@ function openNav() {
         duration: 0.4,
         ease: "power2.out"
       }, 0.7); // Start at the beginning of the timeline
-    }
-    // Ensure the whole nav-hover root fades back in as well so the menu button is visible
-    if (navHoverEl) {
-      tl.to(navHoverEl, { opacity: 1, duration: 0.45, ease: 'power2.out' }, 0.7);
     }
   }
 }
@@ -1032,7 +983,6 @@ function closeNav() {
       if (linksShellClose) gsap.set(linksShellClose, { visibility: 'hidden' });
       const xShellClose = document.querySelector('.x-shell');
       if (xShellClose) gsap.set(xShellClose, { visibility: 'hidden' });
-      try { resetNavHoverState(); } catch (e) {}
     };
 
     if (!navBgClose) {
@@ -1053,13 +1003,6 @@ function closeNav() {
           tl.to(allLines, { opacity: 0, duration: 0.25, ease: 'power2.in', onComplete: () => { try { gsap.set(allLines, { scaleX: 0 }); } catch (e) {} } }, 0.0);
         }
       } catch (e) {}
-      // Fade nav link text back in smoothly near the end of the close timeline
-      // Skip timed fade to avoid flashing — reset opacity in cleanup instead
-      // Fade the root nav-hover back in so the menu button becomes visible
-      const navHoverRoot = document.querySelector('.nav-hover');
-      if (navHoverRoot) {
-        tl.to(navHoverRoot, { opacity: 1, duration: 0.45, ease: 'power2.out' }, 0.7);
-      }
     }
 
     const mainShell = document.querySelector('.main-shell');
@@ -1102,33 +1045,8 @@ function closeNav() {
   });
 }
 
-// Replay the menu button visuals used during nav close so SPA navigation doesn't make it pop.
-function animateMenuButtonCloseVisuals() {
-  try {
-    const tl = gsap.timeline();
-    const xTopEl = document.querySelector('.x-top');
-    const xBtmEl = document.querySelector('.x-bottom');
-    // Ensure starting state matches closed state
-    if (xTopEl) gsap.set(xTopEl, { scaleX: 0 });
-    if (xBtmEl) gsap.set(xBtmEl, { scaleX: 0 });
-    // Animate to open-like then back to closed to mimic the close visuals
-    if (xTopEl) tl.to(xTopEl, { scaleX: 1, duration: 0.28, ease: 'power3.out' }, 0);
-    if (xBtmEl) tl.to(xBtmEl, { scaleX: 1, duration: 0.28, ease: 'power3.out' }, 0.12);
-    // then reverse to closed quickly to match the close end state
-    if (xTopEl) tl.to(xTopEl, { scaleX: 0, duration: 0.4, ease: 'power3.in' }, 0.4);
-    if (xBtmEl) tl.to(xBtmEl, { scaleX: 0, duration: 0.4, ease: 'power3.in' }, 0.4);
-
-    // Fade the whole nav-hover root in (nav-wht-btm will follow via CSS / SplitText)
-    const navHoverEl = document.querySelector('.nav-hover');
-    if (navHoverEl) {
-      gsap.set(navHoverEl, { opacity: 0 });
-      tl.to(navHoverEl, { opacity: 1, duration: 0.45, ease: 'power2.out' }, 0.55);
-    }
-  } catch (e) { /* non-fatal */ }
-}
-
 function playLoadingAnimation() {
-  debugLog('[loader] playLoadingAnimation start');
+  console.log('[loader] playLoadingAnimation start');
   const transLogoShell = document.querySelector('.trans-logo-shell');
   const transMainShell = document.querySelector('.main-shell');
   const transSpacer = document.querySelector('.trans-spacer');
@@ -1155,7 +1073,7 @@ function playLoadingAnimation() {
         duration: 1.4,
         ease: "power4.out",
         onComplete: () => {
-          debugLog('[loader] logo animation complete — resetting scroll');
+          console.log('[loader] logo animation complete — resetting scroll');
           // Use smoother if available; fallback to native scrollTo
           try {
             if (smootherInstance && typeof smootherInstance.scrollTo === 'function') {
@@ -1169,7 +1087,7 @@ function playLoadingAnimation() {
     );
   }
 
-  tl.call(() => debugLog('[loader] playLoadingAnimation timeline running'));
+  tl.call(() => console.log('[loader] playLoadingAnimation timeline running'));
 
   // Animate spacer and img-shell widths in parallel, after logo anim
   tl.to(transSpacer, {
@@ -1331,83 +1249,134 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   } catch (e) { console.warn('takeover link hover init failed', e); }
   
-  // Initialize nav hover split/listeners (also called after SPA navigation)
-  initNavHover();
-});
-
-// Initialize nav hover SplitText and listeners. Call on DOMContentLoaded and after Barba enter so
-// the hover works immediately after SPA navigation (no need to mouse-out then in).
-function initNavHover() {
-  try {
-    const navHoverEl = document.querySelector('.nav-hover');
-    if (!navHoverEl) return;
-
-    // Clear previous splits/listeners
-    try { if (navHoverSplit) { navHoverSplit.revert(); navHoverSplit = null; } } catch (e) {}
-    try { if (navBtmSplit) { navBtmSplit.revert(); navBtmSplit = null; } } catch (e) {}
-
+  // Add hover animation for nav-hover element after fonts are loaded
+  const navHoverEl = document.querySelector('.nav-hover');
+  
+  if (navHoverEl) {
+    // Find both nav-wht-top and nav-wht-btm elements inside nav-hover
     const navTopText = navHoverEl.querySelector('.nav-wht-top');
     const navBtmText = navHoverEl.querySelector('.nav-wht-btm');
-
-    // Wait for fonts to be ready so SplitText measurements are correct
+    
+    // Wait for fonts to load before applying SplitText
     document.fonts.ready.then(() => {
+      // Handle top text if it exists
       if (navTopText) {
+        // Create parent container with overflow hidden if needed
         const parentTop = navTopText.parentElement;
-        if (parentTop) { parentTop.style.overflow = 'hidden'; parentTop.style.display = 'block'; }
-        try { navHoverSplit = new SplitText(navTopText, { type: 'chars', position: 'relative' }); } catch (e) { console.error('SplitText error (top):', e); }
+        if (parentTop) {
+          parentTop.style.overflow = 'hidden';
+          parentTop.style.display = 'block'; 
+        }
+        
+        // Split the text into characters for animation
+        try {
+          navHoverSplit = new SplitText(navTopText, { 
+            type: "chars",
+            position: "relative"
+          });
+        } catch (error) {
+          console.error('SplitText error (top):', error);
+        }
       }
+      
+      // Handle bottom text if it exists
+      let navBtmSplit = null;
       if (navBtmText) {
+        // Create parent container with overflow hidden if needed
         const parentBtm = navBtmText.parentElement;
-        if (parentBtm) { parentBtm.style.overflow = 'hidden'; parentBtm.style.display = 'block'; }
-        try { navBtmSplit = new SplitText(navBtmText, { type: 'chars', position: 'relative' }); } catch (e) { console.error('SplitText error (bottom):', e); }
+        if (parentBtm) {
+          parentBtm.style.overflow = 'hidden';
+          parentBtm.style.display = 'block'; 
+        }
+        
+        // Split the bottom text into characters
+        try {
+          navBtmSplit = new SplitText(navBtmText, { 
+            type: "chars",
+            position: "relative"
+          });
+        } catch (error) {
+          console.error('SplitText error (bottom):', error);
+        }
       }
-
-      // If already initialized on this DOM node, skip re-attaching handlers
-      if (navHoverEl.dataset && navHoverEl.dataset.navHoverInit === '1') return;
-
-      const root = navHoverEl;
-      if (!root) return;
-
-      // Setup hover in/out with current split instances
-      const onEnter = () => {
-        if (navOpen || isNavHoverActive) return;
-        isNavHoverActive = true;
-        if (navHoverSplit?.chars?.length) {
-          gsap.killTweensOf(navHoverSplit.chars);
-          gsap.to(navHoverSplit.chars, { transform: 'translate3d(0, -100%, 0)', duration: 0.3, ease: 'power3.out', stagger: 0.01, overwrite: true });
-        }
-        if (navBtmSplit?.chars?.length) {
-          gsap.killTweensOf(navBtmSplit.chars);
-          gsap.to(navBtmSplit.chars, { transform: 'translate3d(0, -100%, 0)', duration: 0.3, ease: 'power3.out', stagger: 0.01, overwrite: true });
-        }
-      };
-
-      const onLeave = () => {
-        if (navOpen || !isNavHoverActive) return;
-        isNavHoverActive = false;
-        if (navHoverSplit?.chars?.length) {
-          gsap.killTweensOf(navHoverSplit.chars);
-          gsap.to(navHoverSplit.chars, { transform: 'translate3d(0, 0, 0)', duration: 0.4, ease: 'power3.out', stagger: 0.015, overwrite: true });
-        }
-        if (navBtmSplit?.chars?.length) {
-          gsap.killTweensOf(navBtmSplit.chars);
-          gsap.to(navBtmSplit.chars, { transform: 'translate3d(0, 0, 0)', duration: 0.4, ease: 'power3.out', stagger: 0.015, overwrite: true });
-        }
-      };
-
-      // Attach and mark initialized
-      root.addEventListener('mouseenter', onEnter);
-      root.addEventListener('mouseleave', onLeave);
-      try { root.dataset.navHoverInit = '1'; } catch (e) {}
-    }).catch(e => { console.error('Font loading error:', e); });
-  } catch (e) { console.warn('initNavHover failed', e); }
-}
+      
+      // Set up hover listeners only if at least one split was successful
+      if (navHoverSplit?.chars?.length || navBtmSplit?.chars?.length) {
+        // Set up hover in animation
+        navHoverEl.addEventListener('mouseenter', () => {
+          // Skip if nav is open or animation is already active
+          if (navOpen || isNavHoverActive) return;
+          
+          isNavHoverActive = true;
+          
+          // Animate top text characters if they exist
+          if (navHoverSplit?.chars?.length) {
+            gsap.killTweensOf(navHoverSplit.chars);
+            gsap.to(navHoverSplit.chars, {
+              transform: 'translate3d(0, -100%, 0)', 
+              duration: 0.3,
+              ease: "power3.out",
+              stagger: 0.01,
+              overwrite: true
+            });
+          }
+          
+          // Animate bottom text characters if they exist
+          if (navBtmSplit?.chars?.length) {
+            gsap.killTweensOf(navBtmSplit.chars);
+            gsap.to(navBtmSplit.chars, {
+              transform: 'translate3d(0, -100%, 0)', 
+              duration: 0.3,
+              ease: "power3.out",
+              stagger: 0.01,
+              overwrite: true
+            });
+          }
+        });
+        
+        // Set up hover out animation
+        navHoverEl.addEventListener('mouseleave', () => {
+          // Skip if nav is open or animation is not active
+          if (navOpen || !isNavHoverActive) return;
+          
+          isNavHoverActive = false;
+          
+          // Animate top text characters back if they exist
+          if (navHoverSplit?.chars?.length) {
+            gsap.killTweensOf(navHoverSplit.chars);
+            gsap.to(navHoverSplit.chars, {
+              transform: 'translate3d(0, 0, 0)',
+              duration: 0.4,
+              ease: "power3.out",
+              stagger: 0.015,
+              overwrite: true
+            });
+          }
+          
+          // Animate bottom text characters back if they exist
+          if (navBtmSplit?.chars?.length) {
+            gsap.killTweensOf(navBtmSplit.chars);
+            gsap.to(navBtmSplit.chars, {
+              transform: 'translate3d(0, 0, 0)',
+              duration: 0.4,
+              ease: "power3.out",
+              stagger: 0.015,
+              overwrite: true
+            });
+          }
+        });
+      }
+    }).catch(error => {
+      console.error('Font loading error:', error);
+    });
+  }
+});
 
 
 
 
 window.playProjectEnterAnimation = function(data) {
-  debugLog('Project Page enter animation triggered');
+    console.log('Project Page enter animation triggered');
     const projectInfoHeader = document.querySelector('.proj-rich-headline-shell');
     if (projectInfoHeader) {
       // Create a wrapper parent with overflow hidden for bottom-up animation
@@ -1441,7 +1410,7 @@ window.playProjectEnterAnimation = function(data) {
     }
   };
   window.playWorkEnterAnimation = function(data) {
-  debugLog('Work Page enter animation triggered');
+    console.log('Work Page enter animation triggered');
     const workHeader = document.querySelector('.work-intro-header-txt');
     if (workHeader) {
       // Create a wrapper parent with overflow hidden for bottom-up animation
@@ -1473,6 +1442,6 @@ window.playProjectEnterAnimation = function(data) {
     }
   };
   window.playHomeEnterAnimation = function(data) {
-  debugLog('Home Page enter animation triggered');
+    console.log('Home Page enter animation triggered');
     
   };
