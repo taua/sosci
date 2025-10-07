@@ -1352,6 +1352,7 @@ function openNav() {
             }, 0.36 + index * 0.1); // Start when the nav is already opening
         });
         // After the text animation completes, underline the active nav link and disable its hover
+        // Run this call 0.3s earlier so the underline starts sooner when the nav opens
         tl.call(()=>{
             try {
                 // Normalize current path: prefer '/' for root instead of empty string
@@ -1409,7 +1410,7 @@ function openNav() {
                                 });
                                 (0, _gsap.gsap).to(line, {
                                     scaleX: 1,
-                                    duration: 0.45,
+                                    duration: 0.5,
                                     ease: 'expo.out',
                                     onComplete: ()=>{
                                         try {
@@ -1424,7 +1425,7 @@ function openNav() {
             } catch (e) {
                 console.warn('active nav underline failed', e);
             }
-        });
+        }, null, '-=0.48');
         // Animate .x-top scaleX from 0 to 1
         const xTopEl = document.querySelector('.x-top');
         const xBtmEl = document.querySelector('.x-bottom');

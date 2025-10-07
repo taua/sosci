@@ -675,8 +675,9 @@ function openNav() {
       }, 0.36 + index * 0.1); // Start when the nav is already opening
     });
 
-    // After the text animation completes, underline the active nav link and disable its hover
-    tl.call(() => {
+  // After the text animation completes, underline the active nav link and disable its hover
+  // Run this call 0.3s earlier so the underline starts sooner when the nav opens
+  tl.call(() => {
       try {
   // Normalize current path: prefer '/' for root instead of empty string
   let currentPath = (window.location && window.location.pathname) ? window.location.pathname.replace(/\/+$/, '') : '';
@@ -728,7 +729,7 @@ function openNav() {
                   console.log('[nav-active] about to animate line element:', line, 'computedTransform:', window.getComputedStyle(line).transform);
                 } catch (e) {}
                 gsap.set(line, { transformOrigin: 'left center' });
-                gsap.to(line, { scaleX: 1, duration: 0.45, ease: 'expo.out', onComplete: () => {
+                gsap.to(line, { scaleX: 1, duration: 0.5, ease: 'expo.out', onComplete: () => {
                   try { console.log('[nav-active] line animation complete, computedTransform:', window.getComputedStyle(line).transform); } catch (e) {}
                 } });
               }
@@ -736,7 +737,7 @@ function openNav() {
           } catch (e) {}
         });
       } catch (e) { console.warn('active nav underline failed', e); }
-    });
+  }, null, '-=0.48');
     
     // Animate .x-top scaleX from 0 to 1
     const xTopEl = document.querySelector('.x-top');
