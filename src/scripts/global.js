@@ -7,6 +7,14 @@ import grainEffect from "./grainEffect";
 import barba from '@barba/core';
 
 gsap.registerPlugin(ScrollTrigger, ScrollSmoother, SplitText);
+// Debug logging helper - set `window.__DEBUG_LOGS = true` in the console to enable
+const debugLog = (...args) => {
+  try {
+    if (typeof window !== 'undefined' && window.__DEBUG_LOGS && console && typeof console.log === 'function') {
+      console.log(...args);
+    }
+  } catch (e) {}
+};
 
 export function greet(page) {
   // Remove console.log
@@ -117,7 +125,7 @@ function initScrollSmoother() {
       smooth: 1.2,
       effects: true
     });
-    console.log('[smoother] ScrollSmoother created');
+  debugLog('[smoother] ScrollSmoother created');
   // ScrollSmoother initialized
     // Force GSAP to recalculate layout
     if (typeof ScrollSmoother.refresh === 'function') {
@@ -323,7 +331,7 @@ barba.init({
       );
     }
   } else {
-    console.log('Nav is open, skipping default after transition animation');
+  debugLog('Nav is open, skipping default after transition animation');
     // If nav is open, wait for the active underline animation to complete, then close the nav
     (async () => {
       try {
@@ -704,13 +712,13 @@ function openNav() {
   // Normalize current path: prefer '/' for root instead of empty string
   let currentPath = (window.location && window.location.pathname) ? window.location.pathname.replace(/\/+$/, '') : '';
   if (!currentPath) currentPath = '/';
-  console.log('[nav-active] currentPath ->', '"' + currentPath + '"');
+  debugLog('[nav-active] currentPath ->', '"' + currentPath + '"');
         const linksShellEl = document.querySelector('.takeover-nav-links-shell');
-        console.log('[nav-active] linksShellEl ->', linksShellEl);
+  debugLog('[nav-active] linksShellEl ->', linksShellEl);
         const linkContainers = document.querySelectorAll('.takeover-nav-link');
-        console.log('[nav-active] found linkContainers length ->', linkContainers.length);
+  debugLog('[nav-active] found linkContainers length ->', linkContainers.length);
         linkContainers.forEach((container, idx) => {
-          try { console.log('[nav-active] container idx ->', idx, 'outerHTML snippet ->', (container.outerHTML || '').slice(0,200)); } catch (e) {}
+          try { debugLog('[nav-active] container idx ->', idx, 'outerHTML snippet ->', (container.outerHTML || '').slice(0,200)); } catch (e) {}
           try {
             // The .takeover-nav-link may be the anchor itself (an <a>), or a container that contains an <a>.
             let anchor = null;
@@ -720,7 +728,7 @@ function openNav() {
               anchor = container.querySelector ? container.querySelector('a[href]') : null;
             }
             if (!anchor) {
-              console.log('[nav-active] container', idx, 'has no anchor[href] — skipping');
+              debugLog('[nav-active] container', idx, 'has no anchor[href] — skipping');
               return;
             }
             let anchorPath = '';
@@ -730,7 +738,7 @@ function openNav() {
               anchorPath = anchor.getAttribute('href') || '';
             }
             if (!anchorPath) anchorPath = '/';
-            console.log('[nav-active] comparing anchor ->', '"' + (anchor.href || anchorPath) + '"', 'normalized ->', '"' + anchorPath + '"');
+            debugLog('[nav-active] comparing anchor ->', '"' + (anchor.href || anchorPath) + '"', 'normalized ->', '"' + anchorPath + '"');
             // Strict matching rules:
             // - If anchor is root '/', only match when currentPath is '/'.
             // - Otherwise match exact path or prefix match where the prefix boundary is a slash (to avoid '/' matching everything).
@@ -741,18 +749,18 @@ function openNav() {
               isMatch = (currentPath === anchorPath) || currentPath.startsWith(anchorPath + '/') || anchorPath.startsWith(currentPath + '/');
             }
             if (isMatch) {
-              console.log('[nav-active] matched active anchor ->', anchor.href || anchorPath);
+              debugLog('[nav-active] matched active anchor ->', anchor.href || anchorPath);
               container.classList.add('active');
               // disable pointer events for hover interactions (hover handlers check .active)
               const line = container.querySelector('.strike-through-line');
               if (line) {
                 try { gsap.killTweensOf(line); } catch (e) {}
                 try {
-                  console.log('[nav-active] about to animate line element:', line, 'computedTransform:', window.getComputedStyle(line).transform);
+                  debugLog('[nav-active] about to animate line element:', line, 'computedTransform:', window.getComputedStyle(line).transform);
                 } catch (e) {}
                 gsap.set(line, { transformOrigin: 'left center' });
                 gsap.to(line, { scaleX: 1, duration: 0.5, ease: 'expo.out', onComplete: () => {
-                  try { console.log('[nav-active] line animation complete, computedTransform:', window.getComputedStyle(line).transform); } catch (e) {}
+                  try { debugLog('[nav-active] line animation complete, computedTransform:', window.getComputedStyle(line).transform); } catch (e) {}
                 } });
               }
             }
@@ -1046,7 +1054,7 @@ function closeNav() {
 }
 
 function playLoadingAnimation() {
-  console.log('[loader] playLoadingAnimation start');
+  debugLog('[loader] playLoadingAnimation start');
   const transLogoShell = document.querySelector('.trans-logo-shell');
   const transMainShell = document.querySelector('.main-shell');
   const transSpacer = document.querySelector('.trans-spacer');
@@ -1073,7 +1081,7 @@ function playLoadingAnimation() {
         duration: 1.4,
         ease: "power4.out",
         onComplete: () => {
-          console.log('[loader] logo animation complete — resetting scroll');
+          debugLog('[loader] logo animation complete — resetting scroll');
           // Use smoother if available; fallback to native scrollTo
           try {
             if (smootherInstance && typeof smootherInstance.scrollTo === 'function') {
@@ -1087,7 +1095,7 @@ function playLoadingAnimation() {
     );
   }
 
-  tl.call(() => console.log('[loader] playLoadingAnimation timeline running'));
+  tl.call(() => debugLog('[loader] playLoadingAnimation timeline running'));
 
   // Animate spacer and img-shell widths in parallel, after logo anim
   tl.to(transSpacer, {
@@ -1376,7 +1384,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
 window.playProjectEnterAnimation = function(data) {
-    console.log('Project Page enter animation triggered');
+  debugLog('Project Page enter animation triggered');
     const projectInfoHeader = document.querySelector('.proj-rich-headline-shell');
     if (projectInfoHeader) {
       // Create a wrapper parent with overflow hidden for bottom-up animation
@@ -1410,7 +1418,7 @@ window.playProjectEnterAnimation = function(data) {
     }
   };
   window.playWorkEnterAnimation = function(data) {
-    console.log('Work Page enter animation triggered');
+  debugLog('Work Page enter animation triggered');
     const workHeader = document.querySelector('.work-intro-header-txt');
     if (workHeader) {
       // Create a wrapper parent with overflow hidden for bottom-up animation
@@ -1442,6 +1450,6 @@ window.playProjectEnterAnimation = function(data) {
     }
   };
   window.playHomeEnterAnimation = function(data) {
-    console.log('Home Page enter animation triggered');
+  debugLog('Home Page enter animation triggered');
     
   };

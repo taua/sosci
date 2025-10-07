@@ -679,6 +679,12 @@ var _grainEffectDefault = parcelHelpers.interopDefault(_grainEffect);
 var _core = require("@barba/core");
 var _coreDefault = parcelHelpers.interopDefault(_core);
 (0, _gsap.gsap).registerPlugin((0, _scrollTrigger.ScrollTrigger), (0, _scrollSmoother.ScrollSmoother), (0, _splitText.SplitText));
+// Debug logging helper - set `window.__DEBUG_LOGS = true` in the console to enable
+const debugLog = (...args)=>{
+    try {
+        if (typeof window !== 'undefined' && window.__DEBUG_LOGS && console && typeof console.log === 'function') console.log(...args);
+    } catch (e) {}
+};
 function greet(page) {
 // Remove console.log
 }
@@ -778,7 +784,7 @@ function initScrollSmoother() {
             smooth: 1.2,
             effects: true
         });
-        console.log('[smoother] ScrollSmoother created');
+        debugLog('[smoother] ScrollSmoother created');
         // ScrollSmoother initialized
         // Force GSAP to recalculate layout
         if (typeof (0, _scrollSmoother.ScrollSmoother).refresh === 'function') (0, _scrollSmoother.ScrollSmoother).refresh();
@@ -963,7 +969,7 @@ let currentPageCleanup = null;
                         }, "<");
                     }
                 } else {
-                    console.log('Nav is open, skipping default after transition animation');
+                    debugLog('Nav is open, skipping default after transition animation');
                     // If nav is open, wait for the active underline animation to complete, then close the nav
                     (async ()=>{
                         try {
@@ -1391,14 +1397,14 @@ function openNav() {
                 // Normalize current path: prefer '/' for root instead of empty string
                 let currentPath = window.location && window.location.pathname ? window.location.pathname.replace(/\/+$/, '') : '';
                 if (!currentPath) currentPath = '/';
-                console.log('[nav-active] currentPath ->', '"' + currentPath + '"');
+                debugLog('[nav-active] currentPath ->', '"' + currentPath + '"');
                 const linksShellEl = document.querySelector('.takeover-nav-links-shell');
-                console.log('[nav-active] linksShellEl ->', linksShellEl);
+                debugLog('[nav-active] linksShellEl ->', linksShellEl);
                 const linkContainers = document.querySelectorAll('.takeover-nav-link');
-                console.log('[nav-active] found linkContainers length ->', linkContainers.length);
+                debugLog('[nav-active] found linkContainers length ->', linkContainers.length);
                 linkContainers.forEach((container, idx)=>{
                     try {
-                        console.log('[nav-active] container idx ->', idx, 'outerHTML snippet ->', (container.outerHTML || '').slice(0, 200));
+                        debugLog('[nav-active] container idx ->', idx, 'outerHTML snippet ->', (container.outerHTML || '').slice(0, 200));
                     } catch (e) {}
                     try {
                         // The .takeover-nav-link may be the anchor itself (an <a>), or a container that contains an <a>.
@@ -1409,7 +1415,7 @@ function openNav() {
                             anchor = container.querySelector ? container.querySelector('a[href]') : null;
                         }
                         if (!anchor) {
-                            console.log('[nav-active] container', idx, "has no anchor[href] \u2014 skipping");
+                            debugLog('[nav-active] container', idx, "has no anchor[href] \u2014 skipping");
                             return;
                         }
                         let anchorPath = '';
@@ -1419,7 +1425,7 @@ function openNav() {
                             anchorPath = anchor.getAttribute('href') || '';
                         }
                         if (!anchorPath) anchorPath = '/';
-                        console.log('[nav-active] comparing anchor ->', '"' + (anchor.href || anchorPath) + '"', 'normalized ->', '"' + anchorPath + '"');
+                        debugLog('[nav-active] comparing anchor ->', '"' + (anchor.href || anchorPath) + '"', 'normalized ->', '"' + anchorPath + '"');
                         // Strict matching rules:
                         // - If anchor is root '/', only match when currentPath is '/'.
                         // - Otherwise match exact path or prefix match where the prefix boundary is a slash (to avoid '/' matching everything).
@@ -1427,7 +1433,7 @@ function openNav() {
                         if (anchorPath === '/') isMatch = currentPath === '/';
                         else isMatch = currentPath === anchorPath || currentPath.startsWith(anchorPath + '/') || anchorPath.startsWith(currentPath + '/');
                         if (isMatch) {
-                            console.log('[nav-active] matched active anchor ->', anchor.href || anchorPath);
+                            debugLog('[nav-active] matched active anchor ->', anchor.href || anchorPath);
                             container.classList.add('active');
                             // disable pointer events for hover interactions (hover handlers check .active)
                             const line = container.querySelector('.strike-through-line');
@@ -1436,7 +1442,7 @@ function openNav() {
                                     (0, _gsap.gsap).killTweensOf(line);
                                 } catch (e) {}
                                 try {
-                                    console.log('[nav-active] about to animate line element:', line, 'computedTransform:', window.getComputedStyle(line).transform);
+                                    debugLog('[nav-active] about to animate line element:', line, 'computedTransform:', window.getComputedStyle(line).transform);
                                 } catch (e) {}
                                 (0, _gsap.gsap).set(line, {
                                     transformOrigin: 'left center'
@@ -1447,7 +1453,7 @@ function openNav() {
                                     ease: 'expo.out',
                                     onComplete: ()=>{
                                         try {
-                                            console.log('[nav-active] line animation complete, computedTransform:', window.getComputedStyle(line).transform);
+                                            debugLog('[nav-active] line animation complete, computedTransform:', window.getComputedStyle(line).transform);
                                         } catch (e) {}
                                     }
                                 });
@@ -1735,7 +1741,7 @@ function closeNav() {
     });
 }
 function playLoadingAnimation() {
-    console.log('[loader] playLoadingAnimation start');
+    debugLog('[loader] playLoadingAnimation start');
     const transLogoShell = document.querySelector('.trans-logo-shell');
     const transMainShell = document.querySelector('.main-shell');
     const transSpacer = document.querySelector('.trans-spacer');
@@ -1755,7 +1761,7 @@ function playLoadingAnimation() {
         duration: 1.4,
         ease: "power4.out",
         onComplete: ()=>{
-            console.log("[loader] logo animation complete \u2014 resetting scroll");
+            debugLog("[loader] logo animation complete \u2014 resetting scroll");
             // Use smoother if available; fallback to native scrollTo
             try {
                 if (smootherInstance && typeof smootherInstance.scrollTo === 'function') try {
@@ -1767,7 +1773,7 @@ function playLoadingAnimation() {
             } catch (e) {}
         }
     });
-    tl.call(()=>console.log('[loader] playLoadingAnimation timeline running'));
+    tl.call(()=>debugLog('[loader] playLoadingAnimation timeline running'));
     // Animate spacer and img-shell widths in parallel, after logo anim
     tl.to(transSpacer, {
         width: '8vw',
@@ -2029,7 +2035,7 @@ window.addEventListener('DOMContentLoaded', ()=>{
     }
 });
 window.playProjectEnterAnimation = function(data) {
-    console.log('Project Page enter animation triggered');
+    debugLog('Project Page enter animation triggered');
     const projectInfoHeader = document.querySelector('.proj-rich-headline-shell');
     if (projectInfoHeader) {
         // Create a wrapper parent with overflow hidden for bottom-up animation
@@ -2067,7 +2073,7 @@ window.playProjectEnterAnimation = function(data) {
     }
 };
 window.playWorkEnterAnimation = function(data) {
-    console.log('Work Page enter animation triggered');
+    debugLog('Work Page enter animation triggered');
     const workHeader = document.querySelector('.work-intro-header-txt');
     if (workHeader) {
         // Create a wrapper parent with overflow hidden for bottom-up animation
@@ -2104,7 +2110,7 @@ window.playWorkEnterAnimation = function(data) {
     }
 };
 window.playHomeEnterAnimation = function(data) {
-    console.log('Home Page enter animation triggered');
+    debugLog('Home Page enter animation triggered');
 };
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC","gsap/ScrollSmoother":"cGoQX","gsap/ScrollTrigger":"7wnFk","gsap/SplitText":"63tvY","./grainEffect":"gseYd","@barba/core":"gIWbX","15f686a79e03c55a":"an9pY","9e5b3873cfad757a":"3UF59","fb0e6e5a4ade22e8":"fNrHc","3281aad929e661e8":"iuGBB"}],"gkKU3":[function(require,module,exports,__globalThis) {
