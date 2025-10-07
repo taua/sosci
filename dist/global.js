@@ -962,7 +962,26 @@ let currentPageCleanup = null;
                             }
                         }, "<");
                     }
-                } else console.log('Nav is open, skipping default after transition animation');
+                } else {
+                    console.log('Nav is open, skipping default after transition animation');
+                    // If nav is open, wait for the active underline animation to complete, then close the nav
+                    (async ()=>{
+                        try {
+                            const p = window._navActiveLinePromise;
+                            if (p && typeof p.then === 'function') {
+                                const timeout = new Promise((res)=>setTimeout(res, 1200));
+                                await Promise.race([
+                                    p,
+                                    timeout
+                                ]);
+                            } else // fallback short delay
+                            await new Promise((res)=>setTimeout(res, 250));
+                        } catch (e) {}
+                        try {
+                            if (typeof closeNav === 'function') closeNav();
+                        } catch (e) {}
+                    })();
+                }
                 return tl;
             // Re-attach global listeners if needed
             //initGlobalListeners();
@@ -1104,12 +1123,26 @@ function animateUnderlineIn(line) {
         });
     } catch (e) {}
     try {
-        (0, _gsap.gsap).to(line, {
+        // Create a tween and store a promise that resolves when the tween completes
+        const tween = (0, _gsap.gsap).to(line, {
             scaleX: 1,
             opacity: 1,
             duration: 0.45,
             ease: 'expo.out'
         });
+        try {
+            // expose the tween and a completion promise so other code (e.g. Barba hooks)
+            // can wait for the active-line animation to finish before closing the nav
+            window._navActiveLineTween = tween;
+            window._navActiveLinePromise = new Promise((resolve)=>{
+                tween.eventCallback('onComplete', ()=>{
+                    try {
+                        resolve();
+                    } catch (e) {}
+                });
+            });
+        } catch (e) {}
+        return tween;
     } catch (e) {}
 }
 function animateUnderlineOut(line, options) {
@@ -1584,6 +1617,123 @@ function openNav() {
     }
 }
 // Remove this function from global.js
+// Close the navigation with the same sequence used in the openNav() close branch.
+// Returns a Promise that resolves when the close animation completes. Idempotent.
+function closeNav() {
+    // If already animating, return a resolved promise to avoid re-entrancy
+    if (navAnimating) return Promise.resolve();
+    // If already closed, no-op
+    if (!navOpen) return Promise.resolve();
+    navAnimating = true;
+    navOpen = false;
+    return new Promise((resolve)=>{
+        // Hide nav link text and numbers first
+        const navLinks = document.querySelectorAll('.takeover-nav-link-txt');
+        const navNumbers = document.querySelectorAll('.takeover-nav-num-txt');
+        const tl = (0, _gsap.gsap).timeline({
+            onComplete: ()=>{
+                navAnimating = false;
+                resolve();
+            }
+        });
+        if (navLinks && navLinks.length) tl.to(navLinks, {
+            opacity: 0,
+            duration: 0.3,
+            ease: 'power2.in'
+        }, 0);
+        if (navNumbers && navNumbers.length) tl.to(navNumbers, {
+            opacity: 0,
+            duration: 0.3,
+            ease: 'power2.in'
+        }, 0);
+        // Then close the nav using the same .global-nav-bg scaleY approach
+        const navBgClose = document.querySelector('.global-nav-bg');
+        const closeComplete = ()=>{
+            // Clean up split text only after animation completes
+            try {
+                splitTextInstances.forEach((splitText)=>{
+                    splitText.revert();
+                });
+            } catch (e) {}
+            splitTextInstances = [];
+            // Reset opacity for nav link text
+            try {
+                navLinks.forEach((link)=>{
+                    (0, _gsap.gsap).set(link, {
+                        opacity: 1
+                    });
+                });
+            } catch (e) {}
+            // Hide link shell and x-shell after nav closes to prevent interaction/FOUC
+            const linksShellClose = document.querySelector('.takeover-nav-links-shell');
+            if (linksShellClose) (0, _gsap.gsap).set(linksShellClose, {
+                visibility: 'hidden'
+            });
+            const xShellClose = document.querySelector('.x-shell');
+            if (xShellClose) (0, _gsap.gsap).set(xShellClose, {
+                visibility: 'hidden'
+            });
+        };
+        if (!navBgClose) {
+            console.warn("closeNav: .global-nav-bg element not found \u2014 running cleanup");
+            try {
+                closeComplete();
+            } catch (e) {
+                console.warn('closeComplete failed', e);
+            }
+        } else {
+            tl.to(navBgClose, {
+                scaleY: 0,
+                duration: 1,
+                ease: 'expo.inOut',
+                onComplete: closeComplete
+            }, 0.0);
+            // Ensure underline lines collapse at the same time as the nav closes / text fades
+            try {
+                const allLines = document.querySelectorAll('.strike-through-line');
+                if (allLines && allLines.length) tl.to(allLines, {
+                    opacity: 0,
+                    duration: 0.25,
+                    ease: 'power2.in',
+                    onComplete: ()=>{
+                        try {
+                            (0, _gsap.gsap).set(allLines, {
+                                scaleX: 0
+                            });
+                        } catch (e) {}
+                    }
+                }, 0.0);
+            } catch (e) {}
+        }
+        const mainShell = document.querySelector('.main-shell');
+        if (mainShell) tl.to(mainShell, {
+            transform: 'translate3d(0, 0, 0)',
+            duration: 1,
+            ease: 'expo.inOut'
+        }, 0.0);
+        // Reverse .x-top and .x-bottom animations when nav closes
+        const xTopEl = document.querySelector('.x-top');
+        const xBtmEl = document.querySelector('.x-bottom');
+        if (xTopEl) tl.to(xTopEl, {
+            scaleX: 0,
+            duration: .5,
+            ease: "power3.in"
+        }, 0);
+        if (xBtmEl) tl.to(xBtmEl, {
+            scaleX: 0,
+            duration: .5,
+            ease: "power3.in"
+        }, 0);
+        // Fade opacity of .nav-wht-btm back in when nav closes
+        const navHoverEl = document.querySelector('.nav-hover');
+        const navBtmText = navHoverEl ? navHoverEl.querySelector('.nav-wht-btm') : null;
+        if (navBtmText) tl.to(navBtmText, {
+            opacity: 1,
+            duration: 0.4,
+            ease: "power2.out"
+        }, 0.7);
+    });
+}
 function playLoadingAnimation() {
     console.log('[loader] playLoadingAnimation start');
     const transLogoShell = document.querySelector('.trans-logo-shell');
