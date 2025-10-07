@@ -1075,6 +1075,9 @@ try {
                     try {
                         robustScrollReset();
                     } catch (e) {}
+                    try {
+                        updateActiveFromLocation();
+                    } catch (e) {}
                 }));
         });
     }
@@ -1089,6 +1092,131 @@ let navAnimating = false;
 // Store split text instances for cleanup
 let splitTextInstances = [];
 //let closeTxtSplit = null; // Add variable for close-txt split
+// Helper: animate underline in/out for a .strike-through-line element
+function animateUnderlineIn(line) {
+    if (!line) return;
+    try {
+        (0, _gsap.gsap).killTweensOf(line);
+    } catch (e) {}
+    try {
+        (0, _gsap.gsap).set(line, {
+            transformOrigin: 'left center'
+        });
+    } catch (e) {}
+    try {
+        (0, _gsap.gsap).to(line, {
+            scaleX: 1,
+            opacity: 1,
+            duration: 0.45,
+            ease: 'expo.out'
+        });
+    } catch (e) {}
+}
+function animateUnderlineOut(line, options) {
+    // options: { mode: 'fade' | 'scale' }
+    if (!line) return;
+    try {
+        (0, _gsap.gsap).killTweensOf(line);
+    } catch (e) {}
+    try {
+        (0, _gsap.gsap).set(line, {
+            transformOrigin: 'left center'
+        });
+    } catch (e) {}
+    const mode = options && options.mode ? options.mode : 'fade';
+    try {
+        if (mode === 'scale') // Collapse using scaleX (visual width collapse)
+        (0, _gsap.gsap).to(line, {
+            scaleX: 0,
+            duration: 0.35,
+            ease: 'expo.in'
+        });
+        else // Default: fade out then ensure scale is reset
+        (0, _gsap.gsap).to(line, {
+            opacity: 0,
+            duration: 0.25,
+            ease: 'power2.in',
+            onComplete: ()=>{
+                try {
+                    (0, _gsap.gsap).set(line, {
+                        scaleX: 0
+                    });
+                } catch (e) {}
+            }
+        });
+    } catch (e) {}
+}
+// Set active container: animate old active out, new active in, toggle classes and aria-current
+function setActiveContainer(newContainer, options) {
+    if (!newContainer) return;
+    const prev = document.querySelector('.takeover-nav-link.active');
+    if (prev === newContainer) return;
+    try {
+        if (prev) {
+            prev.classList.remove('active');
+            const prevAnchor = prev.matches && prev.matches('a[href]') ? prev : prev.querySelector && prev.querySelector('a[href]');
+            if (prevAnchor && prevAnchor.setAttribute) prevAnchor.removeAttribute('aria-current');
+            const prevLine = prev.querySelector && prev.querySelector('.strike-through-line');
+            // Propagate options (e.g., { mode: 'scale' }) so clicks can collapse by scale
+            animateUnderlineOut(prevLine, options);
+        }
+    } catch (e) {}
+    try {
+        newContainer.classList.add('active');
+        const newAnchor = newContainer.matches && newContainer.matches('a[href]') ? newContainer : newContainer.querySelector && newContainer.querySelector('a[href]');
+        if (newAnchor && newAnchor.setAttribute) newAnchor.setAttribute('aria-current', 'page');
+        const newLine = newContainer.querySelector && newContainer.querySelector('.strike-through-line');
+        animateUnderlineIn(newLine);
+    } catch (e) {}
+}
+// Update active based on current location (same matching logic used earlier)
+function updateActiveFromLocation() {
+    try {
+        let currentPath = window.location && window.location.pathname ? window.location.pathname.replace(/\/+$/, '') : '';
+        if (!currentPath) currentPath = '/';
+        const linkContainers = document.querySelectorAll('.takeover-nav-link');
+        // If we're on an individual project detail (e.g. /projects/some-slug), do not underline any nav item.
+        // Only allow matching when currentPath is exactly '/projects'.
+        if (currentPath.startsWith('/projects') && currentPath !== '/projects') {
+            // Clear any existing active state
+            const prev = document.querySelector('.takeover-nav-link.active');
+            if (prev) {
+                prev.classList.remove('active');
+                const prevAnchor = prev.matches && prev.matches('a[href]') ? prev : prev.querySelector && prev.querySelector('a[href]');
+                if (prevAnchor && prevAnchor.removeAttribute) prevAnchor.removeAttribute('aria-current');
+                const prevLine = prev.querySelector && prev.querySelector('.strike-through-line');
+                animateUnderlineOut(prevLine);
+            }
+            return;
+        }
+        for(let i = 0; i < linkContainers.length; i++){
+            const container = linkContainers[i];
+            let anchor = null;
+            try {
+                anchor = container.matches && container.matches('a[href]') ? container : container.querySelector('a[href]');
+            } catch (e) {
+                anchor = container.querySelector ? container.querySelector('a[href]') : null;
+            }
+            if (!anchor) continue;
+            let anchorPath = '';
+            try {
+                anchorPath = new URL(anchor.href, window.location.origin).pathname.replace(/\/+$/, '');
+            } catch (e) {
+                anchorPath = anchor.getAttribute('href') || '/';
+            }
+            if (!anchorPath) anchorPath = '/';
+            let isMatch = false;
+            if (anchorPath === '/') isMatch = currentPath === '/';
+            else isMatch = currentPath === anchorPath || currentPath.startsWith(anchorPath + '/') || anchorPath.startsWith(currentPath + '/');
+            if (isMatch) {
+                setActiveContainer(container);
+                return;
+            }
+        }
+    } catch (e) {
+        console.warn('updateActiveFromLocation failed', e);
+    }
+}
 function openNav() {
     if (navAnimating) return;
     navAnimating = true;
@@ -1135,6 +1263,16 @@ function openNav() {
         if (xShell) (0, _gsap.gsap).set(xShell, {
             visibility: 'visible'
         });
+        // Collapse all underline lines so the active one can animate in as part of the open timeline
+        try {
+            const allLines = document.querySelectorAll('.strike-through-line');
+            if (allLines && allLines.length) (0, _gsap.gsap).set(allLines, {
+                transformOrigin: 'left center',
+                scaleX: 0,
+                opacity: 1,
+                force3D: true
+            });
+        } catch (e) {}
         if (!navBg) {
             // If the required background element is missing, abort the nav open and reset flags
             console.warn("openNav: .global-nav-bg element not found \u2014 aborting nav open");
@@ -1212,6 +1350,80 @@ function openNav() {
                 stagger: 0.018,
                 overwrite: "auto"
             }, 0.36 + index * 0.1); // Start when the nav is already opening
+        });
+        // After the text animation completes, underline the active nav link and disable its hover
+        tl.call(()=>{
+            try {
+                // Normalize current path: prefer '/' for root instead of empty string
+                let currentPath = window.location && window.location.pathname ? window.location.pathname.replace(/\/+$/, '') : '';
+                if (!currentPath) currentPath = '/';
+                console.log('[nav-active] currentPath ->', '"' + currentPath + '"');
+                const linksShellEl = document.querySelector('.takeover-nav-links-shell');
+                console.log('[nav-active] linksShellEl ->', linksShellEl);
+                const linkContainers = document.querySelectorAll('.takeover-nav-link');
+                console.log('[nav-active] found linkContainers length ->', linkContainers.length);
+                linkContainers.forEach((container, idx)=>{
+                    try {
+                        console.log('[nav-active] container idx ->', idx, 'outerHTML snippet ->', (container.outerHTML || '').slice(0, 200));
+                    } catch (e) {}
+                    try {
+                        // The .takeover-nav-link may be the anchor itself (an <a>), or a container that contains an <a>.
+                        let anchor = null;
+                        try {
+                            anchor = container.matches && container.matches('a[href]') ? container : container.querySelector('a[href]');
+                        } catch (e) {
+                            anchor = container.querySelector ? container.querySelector('a[href]') : null;
+                        }
+                        if (!anchor) {
+                            console.log('[nav-active] container', idx, "has no anchor[href] \u2014 skipping");
+                            return;
+                        }
+                        let anchorPath = '';
+                        try {
+                            anchorPath = new URL(anchor.href, window.location.origin).pathname.replace(/\/+$/, '');
+                        } catch (e) {
+                            anchorPath = anchor.getAttribute('href') || '';
+                        }
+                        if (!anchorPath) anchorPath = '/';
+                        console.log('[nav-active] comparing anchor ->', '"' + (anchor.href || anchorPath) + '"', 'normalized ->', '"' + anchorPath + '"');
+                        // Strict matching rules:
+                        // - If anchor is root '/', only match when currentPath is '/'.
+                        // - Otherwise match exact path or prefix match where the prefix boundary is a slash (to avoid '/' matching everything).
+                        let isMatch = false;
+                        if (anchorPath === '/') isMatch = currentPath === '/';
+                        else isMatch = currentPath === anchorPath || currentPath.startsWith(anchorPath + '/') || anchorPath.startsWith(currentPath + '/');
+                        if (isMatch) {
+                            console.log('[nav-active] matched active anchor ->', anchor.href || anchorPath);
+                            container.classList.add('active');
+                            // disable pointer events for hover interactions (hover handlers check .active)
+                            const line = container.querySelector('.strike-through-line');
+                            if (line) {
+                                try {
+                                    (0, _gsap.gsap).killTweensOf(line);
+                                } catch (e) {}
+                                try {
+                                    console.log('[nav-active] about to animate line element:', line, 'computedTransform:', window.getComputedStyle(line).transform);
+                                } catch (e) {}
+                                (0, _gsap.gsap).set(line, {
+                                    transformOrigin: 'left center'
+                                });
+                                (0, _gsap.gsap).to(line, {
+                                    scaleX: 1,
+                                    duration: 0.45,
+                                    ease: 'expo.out',
+                                    onComplete: ()=>{
+                                        try {
+                                            console.log('[nav-active] line animation complete, computedTransform:', window.getComputedStyle(line).transform);
+                                        } catch (e) {}
+                                    }
+                                });
+                            }
+                        }
+                    } catch (e) {}
+                });
+            } catch (e) {
+                console.warn('active nav underline failed', e);
+            }
         });
         // Animate .x-top scaleX from 0 to 1
         const xTopEl = document.querySelector('.x-top');
@@ -1318,12 +1530,30 @@ function openNav() {
             } catch (e) {
                 console.warn('closeComplete failed', e);
             }
-        } else tl.to(navBgClose, {
-            scaleY: 0,
-            duration: 1,
-            ease: 'expo.inOut',
-            onComplete: closeComplete
-        }, 0.0);
+        } else {
+            tl.to(navBgClose, {
+                scaleY: 0,
+                duration: 1,
+                ease: 'expo.inOut',
+                onComplete: closeComplete
+            }, 0.0);
+            // Ensure underline lines collapse at the same time as the nav closes / text fades
+            try {
+                const allLines = document.querySelectorAll('.strike-through-line');
+                if (allLines && allLines.length) tl.to(allLines, {
+                    opacity: 0,
+                    duration: 0.25,
+                    ease: 'power2.in',
+                    onComplete: ()=>{
+                        try {
+                            (0, _gsap.gsap).set(allLines, {
+                                scaleX: 0
+                            });
+                        } catch (e) {}
+                    }
+                }, 0.0);
+            } catch (e) {}
+        }
         if (mainShell) tl.to(mainShell, {
             transform: 'translate3d(0, 0, 0)',
             duration: 1,
@@ -1464,6 +1694,70 @@ window.addEventListener('DOMContentLoaded', ()=>{
             e.preventDefault();
         }
     });
+    // Add hover/focus interactions for takeover nav links: animate the strike-through line
+    try {
+        const takeoverLinks = document.querySelectorAll('.takeover-nav-link');
+        if (takeoverLinks && takeoverLinks.length) takeoverLinks.forEach((link)=>{
+            const line = link.querySelector('.strike-through-line');
+            if (!line) return;
+            // start collapsed
+            (0, _gsap.gsap).set(line, {
+                transformOrigin: 'left center',
+                scaleX: 0,
+                force3D: true
+            });
+            const enter = ()=>{
+                try {
+                    // If this link's container is already marked active, skip hover animation
+                    const container = link.closest('.takeover-nav-link');
+                    if (container && container.classList.contains('active')) return;
+                    (0, _gsap.gsap).killTweensOf(line);
+                    (0, _gsap.gsap).set(line, {
+                        transformOrigin: 'left center'
+                    });
+                    (0, _gsap.gsap).to(line, {
+                        scaleX: 1,
+                        duration: 0.4,
+                        ease: 'expo.out'
+                    });
+                } catch (e) {}
+            };
+            const leave = ()=>{
+                try {
+                    // If this link's container is marked active, don't collapse the underline
+                    const container = link.closest('.takeover-nav-link');
+                    if (container && container.classList.contains('active')) return;
+                    (0, _gsap.gsap).killTweensOf(line);
+                    // keep the same transform origin (left) when collapsing
+                    (0, _gsap.gsap).set(line, {
+                        transformOrigin: 'left center'
+                    });
+                    (0, _gsap.gsap).to(line, {
+                        scaleX: 0,
+                        duration: 1,
+                        ease: 'expo.in'
+                    });
+                } catch (e) {}
+            };
+            link.addEventListener('mouseenter', enter);
+            link.addEventListener('mouseleave', leave);
+            // keyboard accessibility
+            link.addEventListener('focus', enter);
+            link.addEventListener('blur', leave);
+            // Click should immediately mark this link active and animate underline (SPA navigation will follow)
+            // Use scale mode so the previously selected line collapses by width when user clicks a new link
+            link.addEventListener('click', (ev)=>{
+                try {
+                    const container = link.closest('.takeover-nav-link');
+                    if (container) setActiveContainer(container, {
+                        mode: 'scale'
+                    });
+                } catch (e) {}
+            });
+        });
+    } catch (e) {
+        console.warn('takeover link hover init failed', e);
+    }
     // Add hover animation for nav-hover element after fonts are loaded
     const navHoverEl = document.querySelector('.nav-hover');
     if (navHoverEl) {
