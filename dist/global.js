@@ -1750,7 +1750,17 @@ window.addEventListener('DOMContentLoaded', ()=>{
             link.addEventListener('click', (ev)=>{
                 try {
                     const container = link.closest('.takeover-nav-link');
-                    if (container) setActiveContainer(container, {
+                    if (!container) return;
+                    // If this container is already active, prevent navigation/click behavior
+                    if (container.classList.contains('active')) {
+                        try {
+                            ev.preventDefault();
+                            ev.stopImmediatePropagation();
+                        } catch (e) {}
+                        return;
+                    }
+                    // Otherwise mark active and collapse previous underline by scale
+                    setActiveContainer(container, {
                         mode: 'scale'
                     });
                 } catch (e) {}
