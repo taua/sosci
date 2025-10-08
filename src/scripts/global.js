@@ -168,6 +168,11 @@ function initPageScripts() {
       if (typeof module.initWorkPage === 'function') module.initWorkPage();
       if (typeof module.cleanupWorkPage === 'function') currentPageCleanup = module.cleanupWorkPage;
     });
+  } else if (window.location.pathname.includes('science')) {
+    import('./science.js').then(module => {
+      if (typeof module.initSciencePage === 'function') module.initSciencePage();
+      if (typeof module.cleanupSciencePage === 'function') currentPageCleanup = module.cleanupSciencePage;
+    });
   } else if (window.location.pathname.includes('projects')) {
     import('./project.js').then(module => {
       if (typeof module.initProjectPage === 'function') module.initProjectPage();
@@ -254,6 +259,10 @@ barba.init({
     } else if (window.location.pathname.includes('work')) {
       if (typeof window.playWorkEnterAnimation === 'function') {
         window.playWorkEnterAnimation(data);
+      }
+    } else if (window.location.pathname.includes('science')) {
+      if (typeof window.playScienceEnterAnimation === 'function') {
+        window.playScienceEnterAnimation(data);
       }
     } else if (window.location.pathname.includes('projects')) {
       if (typeof window.playProjectEnterAnimation === 'function') {
@@ -1551,4 +1560,9 @@ window.playProjectEnterAnimation = function(data) {
   window.playHomeEnterAnimation = function(data) {
     console.log('Home Page enter animation triggered');
     
+  };
+  window.playScienceEnterAnimation = function(data) {
+    console.log('Science Page enter animation triggered');
+    // Scaffold: implement page-specific enter animation for the science page here.
+    // Example: find header and animate chars using SplitText similar to work/project pages.
   };
