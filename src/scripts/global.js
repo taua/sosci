@@ -8,6 +8,22 @@ import barba from '@barba/core';
 
 gsap.registerPlugin(ScrollTrigger, ScrollSmoother, SplitText);
 
+// Centralized timing constants for nav animations
+const NAV_CLOSE_OVERLAP = .8; // seconds to overlap the nav-bottom fade when closing
+
+// Silence console.log calls while keeping console.error/warn intact.
+// Toggle ENABLE_LOGS to true to re-enable logs during debugging.
+const ENABLE_LOGS = false;
+if (typeof ENABLE_LOGS !== 'undefined' && !ENABLE_LOGS) {
+  try {
+    if (typeof console !== 'undefined' && console && typeof console.log === 'function') {
+      // preserve original in case we want to restore later
+      try { console._origLog = console._origLog || console.log; } catch (e) {}
+      console.log = function() {};
+    }
+  } catch (e) {}
+}
+
 export function greet(page) {
   // Remove console.log
 }
@@ -438,6 +454,7 @@ try {
 
 // Declare missing tracking variables at the top of the file
 let navHoverSplit = null;
+let navBtmSplit = null;
 let isNavHoverActive = false;
 
 // Add navigation state and functionality
@@ -646,7 +663,7 @@ function openNav() {
         color: '#000000',
         duration: 0.5,
         ease: 'power2.inOut'
-      }, 0.2);
+  }, "-=0.4");
     }
       
     
@@ -656,7 +673,7 @@ function openNav() {
         color: '#000000',
         duration: 0.5,
         ease: 'power2.inOut'
-      }, 0.2);
+  }, "-=0.4");
     }
       */
     
@@ -704,13 +721,13 @@ function openNav() {
   // Normalize current path: prefer '/' for root instead of empty string
   let currentPath = (window.location && window.location.pathname) ? window.location.pathname.replace(/\/+$/, '') : '';
   if (!currentPath) currentPath = '/';
-  console.log('[nav-active] currentPath ->', '"' + currentPath + '"');
+  // nav-active debug logs removed
         const linksShellEl = document.querySelector('.takeover-nav-links-shell');
-        console.log('[nav-active] linksShellEl ->', linksShellEl);
+  // nav-active debug logs removed
         const linkContainers = document.querySelectorAll('.takeover-nav-link');
-        console.log('[nav-active] found linkContainers length ->', linkContainers.length);
+  // nav-active debug logs removed
         linkContainers.forEach((container, idx) => {
-          try { console.log('[nav-active] container idx ->', idx, 'outerHTML snippet ->', (container.outerHTML || '').slice(0,200)); } catch (e) {}
+          try { /* nav-active debug log removed */ } catch (e) {}
           try {
             // The .takeover-nav-link may be the anchor itself (an <a>), or a container that contains an <a>.
             let anchor = null;
@@ -720,7 +737,7 @@ function openNav() {
               anchor = container.querySelector ? container.querySelector('a[href]') : null;
             }
             if (!anchor) {
-              console.log('[nav-active] container', idx, 'has no anchor[href] — skipping');
+              // nav-active debug log removed
               return;
             }
             let anchorPath = '';
@@ -730,7 +747,7 @@ function openNav() {
               anchorPath = anchor.getAttribute('href') || '';
             }
             if (!anchorPath) anchorPath = '/';
-            console.log('[nav-active] comparing anchor ->', '"' + (anchor.href || anchorPath) + '"', 'normalized ->', '"' + anchorPath + '"');
+            // nav-active debug log removed
             // Strict matching rules:
             // - If anchor is root '/', only match when currentPath is '/'.
             // - Otherwise match exact path or prefix match where the prefix boundary is a slash (to avoid '/' matching everything).
@@ -741,18 +758,18 @@ function openNav() {
               isMatch = (currentPath === anchorPath) || currentPath.startsWith(anchorPath + '/') || anchorPath.startsWith(currentPath + '/');
             }
             if (isMatch) {
-              console.log('[nav-active] matched active anchor ->', anchor.href || anchorPath);
+              // nav-active debug log removed
               container.classList.add('active');
               // disable pointer events for hover interactions (hover handlers check .active)
               const line = container.querySelector('.strike-through-line');
               if (line) {
                 try { gsap.killTweensOf(line); } catch (e) {}
                 try {
-                  console.log('[nav-active] about to animate line element:', line, 'computedTransform:', window.getComputedStyle(line).transform);
+                  // nav-active debug log removed
                 } catch (e) {}
                 gsap.set(line, { transformOrigin: 'left center' });
                 gsap.to(line, { scaleX: 1, duration: 0.5, ease: 'expo.out', onComplete: () => {
-                  try { console.log('[nav-active] line animation complete, computedTransform:', window.getComputedStyle(line).transform); } catch (e) {}
+                  try { /* nav-active debug log removed */ } catch (e) {}
                 } });
               }
             }
@@ -784,14 +801,25 @@ function openNav() {
     }
 
     // Fade opacity of .nav-wht-btm when nav opens
+    // Fade opacity of .nav-wht-btm when nav opens and reset split chars on complete
     const navHoverEl = document.querySelector('.nav-hover');
     const navBtmText = navHoverEl ? navHoverEl.querySelector('.nav-wht-btm') : null;
     if (navBtmText) {
       tl.to(navBtmText, {
         opacity: 0,
         duration: 0.3,
-        ease: "power2.out"
-      }, 0.2);
+        ease: "power2.out",
+        onComplete: () => {
+          try {
+            // Reset bottom split chars and hover active flag like mouseleave
+            if (navBtmSplit && navBtmSplit.chars && navBtmSplit.chars.length) {
+              try { gsap.killTweensOf(navBtmSplit.chars); } catch (e) {}
+              try { gsap.set(navBtmSplit.chars, { transform: 'translate3d(0,0,0)' }); } catch (e) {}
+            }
+            isNavHoverActive = false;
+          } catch (e) {}
+        }
+      }, 0);
     }
   } else {
     // Set navOpen to false immediately when animation starts
@@ -852,11 +880,54 @@ function openNav() {
       navLinks.forEach(link => {
         gsap.set(link, { opacity: 1 });
       });
-  // Hide link shell and x-shell after nav closes to prevent interaction/FOUC
-  const linksShellClose = document.querySelector('.takeover-nav-links-shell');
-  if (linksShellClose) gsap.set(linksShellClose, { visibility: 'hidden' });
-  const xShellClose = document.querySelector('.x-shell');
-  if (xShellClose) gsap.set(xShellClose, { visibility: 'hidden' });
+      // Ensure header nav trigger and its split text are visible after the takeover
+      try {
+        const headerNavHover = document.querySelector('.nav-hover');
+        if (headerNavHover) {
+          // Make visible and prepare for a short fade-in to avoid a pop
+          try { headerNavHover.style.visibility = 'visible'; } catch (e) {}
+          try { gsap.set(headerNavHover, { opacity: 0, clearProps: 'transform' }); } catch (e) {}
+
+          // Restore top/bottom text and reset SplitText char transforms (no visual jump)
+          try {
+            const navTop = headerNavHover.querySelector('.nav-wht-top');
+            const navBtm = headerNavHover.querySelector('.nav-wht-btm');
+            if (navTop) try { gsap.set(navTop, { opacity: 1, clearProps: 'transform' }); } catch (e) {}
+            if (navBtm) try { gsap.set(navBtm, { opacity: 1, clearProps: 'transform' }); } catch (e) {}
+          } catch (e) {}
+
+          try {
+            if (navBtmSplit && navBtmSplit.chars && navBtmSplit.chars.length) {
+              try { gsap.killTweensOf(navBtmSplit.chars); } catch (e) {}
+              try { gsap.set(navBtmSplit.chars, { transform: 'translate3d(0,0,0)', opacity: 1 }); } catch (e) {}
+            }
+            if (navHoverSplit && navHoverSplit.chars && navHoverSplit.chars.length) {
+              try { gsap.killTweensOf(navHoverSplit.chars); } catch (e) {}
+              try { gsap.set(navHoverSplit.chars, { transform: 'translate3d(0,0,0)', opacity: 1 }); } catch (e) {}
+            }
+          } catch (e) {}
+
+          // Fade the header trigger in smoothly and then clear temp props
+          try {
+            gsap.to(headerNavHover, {
+              opacity: 1,
+              duration: 0.35,
+              ease: 'power2.out',
+              onComplete: () => {
+                try { gsap.set(headerNavHover, { clearProps: 'opacity,visibility,transform' }); } catch (e) {}
+              }
+            });
+          } catch (e) {}
+
+          isNavHoverActive = false;
+        }
+      } catch (e) {}
+
+      // Hide link shell and x-shell after nav closes to prevent interaction/FOUC
+      const linksShellClose = document.querySelector('.takeover-nav-links-shell');
+      if (linksShellClose) gsap.set(linksShellClose, { visibility: 'hidden' });
+      const xShellClose = document.querySelector('.x-shell');
+      if (xShellClose) gsap.set(xShellClose, { visibility: 'hidden' });
     };
 
     if (!navBgClose) {
@@ -913,7 +984,7 @@ function openNav() {
         opacity: 1,
         duration: 0.4,
         ease: "power2.out"
-      }, 0.7); // Start at the beginning of the timeline
+      }, "-=" + NAV_CLOSE_OVERLAP);
     }
   }
 }
@@ -978,6 +1049,42 @@ function closeNav() {
         });
       } catch (e) {}
 
+      // Ensure header nav trigger and its split text are visible after the takeover
+      try {
+        const headerNavHover = document.querySelector('.nav-hover');
+        if (headerNavHover) {
+          try { headerNavHover.style.visibility = 'visible'; } catch (e) {}
+          try { gsap.set(headerNavHover, { opacity: 0, clearProps: 'transform' }); } catch (e) {}
+          try {
+            const navTop = headerNavHover.querySelector('.nav-wht-top');
+            const navBtm = headerNavHover.querySelector('.nav-wht-btm');
+            if (navTop) try { gsap.set(navTop, { opacity: 1, clearProps: 'transform' }); } catch (e) {}
+            if (navBtm) try { gsap.set(navBtm, { opacity: 1, clearProps: 'transform' }); } catch (e) {}
+          } catch (e) {}
+          try {
+            if (navBtmSplit && navBtmSplit.chars && navBtmSplit.chars.length) {
+              try { gsap.killTweensOf(navBtmSplit.chars); } catch (e) {}
+              try { gsap.set(navBtmSplit.chars, { transform: 'translate3d(0,0,0)', opacity: 1 }); } catch (e) {}
+            }
+            if (navHoverSplit && navHoverSplit.chars && navHoverSplit.chars.length) {
+              try { gsap.killTweensOf(navHoverSplit.chars); } catch (e) {}
+              try { gsap.set(navHoverSplit.chars, { transform: 'translate3d(0,0,0)', opacity: 1 }); } catch (e) {}
+            }
+          } catch (e) {}
+          try {
+            gsap.to(headerNavHover, {
+              opacity: 1,
+              duration: 0.35,
+              ease: 'power2.out',
+              onComplete: () => {
+                try { gsap.set(headerNavHover, { clearProps: 'opacity,visibility,transform' }); } catch (e) {}
+              }
+            });
+          } catch (e) {}
+          isNavHoverActive = false;
+        }
+      } catch (e) {}
+
       // Hide link shell and x-shell after nav closes to prevent interaction/FOUC
       const linksShellClose = document.querySelector('.takeover-nav-links-shell');
       if (linksShellClose) gsap.set(linksShellClose, { visibility: 'hidden' });
@@ -1040,7 +1147,7 @@ function closeNav() {
         opacity: 1,
         duration: 0.4,
         ease: "power2.out"
-      }, 0.7);
+      }, "-=" + NAV_CLOSE_OVERLAP);
     }
   });
 }
@@ -1279,8 +1386,8 @@ window.addEventListener('DOMContentLoaded', () => {
         }
       }
       
-      // Handle bottom text if it exists
-      let navBtmSplit = null;
+  // Handle bottom text if it exists
+  navBtmSplit = null;
       if (navBtmText) {
         // Create parent container with overflow hidden if needed
         const parentBtm = navBtmText.parentElement;
