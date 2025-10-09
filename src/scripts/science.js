@@ -5,6 +5,9 @@ gsap.registerPlugin(ScrollTrigger);
 
 let _vennSVG = null;
 let _vennTL = null;
+let _vennClonedVideo = null;
+let _vennCanvas = null;
+let _vennCanvasRAF = null;
 
 export function initSciencePage() {
   console.log('Science page JS loaded!');
@@ -32,6 +35,16 @@ export function cleanupSciencePage() {
       _vennSVG.parentNode.removeChild(_vennSVG);
       _vennSVG = null;
     }
+    if (_vennClonedVideo && _vennClonedVideo.parentNode) {
+      try { _vennClonedVideo.parentNode.removeChild(_vennClonedVideo); } catch (e) {}
+      _vennClonedVideo = null;
+    }
+    if (_vennCanvas) {
+      try { cancelAnimationFrame(_vennCanvasRAF); } catch (e) {}
+      try { _vennCanvas.parentNode && _vennCanvas.parentNode.removeChild(_vennCanvas); } catch (e) {}
+      _vennCanvas = null;
+      _vennCanvasRAF = null;
+    }
   } catch (e) { console.warn('cleanupSciencePage failed', e); }
 }
 
@@ -56,6 +69,8 @@ function createVennCircles() {
   svg.style.position = 'absolute';
   svg.style.left = '0';
   svg.style.top = '0';
+  // ensure svg overlays above any canvas/video we insert
+  svg.style.zIndex = '2';
   svg.style.pointerEvents = 'none';
   svg.style.overflow = 'visible';
 
@@ -86,27 +101,38 @@ function createVennCircles() {
       // relative luminance approximation
       const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
       const darkBg = lum < 0.5;
+      // Use white outlines and a dotted stroke for both light and dark backgrounds.
+      // Small dots are achieved with a short dash length and spacing, plus round line caps.
       if (darkBg) {
-        return { fill: 'rgba(255,255,255,0.06)', stroke: '#ffffff', lensFill: 'rgba(255,255,255,0.08)', strokeDash: '8 8', strokeW: 4 };
+  return { fill: 'rgba(255,255,255,0.06)', stroke: '#ffffff', lensFill: 'rgba(255,255,255,0.08)', strokeDash: '1 7', strokeW: 2 };
       }
-      return { fill: 'rgba(0,100,255,0.12)', stroke: '#0366d6', lensFill: 'rgba(255,0,0,0.12)', strokeDash: '6 6', strokeW: 3 };
+  return { fill: 'rgba(0,100,255,0.12)', stroke: '#ffffff', lensFill: 'rgba(255,0,0,0.12)', strokeDash: '1 7', strokeW: 2 };
     } catch (e) {
-      return { fill: 'rgba(0,100,255,0.12)', stroke: '#0366d6', lensFill: 'rgba(255,0,0,0.12)', strokeDash: '6 6', strokeW: 3 };
+  return { fill: 'rgba(0,100,255,0.12)', stroke: '#0366d6', lensFill: 'rgba(255,0,0,0.12)', strokeDash: '6 6', strokeW: 2 };
     }
   };
   const colors = pickColors(bgColor);
-  left.setAttribute('fill', colors.fill);
+  // Do not fill the circles so they don't block the video — keep stroke for visual guide
+  left.setAttribute('fill', 'none');
   left.setAttribute('stroke', colors.stroke);
   left.setAttribute('stroke-dasharray', colors.strokeDash);
   left.setAttribute('stroke-width', colors.strokeW);
+  // round caps make short dash lengths look like dots
+  left.setAttribute('stroke-linecap', 'round');
+  // make the outline 50% opaque
+  left.setAttribute('stroke-opacity', '0.8');
 
   right.setAttribute('cx', cxRight);
   right.setAttribute('cy', cy);
   right.setAttribute('r', targetR);
-  right.setAttribute('fill', colors.fill);
+  right.setAttribute('fill', 'none');
   right.setAttribute('stroke', colors.stroke);
   right.setAttribute('stroke-dasharray', colors.strokeDash);
   right.setAttribute('stroke-width', colors.strokeW);
+  // round caps make short dash lengths look like dots
+  right.setAttribute('stroke-linecap', 'round');
+  // make the outline 50% opaque
+  right.setAttribute('stroke-opacity', '0.8');
 
   svg.appendChild(left);
   svg.appendChild(right);
@@ -122,6 +148,24 @@ function createVennCircles() {
   lensPath.setAttribute('fill', colors.lensFill || 'rgba(255,0,0,0.12)');
   clipPath.appendChild(lensPath);
   defs.appendChild(clipPath);
+  // Also create an SVG mask as a fallback — masks sometimes render where clipPath does not
+  const maskEl = document.createElementNS(svgNS, 'mask');
+  maskEl.setAttribute('id', 'venn-mask');
+  maskEl.setAttribute('maskUnits', 'userSpaceOnUse');
+  // a black rect background (masked-out area)
+  const maskBg = document.createElementNS(svgNS, 'rect');
+  maskBg.setAttribute('x', '0');
+  maskBg.setAttribute('y', '0');
+  maskBg.setAttribute('width', String(width));
+  maskBg.setAttribute('height', String(height));
+  maskBg.setAttribute('fill', '#000');
+  const maskPath = document.createElementNS(svgNS, 'path');
+  maskPath.setAttribute('d', '');
+  // white path shows through the mask
+  maskPath.setAttribute('fill', '#fff');
+  maskEl.appendChild(maskBg);
+  maskEl.appendChild(maskPath);
+  defs.appendChild(maskEl);
   svg.appendChild(defs);
 
   // Ensure the shell is positioned so the absolute SVG overlays correctly
@@ -133,6 +177,156 @@ function createVennCircles() {
   // Append svg to shell
   shell.appendChild(svg);
   _vennSVG = svg;
+
+  // Clone a page video into the shell (if present) to ensure we can apply clip/mask
+  try {
+    const pageVideo = document.querySelector('video');
+    if (pageVideo && !pageVideo.closest('.venn-shell')) {
+  const clone = pageVideo.cloneNode(true);
+  // Ensure autoplay will be permitted (muted) and attributes are explicit
+  try { clone.muted = true; } catch (e) {}
+  try { clone.setAttribute('muted', ''); } catch (e) {}
+  try { clone.autoplay = true; } catch (e) {}
+  try { clone.setAttribute('autoplay', ''); } catch (e) {}
+  try { clone.loop = true; } catch (e) {}
+  try { clone.setAttribute('loop', ''); } catch (e) {}
+  try { clone.playsInline = true; } catch (e) {}
+  try { clone.setAttribute('playsinline', ''); } catch (e) {}
+  try { clone.setAttribute('preload', 'auto'); } catch (e) {}
+  clone.style.position = 'absolute';
+  clone.style.left = '0';
+  clone.style.top = '0';
+  clone.style.width = '100%';
+  clone.style.height = '100%';
+  clone.style.objectFit = 'cover';
+  clone.style.zIndex = '1';
+  clone.style.pointerEvents = 'none';
+  clone.style.opacity = '1';
+  try { shell.insertBefore(clone, svg); } catch (e) { shell.appendChild(clone); }
+  // Try to start playback; some browsers require play() call even if autoplay attribute present
+  try { const p = clone.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+  _vennClonedVideo = clone;
+      // Try to start the original page video as well (may be the source)
+      try {
+        const p = pageVideo.play();
+        if (p && p.catch) p.catch(() => {
+          // try muting and playing again
+          try { pageVideo.muted = true; pageVideo.setAttribute('muted',''); } catch (e) {}
+          try { pageVideo.play().catch(() => {}); } catch (e) {}
+        });
+      } catch (e) {}
+      // ensure the clone plays
+      try { const p2 = clone.play(); if (p2 && p2.catch) p2.catch(() => {}); } catch (e) {}
+      // if autoplay is blocked, resume on first user interaction
+      const ensurePlay = (v) => {
+        try { v.play().catch(() => {}); } catch (e) {}
+      };
+      const resumeOnGesture = () => {
+        try { ensurePlay(pageVideo); ensurePlay(clone); } catch (e) {}
+      };
+      document.addEventListener('click', resumeOnGesture, { once: true });
+    }
+  } catch (e) {}
+
+  // Canvas fallback: draw frames from an existing video (inside shell) into a canvas
+  try {
+  const pageVid = shell.querySelector('video');
+    if (pageVid) {
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      canvas.style.position = 'absolute';
+      canvas.style.left = '0';
+      canvas.style.top = '0';
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+      canvas.style.zIndex = '1';
+      canvas.style.pointerEvents = 'none';
+      try { shell.insertBefore(canvas, svg); } catch (e) { shell.appendChild(canvas); }
+      _vennCanvas = canvas;
+      const ctx = canvas.getContext('2d');
+      // Ensure the shell video is playing; try to play and fallback to muting if blocked
+      try {
+        const playPromise = pageVid.play();
+        if (playPromise && playPromise.catch) playPromise.catch(() => {
+          try { pageVid.muted = true; pageVid.setAttribute('muted',''); } catch (e) {}
+          try { pageVid.play().catch(() => {}); } catch (e) {}
+        });
+      } catch (e) {}
+      document.addEventListener('click', () => { try { pageVid.play().catch(() => {}); } catch (e) {} }, { once: true });
+      // draw loop: compute a minimal scale so the drawn video fully covers the lens
+      const draw = () => {
+        try {
+          if (pageVid && pageVid.readyState >= 2) {
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            const vw = pageVid.videoWidth || pageVid.clientWidth || canvas.width;
+            const vh = pageVid.videoHeight || pageVid.clientHeight || canvas.height;
+            // compute minimal scale from lens polygon bbox so we don't reveal edges
+            let autoScale = 0.75; // fallback default
+            try {
+              const poly = lensPolygonPoints(params.lx, params.cy, params.lr, params.rx, params.cy, params.rr, 28);
+              if (poly && poly.length) {
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                for (let p of poly) {
+                  if (p.x < minX) minX = p.x;
+                  if (p.y < minY) minY = p.y;
+                  if (p.x > maxX) maxX = p.x;
+                  if (p.y > maxY) maxY = p.y;
+                }
+                const bboxW = Math.max(1, (maxX - minX));
+                const bboxH = Math.max(1, (maxY - minY));
+                const minScaleW = bboxW / canvas.width;
+                const minScaleH = bboxH / canvas.height;
+                const minScale = Math.max(minScaleW, minScaleH);
+                // add a small safety margin to avoid crisp-edge reveals
+                autoScale = Math.min(1, minScale * 1.03);
+                // ensure not tiny
+                autoScale = Math.max(autoScale, 0.2);
+              }
+            } catch (e) {
+              autoScale = 0.75;
+            }
+            const destW = Math.round(canvas.width * autoScale);
+            const destH = Math.round(canvas.height * autoScale);
+            const dx = Math.round((canvas.width - destW) / 2);
+            const dy = Math.round((canvas.height - destH) / 2);
+            try {
+              ctx.drawImage(pageVid, 0, 0, vw, vh, dx, dy, destW, destH);
+            } catch (e) {
+              // fallback to simple draw if dimension mapping fails
+              try { ctx.drawImage(pageVid, dx, dy, destW, destH); } catch (e) {}
+            }
+          }
+        } catch (e) {}
+        _vennCanvasRAF = requestAnimationFrame(draw);
+      };
+      _vennCanvasRAF = requestAnimationFrame(draw);
+    }
+  } catch (e) {}
+
+  // Visible debug overlay (helps when console is muted globally)
+  const DEBUG_OVLY = true; // set false to hide
+  let debugEl = null;
+  if (DEBUG_OVLY) {
+    debugEl = document.createElement('div');
+    debugEl.style.position = 'absolute';
+  debugEl.style.right = '12px';
+  // move below the site's nav/header so text isn't obscured
+  debugEl.style.top = '80px';
+  debugEl.style.padding = '6px 8px';
+  debugEl.style.background = 'rgba(0,0,0,0.65)';
+  debugEl.style.color = '#fff';
+  debugEl.style.fontFamily = 'monospace';
+  debugEl.style.fontSize = '11px';
+  debugEl.style.zIndex = 9999;
+  debugEl.style.pointerEvents = 'none';
+  debugEl.style.whiteSpace = 'pre-wrap';
+  debugEl.style.maxWidth = 'calc(100% - 160px)';
+  debugEl.style.overflow = 'hidden';
+  debugEl.textContent = 'venn: initializing...';
+    // append to shell (not svg) so HTML can render
+    try { shell.appendChild(debugEl); } catch (e) {}
+  }
 
   // Target radius is computed above (baseR/targetR) and used for params
 
@@ -160,6 +354,9 @@ function createVennCircles() {
     rr: targetR
   };
 
+  // distance in pixels between the visible stroke and the video mask
+  const maskCushion = 2;
+
   const updateShapes = () => {
     try {
       left.setAttribute('cx', Math.round(params.lx));
@@ -169,18 +366,118 @@ function createVennCircles() {
       right.setAttribute('cy', Math.round(params.cy));
       right.setAttribute('r', Math.round(params.rr));
 
-      // compute lens path and set it on lensPath
-      const d = lensPathForCircles(params.lx, params.cy, params.lr, params.rx, params.cy, params.rr);
+  // compute lens path and set it on lensPath
+  // shrink the radii by half the stroke width plus a small cushion so the dotted
+  // stroke does not overlap the revealed video area.
+  const insetLr = Math.max(0, params.lr - ((colors && colors.strokeW ? colors.strokeW : 2) / 2) - maskCushion);
+  const insetRr = Math.max(0, params.rr - ((colors && colors.strokeW ? colors.strokeW : 2) / 2) - maskCushion);
+  const d = lensPathForCircles(params.lx, params.cy, insetLr, params.rx, params.cy, insetRr);
       lensPath.setAttribute('d', d || '');
 
       // apply clipPath to the .venn-video-shell parent (more robust with background-cover videos)
-      const videoEl = document.querySelector('.venn-video-shell video');
       const videoShellEl = document.querySelector('.venn-video-shell');
-      if (videoShellEl) {
-        try { videoShellEl.style.clipPath = 'url(#venn-clip)'; videoShellEl.style.webkitClipPath = 'url(#venn-clip)'; videoShellEl.style.overflow = 'hidden'; } catch (e) {}
-      } else if (videoEl) {
-        try { videoEl.style.clipPath = 'url(#venn-clip)'; videoEl.style.webkitClipPath = 'url(#venn-clip)'; } catch (e) {}
+      const videoEl = videoShellEl ? videoShellEl.querySelector('video') : null;
+      // find the deepest visible element that likely contains the visual (video or background-image)
+      const findVisualTarget = (root) => {
+        if (!root) return null;
+        // prefer an actual video element
+        const vid = root.querySelector('video');
+        if (vid) return vid;
+        // if the root itself has a background image, use it
+        try {
+          const csRoot = getComputedStyle(root);
+          if (csRoot && csRoot.backgroundImage && csRoot.backgroundImage !== 'none') return root;
+        } catch (e) {}
+        // otherwise search children for a background image
+        const walker = root.querySelectorAll('*');
+        for (let i = 0; i < walker.length; i++) {
+          try {
+            const el = walker[i];
+            const cs = getComputedStyle(el);
+            if (cs && cs.backgroundImage && cs.backgroundImage !== 'none') return el;
+          } catch (e) {}
+        }
+        return root;
+      };
+  // Prefer the canvas as the visual target if it exists (we draw frames there)
+  const visualTarget = _vennCanvas || findVisualTarget(videoShellEl) || videoShellEl;
+      // prefer a full-URL reference which is more reliable across browsers
+      const frag = '#venn-clip';
+      const localRef = `url(${frag})`;
+      const fullRef = (() => {
+        try { return `url(${location.href.replace(/#.*$/, '')}${frag})`; } catch (e) { return localRef; }
+      })();
+
+      const applyRef = (el) => {
+        try {
+          el.style.clipPath = fullRef;
+          el.style.webkitClipPath = fullRef;
+          // also try the local ref as a fallback
+          // some browsers accept one or the other
+          // (setting both is fine)
+          el.style.clipPath = el.style.clipPath || localRef;
+          el.style.webkitClipPath = el.style.webkitClipPath || localRef;
+          el.style.overflow = 'hidden';
+        } catch (e) {}
+      };
+
+      // Apply clip/mask to the visual target (video element or background element)
+      if (visualTarget) {
+        applyRef(visualTarget);
       }
+
+      // Update the mask path so we can apply an SVG mask as a fallback
+      try {
+        const dStr = lensPath.getAttribute('d') || '';
+        // set mask path
+        try { maskPath.setAttribute('d', dStr || ''); } catch (e) {}
+        if (dStr) {
+          // also try CSS path() fallback for clipPath
+          const cssPath = `path('${dStr.replace(/'/g, "\\'")}')`;
+          if (videoShellEl) {
+            try { videoShellEl.style.clipPath = cssPath; videoShellEl.style.webkitClipPath = cssPath; } catch (e) {}
+          }
+          if (videoEl) {
+            try { videoEl.style.clipPath = cssPath; videoEl.style.webkitClipPath = cssPath; } catch (e) {}
+          }
+        }
+      } catch (e) {}
+
+      // As an additional, highly-compatible fallback: approximate the lens with a polygon
+      // and apply via CSS `clip-path: polygon(...)` which you noted worked from Webflow.
+      try {
+        // use the inset radii so the polygon mask sits inside the stroke by maskCushion
+        const polyLr = Math.max(0, params.lr - ((colors && colors.strokeW ? colors.strokeW : 2) / 2) - maskCushion);
+        const polyRr = Math.max(0, params.rr - ((colors && colors.strokeW ? colors.strokeW : 2) / 2) - maskCushion);
+        const polygonPoints = lensPolygonPoints(params.lx, params.cy, polyLr, params.rx, params.cy, polyRr, 24);
+        if (polygonPoints && polygonPoints.length) {
+          // convert to percent coordinates relative to the svg/viewBox width/height
+              const polyStr = polygonPoints.map(p => `${(p.x / width * 100).toFixed(3)}% ${(p.y / height * 100).toFixed(3)}%`).join(', ');
+          try { visualTarget.style.clipPath = `polygon(${polyStr})`; visualTarget.style.webkitClipPath = `polygon(${polyStr})`; } catch (e) {}
+        }
+      } catch (e) {}
+
+      // Apply the SVG mask (url) as a final fallback — some browsers support masks better
+      try {
+        const maskFrag = '#venn-mask';
+        const fullMaskRef = `url(${location.href.replace(/#.*$/, '')}${maskFrag})`;
+        if (videoShellEl) {
+          try { videoShellEl.style.mask = fullMaskRef; videoShellEl.style.webkitMask = fullMaskRef; } catch (e) {}
+        }
+        if (videoEl) {
+          try { videoEl.style.mask = fullMaskRef; videoEl.style.webkitMask = fullMaskRef; } catch (e) {}
+        }
+      } catch (e) {}
+
+      // Update visible debug overlay (useful if console logs are muted)
+      try {
+        if (debugEl) {
+          const dStr = lensPath.getAttribute('d') || '';
+          const shellClip = videoShellEl ? (getComputedStyle(videoShellEl).clipPath || getComputedStyle(videoShellEl).webkitClipPath || 'none') : 'n/a';
+          const vidClip = videoEl ? (getComputedStyle(videoEl).clipPath || getComputedStyle(videoEl).webkitClipPath || 'none') : 'n/a';
+          debugEl.textContent = `lens:${dStr? 'yes':'no'} len:${dStr.length}\nclipShell:${shellClip}\nclipVideo:${vidClip}\nfullRef:${fullRef}\nvideoEl:${!!videoEl}\nclone:${!!_vennClonedVideo}`;
+        }
+      } catch (e) {}
     } catch (e) {}
   };
 
@@ -248,4 +545,63 @@ function circlePath(cx, cy, r) {
   return `M ${cx - r} ${cy} ` +
     `a ${r} ${r} 0 1 0 ${r * 2} 0 ` +
     `a ${r} ${r} 0 1 0 ${-r * 2} 0 Z`;
+}
+
+// Approximate the lens intersection area by sampling points along both arcs
+function lensPolygonPoints(x1, y1, r1, x2, y2, r2, segments = 24) {
+  // if no intersection, return empty
+  const dx = x2 - x1; const dy = y2 - y1; const d = Math.hypot(dx, dy);
+  if (d <= 0.0001) return [];
+  if (d >= r1 + r2) return [];
+  if (d <= Math.abs(r1 - r2)) {
+    // return circle approximated
+    const r = Math.min(r1, r2);
+    const cx = r1 < r2 ? x1 : x2;
+    const cy = r1 < r2 ? y1 : y2;
+    const pts = [];
+    for (let i = 0; i < segments; i++) {
+      const a = (i / segments) * Math.PI * 2;
+      pts.push({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r });
+    }
+    return pts;
+  }
+
+  // compute intersection arc endpoints (reuse math from lensPathForCircles)
+  const a = (r1 * r1 - r2 * r2 + d * d) / (2 * d);
+  const h = Math.sqrt(Math.max(0, r1 * r1 - a * a));
+  const xm = x1 + (a * dx) / d; const ym = y1 + (a * dy) / d;
+  const rx = -dy * (h / d); const ry = dx * (h / d);
+  const xi1 = xm + rx; const yi1 = ym + ry;
+  const xi2 = xm - rx; const yi2 = ym - ry;
+
+  // angles for arcs
+  const ang1 = Math.atan2(yi1 - y1, xi1 - x1);
+  const ang2 = Math.atan2(yi2 - y1, xi2 - x1);
+  const ang3 = Math.atan2(yi2 - y2, xi2 - x2);
+  const ang4 = Math.atan2(yi1 - y2, xi1 - x2);
+
+  // normalize sweep from ang1 -> ang2 on circle1, and ang3 -> ang4 on circle2
+  const pts = [];
+  const segHalf = Math.ceil(segments / 2);
+  // circle1 arc from ang1 to ang2
+  for (let i = 0; i <= segHalf; i++) {
+    const t = i / segHalf;
+    // interpolate angle on shorter arc
+    let a1 = ang1 + shortestAngleDiff(ang1, ang2) * t;
+    pts.push({ x: x1 + Math.cos(a1) * r1, y: y1 + Math.sin(a1) * r1 });
+  }
+  // circle2 arc from ang3 to ang4
+  for (let i = 0; i <= segHalf; i++) {
+    const t = i / segHalf;
+    let a2 = ang3 + shortestAngleDiff(ang3, ang4) * t;
+    pts.push({ x: x2 + Math.cos(a2) * r2, y: y2 + Math.sin(a2) * r2 });
+  }
+  return pts;
+}
+
+function shortestAngleDiff(a, b) {
+  let diff = b - a;
+  while (diff < -Math.PI) diff += Math.PI * 2;
+  while (diff > Math.PI) diff -= Math.PI * 2;
+  return diff;
 }
