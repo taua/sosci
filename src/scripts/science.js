@@ -178,6 +178,24 @@ function createVennCircles() {
   shell.appendChild(svg);
   _vennSVG = svg;
 
+  // Locate user-provided label shells (prefer existing DOM nodes created in Webflow)
+  let leftLabel = null;
+  let rightLabel = null;
+  try {
+    leftLabel = shell.querySelector('.venn-txt-shell-left');
+    rightLabel = shell.querySelector('.venn-txt-shell-right');
+    [leftLabel, rightLabel].forEach(el => {
+      if (!el) return;
+      try {
+        // ensure centering transform so (left,top) map the element's center to the coord
+        el.style.position = el.style.position || 'absolute';
+        el.style.transform = el.style.transform || 'translate(-50%,-50%)';
+        el.style.pointerEvents = 'none';
+        el.style.zIndex = el.style.zIndex || '3';
+      } catch (e) {}
+    });
+  } catch (e) {}
+
   // Clone a page video into the shell (if present) to ensure we can apply clip/mask
   try {
     const pageVideo = document.querySelector('video');
@@ -305,7 +323,7 @@ function createVennCircles() {
   } catch (e) {}
 
   // Visible debug overlay (helps when console is muted globally)
-  const DEBUG_OVLY = true; // set false to hide
+  const DEBUG_OVLY = false; // set true to enable
   let debugEl = null;
   if (DEBUG_OVLY) {
     debugEl = document.createElement('div');
@@ -365,6 +383,19 @@ function createVennCircles() {
       right.setAttribute('cx', Math.round(params.rx));
       right.setAttribute('cy', Math.round(params.cy));
       right.setAttribute('r', Math.round(params.rr));
+
+      // Position HTML labels (if present) to the circle centers. We map viewBox
+      // coordinates -> percent so absolutely-positioned divs inside `shell` align.
+      try {
+        if (leftLabel) {
+          leftLabel.style.left = `${(params.lx / width * 100).toFixed(4)}%`;
+          leftLabel.style.top = `${(params.cy / height * 100).toFixed(4)}%`;
+        }
+        if (rightLabel) {
+          rightLabel.style.left = `${(params.rx / width * 100).toFixed(4)}%`;
+          rightLabel.style.top = `${(params.cy / height * 100).toFixed(4)}%`;
+        }
+      } catch (e) {}
 
   // compute lens path and set it on lensPath
   // shrink the radii by half the stroke width plus a small cushion so the dotted
@@ -475,7 +506,11 @@ function createVennCircles() {
           const dStr = lensPath.getAttribute('d') || '';
           const shellClip = videoShellEl ? (getComputedStyle(videoShellEl).clipPath || getComputedStyle(videoShellEl).webkitClipPath || 'none') : 'n/a';
           const vidClip = videoEl ? (getComputedStyle(videoEl).clipPath || getComputedStyle(videoEl).webkitClipPath || 'none') : 'n/a';
-          debugEl.textContent = `lens:${dStr? 'yes':'no'} len:${dStr.length}\nclipShell:${shellClip}\nclipVideo:${vidClip}\nfullRef:${fullRef}\nvideoEl:${!!videoEl}\nclone:${!!_vennClonedVideo}`;
+          const newText = `lens:${dStr? 'yes':'no'} len:${dStr.length}\nclipShell:${shellClip}\nclipVideo:${vidClip}\nfullRef:${fullRef}\nvideoEl:${!!videoEl}\nclone:${!!_vennClonedVideo}`;
+          if (newText !== lastDebugText) {
+            debugEl.textContent = newText;
+            lastDebugText = newText;
+          }
         }
       } catch (e) {}
     } catch (e) {}
