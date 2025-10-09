@@ -1254,10 +1254,10 @@ function createVennCircles() {
         } catch (e) {}
     };
     // Animate params so circles slide horizontally toward each other while the
-    // container is pinned. We want a 20% overlap of the circles' diameter.
-    // For equal radii r, overlap_distance = 0.2 * (2r) = 0.4r
-    // center_distance = 2r - overlap_distance = 1.6r
-    const finalCenterDistance = 1.6 * targetR;
+    // container is pinned. We want a 22% overlap of the circles' diameter.
+    // For equal radii r, overlap_distance = 0.22 * (2r) = 0.44r
+    // center_distance = 2r - overlap_distance = 1.56r
+    const finalCenterDistance = 1.56 * targetR;
     const centerX = width / 2;
     const finalLx = Math.round(centerX - finalCenterDistance / 2);
     const finalRx = Math.round(centerX + finalCenterDistance / 2);
@@ -1273,6 +1273,50 @@ function createVennCircles() {
         ease: 'power2.out',
         onUpdate: updateShapes
     }, 0);
+    // If the page includes an element that should appear on top of the video
+    // inside the lens (class `.venn-vid-txt`), animate its blur from 20px -> 0
+    // starting when the circles first begin to overlap. We compute the relative
+    // fraction of the params animation where overlap starts and insert a scrubbed
+    // tween into the same timeline so it follows the scroll scrub.
+    try {
+        const vidTxt = shell.querySelector('.venn-vid-txt');
+        if (vidTxt) {
+            // use GSAP to set initial state (clean and performant)
+            try {
+                (0, _gsap.gsap).set(vidTxt, {
+                    filter: 'blur(20px)',
+                    opacity: 0,
+                    willChange: 'filter,opacity'
+                });
+            } catch (e) {}
+            // compute fraction where the circles begin to overlap (center distance < sum of radii)
+            const initialDist = cxRight - cxLeft;
+            const finalDist = finalRx - finalLx;
+            const rSum = params.lr + params.rr;
+            if (Math.abs(finalDist - initialDist) > 0.0001) {
+                let frac = (rSum - initialDist) / (finalDist - initialDist);
+                frac = Math.max(0, Math.min(1, frac));
+                const tlDur = tl.duration() || 1.2;
+                // start slightly earlier so the reveal begins before overlap; tweakable
+                const earlyFraction = 0.45; // start 70% of timeline earlier
+                let startTime = frac * tlDur - earlyFraction * tlDur;
+                startTime = Math.max(0, startTime);
+                const remaining = Math.max(0.001, tlDur - startTime);
+                try {
+                    // use fromTo so both filter and opacity are driven together and rendered by GSAP
+                    tl.fromTo(vidTxt, {
+                        filter: 'blur(20px)',
+                        opacity: 0
+                    }, {
+                        filter: 'blur(0px)',
+                        opacity: 1,
+                        duration: remaining,
+                        ease: 'none'
+                    }, startTime);
+                } catch (e) {}
+            }
+        }
+    } catch (e) {}
     // initialize
     updateShapes();
     _vennTL = tl;
