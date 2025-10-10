@@ -1,5 +1,6 @@
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import horizontalLoop from "./horizontalLoop";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -16,6 +17,26 @@ export function initSciencePage() {
   } catch (e) {
     console.error('Failed to init venn circles:', e);
   }
+
+  // Initialize project tickers on the science page using the same behavior
+  // as the homepage. Targets use the same class `.home-project-scroll-txt-shell`.
+  try {
+    const scienceTickerCleanups = [];
+    document.querySelectorAll('.home-project-scroll-txt-shell, .science-scroll-txt-shell').forEach((shell, index) => {
+      const txts = shell.querySelectorAll('.home-project-txt');
+      if (txts.length > 0) {
+        const initialDirection = index % 2 === 0 ? 1 : -1;
+        const cleanup = introTicker(txts, shell, initialDirection);
+        if (typeof cleanup === 'function') scienceTickerCleanups.push(cleanup);
+      }
+    });
+    // expose cleanup so cleanupSciencePage can remove effects when navigating away
+    window._scienceTickerCleanup = () => {
+      try {
+        scienceTickerCleanups.forEach(fn => { try { fn(); } catch (e) {} });
+      } catch (e) {}
+    };
+  } catch (e) { /* ignore */ }
 }
 
 window.initPageTransitions = function() {
@@ -46,6 +67,90 @@ export function cleanupSciencePage() {
       _vennCanvasRAF = null;
     }
   } catch (e) { console.warn('cleanupSciencePage failed', e); }
+
+  // Cleanup any project tickers initialized for the science page
+  try {
+    if (typeof window._scienceTickerCleanup === 'function') {
+      try { window._scienceTickerCleanup(); } catch (e) {}
+      window._scienceTickerCleanup = null;
+    }
+  } catch (e) {}
+}
+
+// Ticker function copied/adapted from home.js so science page tickers behave the same
+function introTicker(txtNodes, shell, initialDirection = 1) {
+  const baseSpeed = 1.2;
+  const maxSpeed = 8;
+  const velocityMult = 0.005;
+
+  const heroLoop = horizontalLoop(txtNodes, {
+    repeat: -1,
+    speed: baseSpeed,
+    reversed: initialDirection < 0
+  });
+
+  const absBaseSpeed = Math.abs(baseSpeed);
+  heroLoop.timeScale(absBaseSpeed);
+
+  let scrollTimeout;
+  let currentDirection = initialDirection;
+
+  const pauseLoop = () => {
+    gsap.killTweensOf(heroLoop);
+    heroLoop.pause();
+  };
+
+  const resumeLoop = () => {
+    heroLoop.resume();
+    heroLoop.timeScale(absBaseSpeed);
+  };
+
+  const st = ScrollTrigger.create({
+    trigger: shell,
+    start: "top+=20% bottom",
+    end: "bottom-=20% top",
+    onUpdate: ({ isActive, getVelocity }) => {
+      if (!isActive) {
+        pauseLoop();
+        return;
+      }
+
+      gsap.killTweensOf(heroLoop);
+
+      const scrollVelocity = getVelocity();
+      if (Math.abs(scrollVelocity) > 0.5) {
+        const scrollDirection = Math.sign(scrollVelocity);
+        const effectiveDirection = initialDirection < 0 ? -scrollDirection : scrollDirection;
+        currentDirection = effectiveDirection;
+
+        const boostAmount = Math.min(Math.abs(scrollVelocity * velocityMult), maxSpeed);
+        const effectiveSpeed = absBaseSpeed + (Math.abs(effectiveDirection) * boostAmount);
+
+        heroLoop.timeScale(effectiveSpeed * Math.sign(effectiveDirection));
+      }
+
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        gsap.to(heroLoop, {
+          timeScale: absBaseSpeed * Math.sign(currentDirection),
+          duration: 0.5,
+          ease: "power1.out",
+          overwrite: true
+        });
+      }, 150);
+    },
+    onLeave: pauseLoop,
+    onEnter: resumeLoop,
+    onLeaveBack: pauseLoop,
+    onEnterBack: resumeLoop
+  });
+
+  return () => {
+    clearTimeout(scrollTimeout);
+    try { st && st.kill && st.kill(); } catch (e) {}
+    gsap.killTweensOf(heroLoop);
+    try { heroLoop.kill && heroLoop.kill(); } catch (e) {}
+  };
 }
 
 function createVennCircles() {
