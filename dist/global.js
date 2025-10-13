@@ -821,7 +821,7 @@ function initPageScripts() {
         if (typeof module.initWorkPage === 'function') module.initWorkPage();
         if (typeof module.cleanupWorkPage === 'function') currentPageCleanup = module.cleanupWorkPage;
     });
-    else if (window.location.pathname.includes('science')) require("a9ec3ea7ae0f1d2f").then((module)=>{
+    else if (window.location.pathname.includes('science') || window.location.pathname.includes('formula')) require("b5797252772b0643").then((module)=>{
         if (typeof module.initSciencePage === 'function') module.initSciencePage();
         if (typeof module.cleanupSciencePage === 'function') currentPageCleanup = module.cleanupSciencePage;
     });
@@ -902,8 +902,8 @@ let currentPageCleanup = null;
                     if (typeof window.playAboutEnterAnimation === 'function') window.playAboutEnterAnimation(data);
                 } else if (window.location.pathname.includes('work')) {
                     if (typeof window.playWorkEnterAnimation === 'function') window.playWorkEnterAnimation(data);
-                } else if (window.location.pathname.includes('science')) {
-                    if (typeof window.playScienceEnterAnimation === 'function') window.playScienceEnterAnimation(data);
+                } else if (window.location.pathname.includes('formula')) {
+                    if (typeof window.playFormulaEnterAnimation === 'function') window.playFormulaEnterAnimation(data);
                 } else if (window.location.pathname.includes('projects')) {
                     if (typeof window.playProjectEnterAnimation === 'function') window.playProjectEnterAnimation(data);
                 }
@@ -2275,13 +2275,13 @@ window.playWorkEnterAnimation = function(data) {
 window.playHomeEnterAnimation = function(data) {
     console.log('Home Page enter animation triggered');
 };
-window.playScienceEnterAnimation = function(data) {
-    console.log('Science Page enter animation triggered');
-// Scaffold: implement page-specific enter animation for the science page here.
+window.playFormulaEnterAnimation = function(data) {
+    console.log('Formula Page enter animation triggered');
+// Scaffold: implement page-specific enter animation for the formula page here.
 // Example: find header and animate chars using SplitText similar to work/project pages.
 };
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC","gsap/ScrollSmoother":"cGoQX","gsap/ScrollTrigger":"7wnFk","gsap/SplitText":"63tvY","./grainEffect":"gseYd","@barba/core":"gIWbX","15f686a79e03c55a":"an9pY","9e5b3873cfad757a":"3UF59","fb0e6e5a4ade22e8":"fNrHc","3281aad929e661e8":"iuGBB","a9ec3ea7ae0f1d2f":"e7CgB"}],"gkKU3":[function(require,module,exports,__globalThis) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap":"fPSuC","gsap/ScrollSmoother":"cGoQX","gsap/ScrollTrigger":"7wnFk","gsap/SplitText":"63tvY","./grainEffect":"gseYd","@barba/core":"gIWbX","15f686a79e03c55a":"an9pY","9e5b3873cfad757a":"3UF59","fb0e6e5a4ade22e8":"fNrHc","3281aad929e661e8":"iuGBB","b5797252772b0643":"b1SmN"}],"gkKU3":[function(require,module,exports,__globalThis) {
 exports.interopDefault = function(a) {
     return a && a.__esModule ? a : {
         default: a
@@ -11090,12 +11090,12 @@ module.exports = require("9303aa280a72ebc4")(module.bundle.resolve("project.b69f
     throw err;
 }).then(()=>module.bundle.root('ba2gq'));
 
-},{"9303aa280a72ebc4":"61B45","ba2gq":"ba2gq"}],"e7CgB":[function(require,module,exports,__globalThis) {
-module.exports = require("de622da2aa4005c5")(module.bundle.resolve("science.8ff8c468.js")).catch((err)=>{
+},{"9303aa280a72ebc4":"61B45","ba2gq":"ba2gq"}],"b1SmN":[function(require,module,exports,__globalThis) {
+module.exports = require("cc25fbbc5b563fc1")(module.bundle.resolve("formula.5806d454.js")).catch((err)=>{
     delete module.bundle.cache[module.id];
     throw err;
-}).then(()=>module.bundle.root('bvEbY'));
+}).then(()=>module.bundle.root('l8Qcj'));
 
-},{"de622da2aa4005c5":"61B45","bvEbY":"bvEbY"}]},["8Kk5H","Niccm"], "Niccm", "parcelRequire60dc", {}, "./", "/")
+},{"cc25fbbc5b563fc1":"61B45","l8Qcj":"l8Qcj"}]},["8Kk5H","Niccm"], "Niccm", "parcelRequire60dc", {}, "./", "/")
 
 //# sourceMappingURL=global.js.map

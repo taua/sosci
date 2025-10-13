@@ -168,8 +168,8 @@ function initPageScripts() {
       if (typeof module.initWorkPage === 'function') module.initWorkPage();
       if (typeof module.cleanupWorkPage === 'function') currentPageCleanup = module.cleanupWorkPage;
     });
-  } else if (window.location.pathname.includes('science')) {
-    import('./science.js').then(module => {
+  } else if (window.location.pathname.includes('science') || window.location.pathname.includes('formula')) {
+    import('./formula.js').then(module => {
       if (typeof module.initSciencePage === 'function') module.initSciencePage();
       if (typeof module.cleanupSciencePage === 'function') currentPageCleanup = module.cleanupSciencePage;
     });
@@ -260,9 +260,9 @@ barba.init({
       if (typeof window.playWorkEnterAnimation === 'function') {
         window.playWorkEnterAnimation(data);
       }
-    } else if (window.location.pathname.includes('science')) {
-      if (typeof window.playScienceEnterAnimation === 'function') {
-        window.playScienceEnterAnimation(data);
+    } else if (window.location.pathname.includes('formula')) {
+      if (typeof window.playFormulaEnterAnimation === 'function') {
+        window.playFormulaEnterAnimation(data);
       }
     } else if (window.location.pathname.includes('projects')) {
       if (typeof window.playProjectEnterAnimation === 'function') {
@@ -1561,8 +1561,8 @@ window.playProjectEnterAnimation = function(data) {
     console.log('Home Page enter animation triggered');
     
   };
-  window.playScienceEnterAnimation = function(data) {
-    console.log('Science Page enter animation triggered');
-    // Scaffold: implement page-specific enter animation for the science page here.
+  window.playFormulaEnterAnimation = function(data) {
+    console.log('Formula Page enter animation triggered');
+    // Scaffold: implement page-specific enter animation for the formula page here.
     // Example: find header and animate chars using SplitText similar to work/project pages.
   };

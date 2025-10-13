@@ -11,7 +11,7 @@ let _vennCanvas = null;
 let _vennCanvasRAF = null;
 
 export function initSciencePage() {
-  console.log('Science page JS loaded!');
+  console.log('Formula page JS loaded!');
   try {
     createVennCircles();
   } catch (e) {
@@ -23,12 +23,32 @@ export function initSciencePage() {
   try {
     const scienceTickerCleanups = [];
     document.querySelectorAll('.home-project-scroll-txt-shell, .science-scroll-txt-shell').forEach((shell, index) => {
-      const txts = shell.querySelectorAll('.home-project-txt');
-      if (txts.length > 0) {
-        const initialDirection = index % 2 === 0 ? 1 : -1;
-        const cleanup = introTicker(txts, shell, initialDirection);
-        if (typeof cleanup === 'function') scienceTickerCleanups.push(cleanup);
+      // Try common selectors first (homepage naming and the science page naming)
+      let txts = shell.querySelectorAll('.home-project-txt, .science-project-txt, [data-ticker-item]');
+      // Fallback: if no explicit items found, use direct children that look like ticker items
+      if (!txts || txts.length === 0) {
+        const children = Array.from(shell.children || []);
+        // Filter out elements that are clearly not visual/text items (e.g., script, svg, empty)
+        const candidates = children.filter(el => {
+          try {
+            const tag = (el.tagName || '').toLowerCase();
+            if (tag === 'script' || tag === 'svg' || tag === 'canvas') return false;
+            const txt = (el.textContent || '').trim();
+            return txt.length > 0 || el.querySelector && el.querySelector('img,svg');
+          } catch (e) { return false; }
+        });
+        if (candidates.length) txts = candidates;
       }
+
+      if (!txts || txts.length === 0) {
+        // No ticker items found — log for debugging and skip
+        try { console.debug('[formula] no ticker items found in shell:', shell); } catch (e) {}
+        return;
+      }
+
+      const initialDirection = index % 2 === 0 ? 1 : -1;
+      const cleanup = introTicker(txts, shell, initialDirection);
+      if (typeof cleanup === 'function') scienceTickerCleanups.push(cleanup);
     });
     // expose cleanup so cleanupSciencePage can remove effects when navigating away
     window._scienceTickerCleanup = () => {
