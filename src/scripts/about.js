@@ -1,8 +1,9 @@
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { SplitText } from "gsap/SplitText";
 import horizontalLoop from "./horizontalLoop";
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, SplitText);
 
 export function initAboutPage() {
   console.log('About page JS loaded!');
@@ -39,6 +40,35 @@ export function initAboutPage() {
       try { aboutTickerCleanups.forEach(fn => { try { fn(); } catch (e) {} }); } catch (e) {}
     };
   } catch (e) { /* ignore */ }
+
+  // Animate manifesto text words on scroll using GSAP SplitText (same as home)
+  const manifesto = document.querySelector('.manifesto-txt');
+  if (manifesto) {
+    // Only split once
+    if (!manifesto.classList.contains('split')) {
+      try {
+        const split = new SplitText(manifesto, { type: 'words' });
+        manifesto.classList.add('split');
+        // Animate words
+        gsap.set(split.words, { color: '#2f2f2fff', display: 'inline', whiteSpace: 'normal' });
+        gsap.to(split.words, {
+          color: '#fff',
+          stagger: 0.05,
+          duration: 0.5,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: '.manifesto-shell',
+            start: 'top 80%',
+            end: 'bottom 20%',
+            scrub: true,
+          }
+        });
+      } catch (e) {
+        // If SplitText isn't available or errors, fail silently
+        try { console.warn('manifesto split failed', e); } catch (ee) {}
+      }
+    }
+  }
 }
 
 window.initPageTransitions = function() {

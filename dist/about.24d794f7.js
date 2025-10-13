@@ -673,9 +673,10 @@ parcelHelpers.export(exports, "initAboutPage", ()=>initAboutPage);
 parcelHelpers.export(exports, "cleanupAboutPage", ()=>cleanupAboutPage);
 var _gsap = require("gsap");
 var _scrollTrigger = require("gsap/ScrollTrigger");
+var _splitText = require("gsap/SplitText");
 var _horizontalLoop = require("./horizontalLoop");
 var _horizontalLoopDefault = parcelHelpers.interopDefault(_horizontalLoop);
-(0, _gsap.gsap).registerPlugin((0, _scrollTrigger.ScrollTrigger));
+(0, _gsap.gsap).registerPlugin((0, _scrollTrigger.ScrollTrigger), (0, _splitText.SplitText));
 function initAboutPage() {
     console.log('About page JS loaded!');
     try {
@@ -718,6 +719,40 @@ function initAboutPage() {
             } catch (e) {}
         };
     } catch (e) {}
+    // Animate manifesto text words on scroll using GSAP SplitText (same as home)
+    const manifesto = document.querySelector('.manifesto-txt');
+    if (manifesto) {
+        // Only split once
+        if (!manifesto.classList.contains('split')) try {
+            const split = new (0, _splitText.SplitText)(manifesto, {
+                type: 'words'
+            });
+            manifesto.classList.add('split');
+            // Animate words
+            (0, _gsap.gsap).set(split.words, {
+                color: '#2f2f2fff',
+                display: 'inline',
+                whiteSpace: 'normal'
+            });
+            (0, _gsap.gsap).to(split.words, {
+                color: '#fff',
+                stagger: 0.05,
+                duration: 0.5,
+                ease: 'power2.out',
+                scrollTrigger: {
+                    trigger: '.manifesto-shell',
+                    start: 'top 80%',
+                    end: 'bottom 20%',
+                    scrub: true
+                }
+            });
+        } catch (e) {
+            // If SplitText isn't available or errors, fail silently
+            try {
+                console.warn('manifesto split failed', e);
+            } catch (ee) {}
+        }
+    }
 }
 window.initPageTransitions = function() {
     // Your page-specific GSAP intro animation here
@@ -802,7 +837,7 @@ function introTicker(txtNodes, shell, initialDirection = 1) {
     };
 }
 
-},{"gsap":"fPSuC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap/ScrollTrigger":"7wnFk","./horizontalLoop":"02lVZ"}],"02lVZ":[function(require,module,exports,__globalThis) {
+},{"gsap":"fPSuC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap/ScrollTrigger":"7wnFk","./horizontalLoop":"02lVZ","gsap/SplitText":"63tvY"}],"02lVZ":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "default", ()=>horizontalLoop);
