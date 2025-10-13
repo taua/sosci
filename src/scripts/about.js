@@ -1,8 +1,44 @@
 import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import horizontalLoop from "./horizontalLoop";
+
+gsap.registerPlugin(ScrollTrigger);
 
 export function initAboutPage() {
   console.log('About page JS loaded!');
-  // Add about page specific GSAP code here
+
+  try {
+    const aboutTickerCleanups = [];
+    document.querySelectorAll('.formula-scroll-txt-shell').forEach((shell, index) => {
+      // try the common ticker item selectors used elsewhere
+      let txts = shell.querySelectorAll('.home-project-txt, .science-project-txt, [data-ticker-item]');
+      if (!txts || txts.length === 0) {
+        const children = Array.from(shell.children || []);
+        const candidates = children.filter(el => {
+          try {
+            const tag = (el.tagName || '').toLowerCase();
+            if (tag === 'script' || tag === 'svg' || tag === 'canvas') return false;
+            const txt = (el.textContent || '').trim();
+            return txt.length > 0 || el.querySelector && el.querySelector('img,svg');
+          } catch (e) { return false; }
+        });
+        if (candidates.length) txts = candidates;
+      }
+      if (!txts || txts.length === 0) {
+        try { console.debug('[about] no ticker items found in shell:', shell); } catch (e) {}
+        return;
+      }
+
+      const initialDirection = index % 2 === 0 ? 1 : -1;
+      const cleanup = introTicker(txts, shell, initialDirection);
+      if (typeof cleanup === 'function') aboutTickerCleanups.push(cleanup);
+    });
+
+    // expose cleanup for the about page so page transitions can remove them
+    window._aboutTickerCleanup = () => {
+      try { aboutTickerCleanups.forEach(fn => { try { fn(); } catch (e) {} }); } catch (e) {}
+    };
+  } catch (e) { /* ignore */ }
 }
 
 window.initPageTransitions = function() {
@@ -11,5 +47,87 @@ window.initPageTransitions = function() {
 };
 
 export function cleanupAboutPage() {
-  // No-op cleanup for about page; placeholder for symmetry with other pages
+  // cleanup any tickers created here
+  try {
+    if (typeof window._aboutTickerCleanup === 'function') {
+      try { window._aboutTickerCleanup(); } catch (e) {}
+      window._aboutTickerCleanup = null;
+    }
+  } catch (e) {}
+}
+
+// Ticker function adapted from home/formula
+function introTicker(txtNodes, shell, initialDirection = 1) {
+  const baseSpeed = 1.2;
+  const maxSpeed = 8;
+  const velocityMult = 0.005;
+
+  const heroLoop = horizontalLoop(txtNodes, {
+    repeat: -1,
+    speed: baseSpeed,
+    reversed: initialDirection < 0
+  });
+
+  const absBaseSpeed = Math.abs(baseSpeed);
+  heroLoop.timeScale(absBaseSpeed);
+
+  let scrollTimeout;
+  let currentDirection = initialDirection;
+
+  const pauseLoop = () => {
+    gsap.killTweensOf(heroLoop);
+    heroLoop.pause();
+  };
+
+  const resumeLoop = () => {
+    heroLoop.resume();
+    heroLoop.timeScale(absBaseSpeed);
+  };
+
+  const st = ScrollTrigger.create({
+    trigger: shell,
+    start: "top+=20% bottom",
+    end: "bottom-=20% top",
+    onUpdate: ({ isActive, getVelocity }) => {
+      if (!isActive) {
+        pauseLoop();
+        return;
+      }
+
+      gsap.killTweensOf(heroLoop);
+
+      const scrollVelocity = getVelocity();
+      if (Math.abs(scrollVelocity) > 0.5) {
+        const scrollDirection = Math.sign(scrollVelocity);
+        const effectiveDirection = initialDirection < 0 ? -scrollDirection : scrollDirection;
+        currentDirection = effectiveDirection;
+
+        const boostAmount = Math.min(Math.abs(scrollVelocity * velocityMult), maxSpeed);
+        const effectiveSpeed = absBaseSpeed + (Math.abs(effectiveDirection) * boostAmount);
+
+        heroLoop.timeScale(effectiveSpeed * Math.sign(effectiveDirection));
+      }
+
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        gsap.to(heroLoop, {
+          timeScale: absBaseSpeed * Math.sign(currentDirection),
+          duration: 0.5,
+          ease: "power1.out",
+          overwrite: true
+        });
+      }, 150);
+    },
+    onLeave: pauseLoop,
+    onEnter: resumeLoop,
+    onLeaveBack: pauseLoop,
+    onEnterBack: resumeLoop
+  });
+
+  return () => {
+    clearTimeout(scrollTimeout);
+    try { st && st.kill && st.kill(); } catch (e) {}
+    gsap.killTweensOf(heroLoop);
+    try { heroLoop.kill && heroLoop.kill(); } catch (e) {}
+  };
 }
