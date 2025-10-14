@@ -753,6 +753,21 @@ function initAboutPage() {
             } catch (ee) {}
         }
     }
+    // Number pillars blocks (format: "01 /", "02 /")
+    try {
+        const elems = Array.from(document.querySelectorAll('.pillars-num-txt'));
+        if (elems && elems.length) {
+            const total = elems.length;
+            const padLen = Math.max(2, String(total).length);
+            elems.forEach((el, i)=>{
+                try {
+                    const n = String(i + 1).padStart(padLen, '0');
+                    // set as number + space + slash (match example)
+                    el.innerHTML = `${n} /`;
+                } catch (e) {}
+            });
+        }
+    } catch (e) {}
 }
 window.initPageTransitions = function() {
     // Your page-specific GSAP intro animation here
