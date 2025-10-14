@@ -34,6 +34,21 @@ export function initWorkPage() {
     _workState.workLinks = workLinks;
     _workState.workImgMasks = workImgMasks;
 
+        // Number work link blocks (format: "01 /", "02 /")
+        try {
+            const elems = Array.from(document.querySelectorAll('.work-link-num-txt'));
+            if (elems && elems.length) {
+                const total = elems.length;
+                const padLen = Math.max(2, String(total).length);
+                elems.forEach((el, i) => {
+                    try {
+                        const n = String(i + 1).padStart(padLen, '0');
+                        el.innerHTML = `${n} /`;
+                    } catch (e) {}
+                });
+            }
+        } catch (e) {}
+
     // Debug info removed for cleaner console output
 
     if (!workImgShell || !workLinksShell) return;
