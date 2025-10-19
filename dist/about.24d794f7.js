@@ -852,7 +852,7 @@ function introTicker(txtNodes, shell, initialDirection = 1) {
     };
 }
 
-},{"gsap":"fPSuC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap/ScrollTrigger":"7wnFk","./horizontalLoop":"02lVZ","gsap/SplitText":"63tvY"}],"02lVZ":[function(require,module,exports,__globalThis) {
+},{"gsap":"fPSuC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap/ScrollTrigger":"7wnFk","gsap/SplitText":"63tvY","./horizontalLoop":"02lVZ"}],"02lVZ":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "default", ()=>horizontalLoop);

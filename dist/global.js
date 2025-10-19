@@ -1497,27 +1497,40 @@ function openNav() {
         // Fade opacity of .nav-wht-btm when nav opens and reset split chars on complete
         const navHoverEl = document.querySelector('.nav-hover');
         const navBtmText = navHoverEl ? navHoverEl.querySelector('.nav-wht-btm') : null;
-        if (navBtmText) tl.to(navBtmText, {
-            opacity: 0,
-            duration: 0.3,
-            ease: "power2.out",
-            onComplete: ()=>{
-                try {
-                    // Reset bottom split chars and hover active flag like mouseleave
-                    if (navBtmSplit && navBtmSplit.chars && navBtmSplit.chars.length) {
-                        try {
-                            (0, _gsap.gsap).killTweensOf(navBtmSplit.chars);
-                        } catch (e) {}
-                        try {
-                            (0, _gsap.gsap).set(navBtmSplit.chars, {
-                                transform: 'translate3d(0,0,0)'
-                            });
-                        } catch (e) {}
-                    }
-                    isNavHoverActive = false;
-                } catch (e) {}
-            }
-        }, 0);
+        // Kill any parent .nav-hover tweens and set opacity to 0 immediately
+        if (navHoverEl) {
+            (0, _gsap.gsap).killTweensOf(navHoverEl);
+            (0, _gsap.gsap).set(navHoverEl, {
+                opacity: 0
+            });
+        }
+        if (navBtmText) {
+            (0, _gsap.gsap).killTweensOf(navBtmText); // Kill any existing tweens before animating
+            (0, _gsap.gsap).set(navBtmText, {
+                opacity: 1
+            }); // Ensure starting state is visible
+            tl.to(navBtmText, {
+                opacity: 0,
+                duration: 0.3,
+                ease: "power2.out",
+                onComplete: ()=>{
+                    try {
+                        // Reset bottom split chars and hover active flag like mouseleave
+                        if (navBtmSplit && navBtmSplit.chars && navBtmSplit.chars.length) {
+                            try {
+                                (0, _gsap.gsap).killTweensOf(navBtmSplit.chars);
+                            } catch (e) {}
+                            try {
+                                (0, _gsap.gsap).set(navBtmSplit.chars, {
+                                    transform: 'translate3d(0,0,0)'
+                                });
+                            } catch (e) {}
+                        }
+                        isNavHoverActive = false;
+                    } catch (e) {}
+                }
+            }, 0);
+        }
     } else {
         // Set navOpen to false immediately when animation starts
         navOpen = false;
@@ -1708,11 +1721,17 @@ function openNav() {
         // Fade opacity of .nav-wht-btm back in when nav closes
         const navHoverEl = document.querySelector('.nav-hover');
         const navBtmText = navHoverEl ? navHoverEl.querySelector('.nav-wht-btm') : null;
-        if (navBtmText) tl.to(navBtmText, {
-            opacity: 1,
-            duration: 0.4,
-            ease: "power2.out"
-        }, "-=" + NAV_CLOSE_OVERLAP);
+        if (navBtmText) {
+            (0, _gsap.gsap).killTweensOf(navBtmText); // Kill any existing tweens before animating
+            (0, _gsap.gsap).set(navBtmText, {
+                opacity: 0
+            }); // Ensure starting state is hidden
+            tl.to(navBtmText, {
+                opacity: 1,
+                duration: 0.4,
+                ease: "power2.out"
+            }, "-=" + NAV_CLOSE_OVERLAP);
+        }
     }
 }
 // Remove this function from global.js
@@ -1896,11 +1915,17 @@ function closeNav() {
         // Fade opacity of .nav-wht-btm back in when nav closes
         const navHoverEl = document.querySelector('.nav-hover');
         const navBtmText = navHoverEl ? navHoverEl.querySelector('.nav-wht-btm') : null;
-        if (navBtmText) tl.to(navBtmText, {
-            opacity: 1,
-            duration: 0.4,
-            ease: "power2.out"
-        }, "-=" + NAV_CLOSE_OVERLAP);
+        if (navBtmText) {
+            (0, _gsap.gsap).killTweensOf(navBtmText); // Kill any existing tweens before animating
+            (0, _gsap.gsap).set(navBtmText, {
+                opacity: 0
+            }); // Ensure starting state is hidden
+            tl.to(navBtmText, {
+                opacity: 1,
+                duration: 0.4,
+                ease: "power2.out"
+            }, "-=" + NAV_CLOSE_OVERLAP);
+        }
     });
 }
 function playLoadingAnimation() {

@@ -813,7 +813,16 @@ function openNav() {
     // Fade opacity of .nav-wht-btm when nav opens and reset split chars on complete
     const navHoverEl = document.querySelector('.nav-hover');
     const navBtmText = navHoverEl ? navHoverEl.querySelector('.nav-wht-btm') : null;
+    
+    // Kill any parent .nav-hover tweens and set opacity to 0 immediately
+    if (navHoverEl) {
+      gsap.killTweensOf(navHoverEl);
+      gsap.set(navHoverEl, { opacity: 0 });
+    }
+    
     if (navBtmText) {
+      gsap.killTweensOf(navBtmText); // Kill any existing tweens before animating
+      gsap.set(navBtmText, { opacity: 1 }); // Ensure starting state is visible
       tl.to(navBtmText, {
         opacity: 0,
         duration: 0.3,
@@ -989,6 +998,8 @@ function openNav() {
     const navHoverEl = document.querySelector('.nav-hover');
     const navBtmText = navHoverEl ? navHoverEl.querySelector('.nav-wht-btm') : null;
     if (navBtmText) {
+      gsap.killTweensOf(navBtmText); // Kill any existing tweens before animating
+      gsap.set(navBtmText, { opacity: 0 }); // Ensure starting state is hidden
       tl.to(navBtmText, {
         opacity: 1,
         duration: 0.4,
@@ -1152,6 +1163,8 @@ function closeNav() {
     const navHoverEl = document.querySelector('.nav-hover');
     const navBtmText = navHoverEl ? navHoverEl.querySelector('.nav-wht-btm') : null;
     if (navBtmText) {
+      gsap.killTweensOf(navBtmText); // Kill any existing tweens before animating
+      gsap.set(navBtmText, { opacity: 0 }); // Ensure starting state is hidden
       tl.to(navBtmText, {
         opacity: 1,
         duration: 0.4,
