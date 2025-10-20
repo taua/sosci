@@ -447,6 +447,8 @@ try {
   if (barba && barba.hooks) {
     barba.hooks.once(() => {
       try { robustScrollReset(); } catch (e) {}
+      // Reset nav hover state on initial load
+      isNavHoverActive = false;
     });
 
     barba.hooks.afterEnter(() => {
@@ -455,6 +457,15 @@ try {
         try { ScrollTrigger.refresh(); } catch (e) {}
         try { robustScrollReset(); } catch (e) {}
           try { updateActiveFromLocation(); } catch (e) {}
+          // Reset nav hover state on page transition
+          isNavHoverActive = false;
+          // Reset char transforms to default state
+          if (navHoverSplit?.chars?.length) {
+            gsap.set(navHoverSplit.chars, { transform: 'translate3d(0, 0, 0)' });
+          }
+          if (navBtmSplit?.chars?.length) {
+            gsap.set(navBtmSplit.chars, { transform: 'translate3d(0, 0, 0)' });
+          }
       }));
     });
   }
@@ -809,35 +820,23 @@ function openNav() {
       }, 0);
     }
 
-    // Fade opacity of .nav-wht-btm when nav opens
-    // Fade opacity of .nav-wht-btm when nav opens and reset split chars on complete
+    // Fade opacity of .nav-hover when nav opens
     const navHoverEl = document.querySelector('.nav-hover');
-    const navBtmText = navHoverEl ? navHoverEl.querySelector('.nav-wht-btm') : null;
     
-    // Kill any parent .nav-hover tweens and set opacity to 0 immediately
     if (navHoverEl) {
-      gsap.killTweensOf(navHoverEl);
-      gsap.set(navHoverEl, { opacity: 0 });
-    }
-    
-    if (navBtmText) {
-      gsap.killTweensOf(navBtmText); // Kill any existing tweens before animating
-      gsap.set(navBtmText, { opacity: 1 }); // Ensure starting state is visible
-      tl.to(navBtmText, {
-        opacity: 0,
-        duration: 0.3,
-        ease: "power2.out",
-        onComplete: () => {
-          try {
-            // Reset bottom split chars and hover active flag like mouseleave
-            if (navBtmSplit && navBtmSplit.chars && navBtmSplit.chars.length) {
-              try { gsap.killTweensOf(navBtmSplit.chars); } catch (e) {}
-              try { gsap.set(navBtmSplit.chars, { transform: 'translate3d(0,0,0)' }); } catch (e) {}
-            }
-            isNavHoverActive = false;
-          } catch (e) {}
-        }
-      }, 0);
+      gsap.killTweensOf(navHoverEl); // Kill any existing tweens before animating
+      tl.fromTo(navHoverEl, 
+        { opacity: gsap.getProperty(navHoverEl, "opacity") }, // Start from current opacity
+        {
+          opacity: 0,
+          duration: 0.3,
+          ease: "power2.out",
+          onComplete: () => {
+            try {
+              // onComplete callback
+            } catch (e) {}
+          }
+        }, 0);
     }
   } else {
     // Set navOpen to false immediately when animation starts
@@ -902,42 +901,7 @@ function openNav() {
       try {
         const headerNavHover = document.querySelector('.nav-hover');
         if (headerNavHover) {
-          // Make visible and prepare for a short fade-in to avoid a pop
-          try { headerNavHover.style.visibility = 'visible'; } catch (e) {}
-          try { gsap.set(headerNavHover, { opacity: 0, clearProps: 'transform' }); } catch (e) {}
-
-          // Restore top/bottom text and reset SplitText char transforms (no visual jump)
-          try {
-            const navTop = headerNavHover.querySelector('.nav-wht-top');
-            const navBtm = headerNavHover.querySelector('.nav-wht-btm');
-            if (navTop) try { gsap.set(navTop, { opacity: 1, clearProps: 'transform' }); } catch (e) {}
-            if (navBtm) try { gsap.set(navBtm, { opacity: 1, clearProps: 'transform' }); } catch (e) {}
-          } catch (e) {}
-
-          try {
-            if (navBtmSplit && navBtmSplit.chars && navBtmSplit.chars.length) {
-              try { gsap.killTweensOf(navBtmSplit.chars); } catch (e) {}
-              try { gsap.set(navBtmSplit.chars, { transform: 'translate3d(0,0,0)', opacity: 1 }); } catch (e) {}
-            }
-            if (navHoverSplit && navHoverSplit.chars && navHoverSplit.chars.length) {
-              try { gsap.killTweensOf(navHoverSplit.chars); } catch (e) {}
-              try { gsap.set(navHoverSplit.chars, { transform: 'translate3d(0,0,0)', opacity: 1 }); } catch (e) {}
-            }
-          } catch (e) {}
-
-          // Fade the header trigger in smoothly and then clear temp props
-          try {
-            gsap.to(headerNavHover, {
-              opacity: 1,
-              duration: 0.35,
-              ease: 'power2.out',
-              onComplete: () => {
-                try { gsap.set(headerNavHover, { clearProps: 'opacity,visibility,transform' }); } catch (e) {}
-              }
-            });
-          } catch (e) {}
-
-          isNavHoverActive = false;
+          // Cleanup after nav close
         }
       } catch (e) {}
 
@@ -959,6 +923,20 @@ function openNav() {
         ease: 'expo.inOut',
         onComplete: closeComplete
       }, 0.0);
+      
+      // Fade opacity of .nav-hover back in as navBgClose animates
+      const navHoverEl = document.querySelector('.nav-hover');
+      if (navHoverEl) {
+        gsap.killTweensOf(navHoverEl); // Kill any existing tweens before animating
+        tl.to(navHoverEl, {
+          opacity: 1,
+          duration: 0.6,
+          ease: "power2.inOut",
+          overwrite: true,
+          delay: 0.4
+        }, 0); // Start at the same time as navBgClose
+      }
+      
       // Ensure underline lines collapse at the same time as the nav closes / text fades
       try {
         const allLines = document.querySelectorAll('.strike-through-line');
@@ -992,19 +970,6 @@ function openNav() {
         duration: .5,
         ease: "power3.in"
       }, 0);
-    }
-
-    // Fade opacity of .nav-wht-btm back in when nav closes
-    const navHoverEl = document.querySelector('.nav-hover');
-    const navBtmText = navHoverEl ? navHoverEl.querySelector('.nav-wht-btm') : null;
-    if (navBtmText) {
-      gsap.killTweensOf(navBtmText); // Kill any existing tweens before animating
-      gsap.set(navBtmText, { opacity: 0 }); // Ensure starting state is hidden
-      tl.to(navBtmText, {
-        opacity: 1,
-        duration: 0.4,
-        ease: "power2.out"
-      }, "-=" + NAV_CLOSE_OVERLAP);
     }
   }
 }
@@ -1073,35 +1038,9 @@ function closeNav() {
       try {
         const headerNavHover = document.querySelector('.nav-hover');
         if (headerNavHover) {
-          try { headerNavHover.style.visibility = 'visible'; } catch (e) {}
-          try { gsap.set(headerNavHover, { opacity: 0, clearProps: 'transform' }); } catch (e) {}
+          // Cleanup after nav close
           try {
-            const navTop = headerNavHover.querySelector('.nav-wht-top');
-            const navBtm = headerNavHover.querySelector('.nav-wht-btm');
-            if (navTop) try { gsap.set(navTop, { opacity: 1, clearProps: 'transform' }); } catch (e) {}
-            if (navBtm) try { gsap.set(navBtm, { opacity: 1, clearProps: 'transform' }); } catch (e) {}
           } catch (e) {}
-          try {
-            if (navBtmSplit && navBtmSplit.chars && navBtmSplit.chars.length) {
-              try { gsap.killTweensOf(navBtmSplit.chars); } catch (e) {}
-              try { gsap.set(navBtmSplit.chars, { transform: 'translate3d(0,0,0)', opacity: 1 }); } catch (e) {}
-            }
-            if (navHoverSplit && navHoverSplit.chars && navHoverSplit.chars.length) {
-              try { gsap.killTweensOf(navHoverSplit.chars); } catch (e) {}
-              try { gsap.set(navHoverSplit.chars, { transform: 'translate3d(0,0,0)', opacity: 1 }); } catch (e) {}
-            }
-          } catch (e) {}
-          try {
-            gsap.to(headerNavHover, {
-              opacity: 1,
-              duration: 0.35,
-              ease: 'power2.out',
-              onComplete: () => {
-                try { gsap.set(headerNavHover, { clearProps: 'opacity,visibility,transform' }); } catch (e) {}
-              }
-            });
-          } catch (e) {}
-          isNavHoverActive = false;
         }
       } catch (e) {}
 
@@ -1122,6 +1061,19 @@ function closeNav() {
         ease: 'expo.inOut',
         onComplete: closeComplete
       }, 0.0);
+
+      // Fade opacity of .nav-hover back in as navBgClose animates
+      const navHoverEl = document.querySelector('.nav-hover');
+      if (navHoverEl) {
+        gsap.killTweensOf(navHoverEl); // Kill any existing tweens before animating
+        tl.to(navHoverEl, {
+          opacity: 1,
+          duration: 0.6,
+          ease: "power2.inOut",
+          overwrite: true,
+          delay: 0.4
+        }, 0); // Start at the same time as navBgClose
+      }
 
       // Ensure underline lines collapse at the same time as the nav closes / text fades
       try {
@@ -1157,19 +1109,6 @@ function closeNav() {
         duration: .5,
         ease: "power3.in"
       }, 0);
-    }
-
-    // Fade opacity of .nav-wht-btm back in when nav closes
-    const navHoverEl = document.querySelector('.nav-hover');
-    const navBtmText = navHoverEl ? navHoverEl.querySelector('.nav-wht-btm') : null;
-    if (navBtmText) {
-      gsap.killTweensOf(navBtmText); // Kill any existing tweens before animating
-      gsap.set(navBtmText, { opacity: 0 }); // Ensure starting state is hidden
-      tl.to(navBtmText, {
-        opacity: 1,
-        duration: 0.4,
-        ease: "power2.out"
-      }, "-=" + NAV_CLOSE_OVERLAP);
     }
   });
 }
