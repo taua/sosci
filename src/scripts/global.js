@@ -820,13 +820,32 @@ function openNav() {
       }, 0);
     }
 
-    // Fade opacity of .nav-hover when nav opens
-    const navHoverEl = document.querySelector('.nav-hover');
+    // Fade opacity of .global-nav-links when nav opens
+    const globalNavLinks = document.querySelector('.global-nav-links');
     
-    if (navHoverEl) {
-      gsap.killTweensOf(navHoverEl); // Kill any existing tweens before animating
-      tl.fromTo(navHoverEl, 
-        { opacity: gsap.getProperty(navHoverEl, "opacity") }, // Start from current opacity
+    if (globalNavLinks) {
+      gsap.killTweensOf(globalNavLinks); // Kill any existing tweens before animating
+      tl.fromTo(globalNavLinks, 
+        { opacity: gsap.getProperty(globalNavLinks, "opacity") }, // Start from current opacity
+        {
+          opacity: 0,
+          duration: 0.3,
+          ease: "power2.out",
+          onComplete: () => {
+            try {
+              // onComplete callback
+            } catch (e) {}
+          }
+        }, 0);
+    }
+
+    // Fade opacity of .global-footer-shell when nav opens
+    const globalFooterShell = document.querySelector('.global-footer-shell');
+    
+    if (globalFooterShell) {
+      gsap.killTweensOf(globalFooterShell); // Kill any existing tweens before animating
+      tl.fromTo(globalFooterShell, 
+        { opacity: gsap.getProperty(globalFooterShell, "opacity") }, // Start from current opacity
         {
           opacity: 0,
           duration: 0.3,
@@ -924,11 +943,24 @@ function openNav() {
         onComplete: closeComplete
       }, 0.0);
       
-      // Fade opacity of .nav-hover back in as navBgClose animates
-      const navHoverEl = document.querySelector('.nav-hover');
-      if (navHoverEl) {
-        gsap.killTweensOf(navHoverEl); // Kill any existing tweens before animating
-        tl.to(navHoverEl, {
+      // Fade opacity of .global-nav-links back in as navBgClose animates
+      const globalNavLinks = document.querySelector('.global-nav-links');
+      if (globalNavLinks) {
+        gsap.killTweensOf(globalNavLinks); // Kill any existing tweens before animating
+        tl.to(globalNavLinks, {
+          opacity: 1,
+          duration: 0.6,
+          ease: "power2.inOut",
+          overwrite: true,
+          delay: 0.4
+        }, 0); // Start at the same time as navBgClose
+      }
+
+      // Fade opacity of .global-footer-shell back in as navBgClose animates
+      const globalFooterShell = document.querySelector('.global-footer-shell');
+      if (globalFooterShell) {
+        gsap.killTweensOf(globalFooterShell); // Kill any existing tweens before animating
+        tl.to(globalFooterShell, {
           opacity: 1,
           duration: 0.6,
           ease: "power2.inOut",
@@ -1062,11 +1094,24 @@ function closeNav() {
         onComplete: closeComplete
       }, 0.0);
 
-      // Fade opacity of .nav-hover back in as navBgClose animates
-      const navHoverEl = document.querySelector('.nav-hover');
-      if (navHoverEl) {
-        gsap.killTweensOf(navHoverEl); // Kill any existing tweens before animating
-        tl.to(navHoverEl, {
+      // Fade opacity of .global-nav-links back in as navBgClose animates
+      const globalNavLinks = document.querySelector('.global-nav-links');
+      if (globalNavLinks) {
+        gsap.killTweensOf(globalNavLinks); // Kill any existing tweens before animating
+        tl.to(globalNavLinks, {
+          opacity: 1,
+          duration: 0.6,
+          ease: "power2.inOut",
+          overwrite: true,
+          delay: 0.4
+        }, 0); // Start at the same time as navBgClose
+      }
+
+      // Fade opacity of .global-footer-shell back in as navBgClose animates
+      const globalFooterShell = document.querySelector('.global-footer-shell');
+      if (globalFooterShell) {
+        gsap.killTweensOf(globalFooterShell); // Kill any existing tweens before animating
+        tl.to(globalFooterShell, {
           opacity: 1,
           duration: 0.6,
           ease: "power2.inOut",
