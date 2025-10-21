@@ -967,10 +967,7 @@ let currentPageCleanup = null;
                                         if (smootherInstance && typeof smootherInstance.scrollTo === 'function') try {
                                             smootherInstance.scrollTo(0, false);
                                         } catch (e) {}
-                                        try {
-                                            // Use true parameter to only refresh dimensions without triggering callbacks
-                                            (0, _scrollTrigger.ScrollTrigger).refresh(true);
-                                        } catch (e) {}
+                                    // Removed delayed ScrollTrigger.refresh call
                                     });
                                 });
                             }
@@ -985,15 +982,8 @@ let currentPageCleanup = null;
                         force3D: true
                     }, 0.2);
                 } else {
-                    console.log('Nav is open, setting up main-shell position before closing nav');
-                    // If nav is open, set main-shell to translated position so it animates back when nav closes
-                    const mainShellEl = document.querySelector('.main-shell');
-                    if (mainShellEl) // Set the main-shell to the starting position (translated down)
-                    (0, _gsap.gsap).set(mainShellEl, {
-                        y: '30%',
-                        force3D: true,
-                        overwrite: 'auto'
-                    });
+                    console.log('Nav is open, closing nav without main-shell animation');
+                    // Removed main-shell translate animation when navigating with nav open
                     // Wait for the active underline animation to complete, then close the nav
                     (async ()=>{
                         try {
@@ -1706,6 +1696,10 @@ function closeNav() {
         const tl = (0, _gsap.gsap).timeline({
             onComplete: ()=>{
                 navAnimating = false;
+                // Unpause ScrollSmoother after nav closes
+                if (smootherInstance && typeof smootherInstance.paused === 'function') try {
+                    smootherInstance.paused(false);
+                } catch (e) {}
                 resolve();
             }
         });
@@ -1765,15 +1759,6 @@ function closeNav() {
                 duration: 1,
                 ease: 'expo.inOut',
                 onComplete: ()=>{
-                    // Re-enable scrolling and refresh triggers after animation completes
-                    requestAnimationFrame(()=>{
-                        initScrollSmoother();
-                        requestAnimationFrame(()=>{
-                            try {
-                                (0, _scrollTrigger.ScrollTrigger).refresh();
-                            } catch (e) {}
-                        });
-                    });
                     // Run the closeComplete
                     closeComplete();
                 }
@@ -1821,11 +1806,7 @@ function closeNav() {
         }
         const mainShell = document.querySelector('.main-shell');
         if (mainShell) {
-            // Kill ScrollSmoother before animating to avoid conflicts
-            if (smootherInstance && typeof smootherInstance.kill === 'function') try {
-                smootherInstance.kill();
-                smootherInstance = null;
-            } catch (e) {}
+            // Don't kill ScrollSmoother - let it continue running
             // Explicitly set starting position and animate
             (0, _gsap.gsap).set(mainShell, {
                 y: '30%',
@@ -1835,15 +1816,7 @@ function closeNav() {
                 y: '0%',
                 duration: 1,
                 ease: 'expo.inOut',
-                force3D: true,
-                onComplete: ()=>{
-                    // Just clear transform - ScrollSmoother is already recreated by nav-bg onComplete
-                    try {
-                        (0, _gsap.gsap).set(mainShell, {
-                            clearProps: 'y,yPercent,transform'
-                        });
-                    } catch (e) {}
-                }
+                force3D: true
             }, 0.0);
         }
         // Reverse .x-top and .x-bottom animations when nav closes
