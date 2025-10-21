@@ -150,6 +150,16 @@ export function initWorkPage() {
         link.addEventListener('mouseenter', (e) => {
             _workState.currentIndex++;
             
+            // Animate text color to black
+            const textElements = link.querySelectorAll('*');
+            if (textElements.length) {
+                gsap.to(textElements, {
+                    color: '#000000',
+                    duration: 0.4,
+                    ease: "power2.out"
+                });
+            }
+            
             // Animate links-bg with directional scale
             const linksBg = link.querySelector('.links-bg');
             if (linksBg) {
@@ -224,6 +234,16 @@ export function initWorkPage() {
         });
 
     link.addEventListener('mouseleave', (e) => {
+            // Animate text color back to white
+            const textElements = link.querySelectorAll('*');
+            if (textElements.length) {
+                gsap.to(textElements, {
+                    color: '#FFFFFF',
+                    duration: 0.4,
+                    ease: "power2.out"
+                });
+            }
+            
             const linksBg = link.querySelector('.links-bg');
             if (linksBg) {
                 const rect = link.getBoundingClientRect();
