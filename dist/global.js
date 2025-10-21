@@ -960,7 +960,8 @@ let currentPageCleanup = null;
                                     initScrollSmoother();
                                     requestAnimationFrame(()=>{
                                         try {
-                                            (0, _scrollTrigger.ScrollTrigger).refresh();
+                                            // Use true parameter to only refresh dimensions without triggering callbacks
+                                            (0, _scrollTrigger.ScrollTrigger).refresh(true);
                                         } catch (e) {}
                                     });
                                 });

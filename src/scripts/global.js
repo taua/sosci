@@ -330,7 +330,8 @@ barba.init({
             initScrollSmoother();
             requestAnimationFrame(() => {
               try {
-                ScrollTrigger.refresh();
+                // Use true parameter to only refresh dimensions without triggering callbacks
+                ScrollTrigger.refresh(true);
               } catch (e) {}
             });
           });
