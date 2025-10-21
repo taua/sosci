@@ -908,13 +908,15 @@ let currentPageCleanup = null;
                     if (typeof window.playProjectEnterAnimation === 'function') window.playProjectEnterAnimation(data);
                 }
                 //gsap.from(data.next.container, { opacity: 0, duration: 0.4 });
-                // Only initialize ScrollSmoother if nav is closed (will animate in 'after' hook)
-                // If nav is open, we'll initialize after closeNav animation completes
-                if (!navOpen) // For nav closed: init page scripts immediately to set initial states
-                // Don't init smoother yet, will do after animation in 'after' hook
+                // Initialize ScrollSmoother for all page transitions
+                if (!navOpen) // For nav closed: init smoother and page scripts immediately
                 requestAnimationFrame(()=>{
-                    initVideoVisibility();
-                    initPageScripts();
+                    initScrollSmoother();
+                    requestAnimationFrame(()=>{
+                        initVideoVisibility();
+                        initPageScripts();
+                        (0, _scrollTrigger.ScrollTrigger).refresh();
+                    });
                 });
                 else // For nav open: init smoother and page scripts now since closeNav will handle the animation
                 requestAnimationFrame(()=>{
@@ -930,46 +932,40 @@ let currentPageCleanup = null;
                 // Barba after — transition complete
                 let tl;
                 if (!navOpen) {
-                    tl = (0, _gsap.gsap).timeline();
+                    tl = (0, _gsap.gsap).timeline({
+                        onComplete: ()=>{
+                            // Ensure ScrollSmoother is unpaused after the entire transition completes
+                            if (smootherInstance && typeof smootherInstance.paused === 'function') try {
+                                smootherInstance.paused(false);
+                            } catch (e) {}
+                            // Refresh ScrollTrigger after mainShell animation completes to fix positions
+                            try {
+                                (0, _scrollTrigger.ScrollTrigger).refresh();
+                            } catch (e) {}
+                        }
+                    });
                     const mainShellEl = document.querySelector('.main-shell');
                     if (mainShellEl) {
                         // Pause ScrollSmoother (if it exists) to prevent scroll during animation
                         if (smootherInstance && typeof smootherInstance.paused === 'function') try {
                             smootherInstance.paused(true);
                         } catch (e) {}
-                        // Kill ScrollSmoother before animating to avoid conflicts
-                        if (smootherInstance && typeof smootherInstance.kill === 'function') try {
-                            smootherInstance.kill();
-                            smootherInstance = null;
-                        } catch (e) {}
-                        // Explicitly set starting position and animate
-                        (0, _gsap.gsap).set(mainShellEl, {
+                        // Don't kill ScrollSmoother - let it continue running
+                        // Animate from current position (don't set starting position)
+                        tl.fromTo(mainShellEl, {
                             y: '30%',
                             force3D: true
-                        });
-                        tl.to(mainShellEl, {
+                        }, {
                             y: '0%',
                             duration: 0.8,
                             ease: 'expo.inOut',
                             force3D: true,
                             onComplete: ()=>{
-                                // Clear transform
-                                try {
-                                    (0, _gsap.gsap).set(mainShellEl, {
-                                        clearProps: 'y,yPercent,transform'
-                                    });
+                                // Unpause ScrollSmoother after animation
+                                if (smootherInstance && typeof smootherInstance.paused === 'function') try {
+                                    smootherInstance.paused(false);
                                 } catch (e) {}
-                                // Recreate ScrollSmoother after animation (page scripts already initialized in enter hook)
-                                requestAnimationFrame(()=>{
-                                    initScrollSmoother();
-                                    requestAnimationFrame(()=>{
-                                        // Scroll to top to prevent queued scroll delta from jumping
-                                        if (smootherInstance && typeof smootherInstance.scrollTo === 'function') try {
-                                            smootherInstance.scrollTo(0, false);
-                                        } catch (e) {}
-                                    // Removed delayed ScrollTrigger.refresh call
-                                    });
-                                });
+                            // Removed scrollTo(0) - let scroll position remain as is
                             }
                         }, 0.2);
                     }
@@ -1805,20 +1801,17 @@ function closeNav() {
             } catch (e) {}
         }
         const mainShell = document.querySelector('.main-shell');
-        if (mainShell) {
-            // Don't kill ScrollSmoother - let it continue running
-            // Explicitly set starting position and animate
-            (0, _gsap.gsap).set(mainShell, {
-                y: '30%',
-                force3D: true
-            });
-            tl.to(mainShell, {
-                y: '0%',
-                duration: 1,
-                ease: 'expo.inOut',
-                force3D: true
-            }, 0.0);
-        }
+        if (mainShell) // Don't kill ScrollSmoother - let it continue running
+        // Animate from current position (don't set starting position)
+        tl.fromTo(mainShell, {
+            y: '30%',
+            force3D: true
+        }, {
+            y: '0%',
+            duration: 1,
+            ease: 'expo.inOut',
+            force3D: true
+        }, 0.0);
         // Reverse .x-top and .x-bottom animations when nav closes
         const xTopEl = document.querySelector('.x-top');
         const xBtmEl = document.querySelector('.x-bottom');
