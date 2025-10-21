@@ -303,6 +303,13 @@ barba.init({
     
     const mainShellEl = document.querySelector('.main-shell');
     if (mainShellEl) {
+      // Pause ScrollSmoother (if it exists) to prevent scroll during animation
+      if (smootherInstance && typeof smootherInstance.paused === 'function') {
+        try {
+          smootherInstance.paused(true);
+        } catch (e) {}
+      }
+      
       // Kill ScrollSmoother before animating to avoid conflicts
       if (smootherInstance && typeof smootherInstance.kill === 'function') {
         try {
@@ -329,6 +336,12 @@ barba.init({
           requestAnimationFrame(() => {
             initScrollSmoother();
             requestAnimationFrame(() => {
+              // Scroll to top to prevent queued scroll delta from jumping
+              if (smootherInstance && typeof smootherInstance.scrollTo === 'function') {
+                try {
+                  smootherInstance.scrollTo(0, false);
+                } catch (e) {}
+              }
               try {
                 // Use true parameter to only refresh dimensions without triggering callbacks
                 ScrollTrigger.refresh(true);
@@ -1021,6 +1034,13 @@ function closeNav() {
   // If already closed, no-op
   if (!navOpen) return Promise.resolve();
 
+  // Pause ScrollSmoother immediately when closing nav to prevent scroll jumps
+  if (smootherInstance && typeof smootherInstance.paused === 'function') {
+    try {
+      smootherInstance.paused(true);
+    } catch (e) {}
+  }
+
   navAnimating = true;
   navOpen = false;
 
@@ -1096,7 +1116,19 @@ function closeNav() {
         scaleY: 0,
         duration: 1,
         ease: 'expo.inOut',
-        onComplete: closeComplete
+        onComplete: () => {
+          // Re-enable scrolling and refresh triggers after animation completes
+          requestAnimationFrame(() => {
+            initScrollSmoother();
+            requestAnimationFrame(() => {
+              try {
+                ScrollTrigger.refresh();
+              } catch (e) {}
+            });
+          });
+          // Run the closeComplete
+          closeComplete();
+        }
       }, 0.0);
 
       // Fade opacity of .global-nav-links back in as navBgClose animates
@@ -1153,20 +1185,10 @@ function closeNav() {
         ease: 'expo.inOut',
         force3D: true,
         onComplete: () => {
-          // Clear transform
+          // Just clear transform - ScrollSmoother is already recreated by nav-bg onComplete
           try {
             gsap.set(mainShell, { clearProps: 'y,yPercent,transform' });
           } catch (e) {}
-          
-          // Recreate ScrollSmoother after animation
-          requestAnimationFrame(() => {
-            initScrollSmoother();
-            requestAnimationFrame(() => {
-              try {
-                ScrollTrigger.refresh();
-              } catch (e) {}
-            });
-          });
         }
       }, 0.0);
     }
