@@ -275,7 +275,7 @@ function initProjectPage() {
           gsap.to(indicatorShells, {
             x: -300,
             autoAlpha: 0,
-            duration: 0.6,
+            duration: 0.5,
             stagger: 0.1,
             ease: "expo.in",
             overwrite: 'auto'
@@ -288,14 +288,14 @@ function initProjectPage() {
       if (linksIntroShell) {
         linksIntroTrigger = ScrollTrigger.create({
           trigger: linksIntroShell,
-          start: 'top bottom+=200',
+          start: 'top bottom+=500',
           onEnter: () => {
             if (!triggersEnabled) return;
             gsap.killTweensOf(indicatorShells);
             gsap.to(indicatorShells, {
               x: -300,
               autoAlpha: 0,
-              duration: 0.6,
+              duration: 0.5,
               stagger: 0.1,
               ease: "expo.in",
               overwrite: 'auto'

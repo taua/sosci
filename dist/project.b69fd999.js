@@ -957,7 +957,7 @@ function initProjectPage() {
                     (0, _gsap.gsap).to(indicatorShells, {
                         x: -300,
                         autoAlpha: 0,
-                        duration: 0.6,
+                        duration: 0.5,
                         stagger: 0.1,
                         ease: "expo.in",
                         overwrite: 'auto'
@@ -969,14 +969,14 @@ function initProjectPage() {
             if (linksIntroShell) {
                 linksIntroTrigger = (0, _scrollTrigger.ScrollTrigger).create({
                     trigger: linksIntroShell,
-                    start: 'top bottom+=200',
+                    start: 'top bottom+=500',
                     onEnter: ()=>{
                         if (!triggersEnabled) return;
                         (0, _gsap.gsap).killTweensOf(indicatorShells);
                         (0, _gsap.gsap).to(indicatorShells, {
                             x: -300,
                             autoAlpha: 0,
-                            duration: 0.6,
+                            duration: 0.5,
                             stagger: 0.1,
                             ease: "expo.in",
                             overwrite: 'auto'
