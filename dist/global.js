@@ -768,9 +768,18 @@ function initVideoVisibility() {
             onEnter: safePlay,
             onLeave: safePause,
             onEnterBack: safePlay,
-            onLeaveBack: safePause
+            onLeaveBack: safePause,
+            onRefresh: (self)=>{
+                // On refresh, check if video is in view and play if so
+                if (self.isActive) safePlay();
+                else safePause();
+            }
         });
         videoScrollTriggers.push(trigger);
+        // Check initial state - if video is already in viewport, play it
+        requestAnimationFrame(()=>{
+            if (trigger.isActive) safePlay();
+        });
     });
 }
 let smootherInstance = null;
