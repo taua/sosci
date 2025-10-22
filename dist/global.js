@@ -2132,18 +2132,27 @@ window.addEventListener('DOMContentLoaded', ()=>{
 });
 window.playProjectEnterAnimation = function(data) {
     console.log('Project Page enter animation triggered');
-    const projectInfoHeader = document.querySelector('.proj-rich-headline-shell');
-    if (projectInfoHeader) {
-        // Create a wrapper parent with overflow hidden for bottom-up animation
-        const txtWrapper = document.createElement('span');
-        txtWrapper.style.overflow = 'hidden';
-        txtWrapper.style.width = '100%';
-        //txtWrapper.style.marginBottom = '0px';
-        txtWrapper.style.display = 'inline-block';
-        txtWrapper.style.verticalAlign = 'bottom';
-        // Insert txtWrapper before the text element and move the text inside
-        projectInfoHeader.parentNode.insertBefore(txtWrapper, projectInfoHeader);
-        txtWrapper.appendChild(projectInfoHeader);
+    // Use requestAnimationFrame to ensure DOM is ready
+    requestAnimationFrame(()=>{
+        const projectInfoHeader = document.querySelector('.proj-rich-headline-shell');
+        if (!projectInfoHeader) {
+            console.log('proj-rich-headline-shell not found, skipping animation');
+            return;
+        }
+        // Check if element is already wrapped (from previous navigation)
+        const existingWrapper = projectInfoHeader.parentElement;
+        const isAlreadyWrapped = existingWrapper && existingWrapper.tagName === 'SPAN' && existingWrapper.style.overflow === 'hidden';
+        if (!isAlreadyWrapped) {
+            // Create a wrapper parent with overflow hidden for bottom-up animation
+            const txtWrapper = document.createElement('span');
+            txtWrapper.style.overflow = 'hidden';
+            txtWrapper.style.width = '100%';
+            txtWrapper.style.display = 'inline-block';
+            txtWrapper.style.verticalAlign = 'bottom';
+            // Insert txtWrapper before the text element and move the text inside
+            projectInfoHeader.parentNode.insertBefore(txtWrapper, projectInfoHeader);
+            txtWrapper.appendChild(projectInfoHeader);
+        }
         let projectSplit = null;
         try {
             projectSplit = new (0, _splitText.SplitText)(projectInfoHeader, {
@@ -2166,7 +2175,7 @@ window.playProjectEnterAnimation = function(data) {
                 overwrite: "auto"
             });
         }
-    }
+    });
 };
 window.playWorkEnterAnimation = function(data) {
     console.log('Work Page enter animation triggered');
