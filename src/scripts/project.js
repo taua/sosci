@@ -55,9 +55,30 @@ function initProjectPage() {
       // after paint (double rAF)
       requestAnimationFrame(() => requestAnimationFrame(() => tryReset()));
       // short timeout in case smoother initializes slightly later
-      setTimeout(() => tryReset(), 120);
+      setTimeout(() => {
+        tryReset();
+        // After scroll reset, aggressively hide indicators
+        const indicatorShells = document.querySelectorAll('.indicator-item-shell');
+        if (indicatorShells.length) {
+          try {
+            gsap.killTweensOf(indicatorShells);
+            gsap.set(indicatorShells, { x: -150, autoAlpha: 0 });
+          } catch (e) {}
+        }
+      }, 120);
       // final attempt on full load (once)
-      const onLoad = () => { tryReset(); window.removeEventListener('load', onLoad); };
+      const onLoad = () => { 
+        tryReset();
+        // After scroll reset on load, aggressively hide indicators
+        const indicatorShells = document.querySelectorAll('.indicator-item-shell');
+        if (indicatorShells.length) {
+          try {
+            gsap.killTweensOf(indicatorShells);
+            gsap.set(indicatorShells, { x: -150, autoAlpha: 0 });
+          } catch (e) {}
+        }
+        window.removeEventListener('load', onLoad); 
+      };
       try { window.addEventListener('load', onLoad); } catch (e) {}
     } catch (e) {}
     const isProjectPage = window.location.pathname.includes('/projects');
@@ -191,49 +212,110 @@ function initProjectPage() {
     // Add indicator items animation only if element exists
     const indicatorShells = document.querySelectorAll('.indicator-item-shell');
     const projectsSectionShell = document.querySelector('.projects-section-shell');
+    const linksIntroShell = document.querySelector('.links-intro-shell');
+    
     if (indicatorShells.length && projectsSectionShell) {
-      // Initialize position and hide them until after bootstrapping completes
-      try { gsap.set(indicatorShells, { x: -150, autoAlpha: 0 }); } catch (e) {}
+      // Force them hidden with inline style AND GSAP, with transform
+      indicatorShells.forEach(shell => {
+        shell.style.visibility = 'hidden';
+        shell.style.opacity = '0';
+        shell.style.transform = 'translate3d(-300px, 0, 0)';
+      });
+      gsap.set(indicatorShells, { x: -300, autoAlpha: 0 });
+
+      let projectsSectionTrigger = null;
+      let linksIntroTrigger = null;
+      let triggersEnabled = false;
+
+      // Wait for actual user interaction before enabling triggers
+      const enableTriggers = () => {
+        if (triggersEnabled) return;
+        triggersEnabled = true;
+        
+        // Remove inline styles so GSAP can control, but keep them hidden
+        indicatorShells.forEach(shell => {
+          shell.style.visibility = '';
+          shell.style.opacity = '';
+          shell.style.transform = '';
+        });
+        
+        // Ensure they stay hidden with GSAP until ScrollTrigger shows them
+        gsap.set(indicatorShells, { x: -300, autoAlpha: 0 });
+        
+        window.removeEventListener('wheel', enableTriggers);
+        window.removeEventListener('touchmove', enableTriggers);
+      };
+      
+      // Listen for wheel/touch - these are actual user scroll interactions
+      window.addEventListener('wheel', enableTriggers, { passive: true, once: true });
+      window.addEventListener('touchmove', enableTriggers, { passive: true, once: true });
 
       // Use guarded gsap.to calls and kill overlapping tweens to avoid snapping/popping
-      const st = ScrollTrigger.create({
+      projectsSectionTrigger = ScrollTrigger.create({
         trigger: projectsSectionShell,
         start: 'top 35%',
         onEnter: () => {
-          // If the page is still bootstrapping (initial refresh), skip animating in
-          if (typeof window !== 'undefined' && window._pageBootstrapping) return;
-          try { gsap.killTweensOf(indicatorShells); } catch (e) {}
+          if (!triggersEnabled) return;
+          // Also check if links intro has been passed
+          if (linksIntroTrigger && linksIntroTrigger.isActive) return;
+          
+          gsap.killTweensOf(indicatorShells);
           gsap.to(indicatorShells, {
             x: 0,
             autoAlpha: 1,
             duration: 1,
             stagger: 0.15,
             ease: "expo.out",
-            overwrite: 'auto',
-            immediateRender: false
+            overwrite: 'auto'
           });
         },
         onLeaveBack: () => {
-          try { gsap.killTweensOf(indicatorShells); } catch (e) {}
+          if (!triggersEnabled) return;
+          gsap.killTweensOf(indicatorShells);
           gsap.to(indicatorShells, {
-            x: -150,
+            x: -300,
             autoAlpha: 0,
             duration: 0.6,
             stagger: 0.1,
             ease: "expo.in",
-            overwrite: 'auto',
-            immediateRender: false
+            overwrite: 'auto'
           });
-        },
-        onRefresh: () => {
-          // If still bootstrapping, ensure they're hidden
-          if (typeof window !== 'undefined' && window._pageBootstrapping) {
-            try { gsap.killTweensOf(indicatorShells); } catch (e) {}
-            try { gsap.set(indicatorShells, { x: -150, autoAlpha: 0 }); } catch (e) {}
-          }
         }
       });
-      projectScrollTriggers.push(st);
+      projectScrollTriggers.push(projectsSectionTrigger);
+
+      // Add trigger to hide indicators when links-intro-shell enters viewport
+      if (linksIntroShell) {
+        linksIntroTrigger = ScrollTrigger.create({
+          trigger: linksIntroShell,
+          start: 'top bottom+=200',
+          onEnter: () => {
+            if (!triggersEnabled) return;
+            gsap.killTweensOf(indicatorShells);
+            gsap.to(indicatorShells, {
+              x: -300,
+              autoAlpha: 0,
+              duration: 0.6,
+              stagger: 0.1,
+              ease: "expo.in",
+              overwrite: 'auto'
+            });
+          },
+          onLeaveBack: () => {
+            if (!triggersEnabled) return;
+            gsap.killTweensOf(indicatorShells);
+            gsap.to(indicatorShells, {
+              x: 0,
+              autoAlpha: 1,
+              duration: 1,
+              stagger: 0.15,
+              ease: "expo.out",
+              overwrite: 'auto'
+            });
+          }
+        });
+        projectScrollTriggers.push(linksIntroTrigger);
+      }
     }
 
     // Ensure ScrollTrigger recalculates after DOM is ready

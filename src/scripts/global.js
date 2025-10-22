@@ -1209,6 +1209,16 @@ function closeNav() {
 
 function playLoadingAnimation() {
   console.log('[loader] playLoadingAnimation start');
+  
+  // Hide project indicators immediately to prevent flashing during initial load
+  const indicatorShells = document.querySelectorAll('.indicator-item-shell');
+  if (indicatorShells.length) {
+    try {
+      gsap.killTweensOf(indicatorShells);
+      gsap.set(indicatorShells, { x: -150, autoAlpha: 0 });
+    } catch (e) {}
+  }
+  
   const transLogoShell = document.querySelector('.trans-logo-shell');
   const transMainShell = document.querySelector('.main-shell');
   const transSpacer = document.querySelector('.trans-spacer');
