@@ -1031,6 +1031,80 @@ function initHomePage() {
             });
         });
     });
+    // Add directional hover animations for service items
+    let lastMouseY = 0;
+    window.addEventListener('mousemove', (e)=>{
+        lastMouseY = e.clientY;
+    });
+    document.querySelectorAll('.service-item-shell').forEach((item)=>{
+        item.addEventListener('mouseenter', (e)=>{
+            const serviceBg = item.querySelector('.service-link-bg');
+            const plusSymbol = item.querySelector('.plus-symbol-svg');
+            const serviceName = item.querySelector('.service-name-txt');
+            if (serviceBg) {
+                const rect = item.getBoundingClientRect();
+                const elementCenter = rect.top + rect.height / 2;
+                const fromTop = lastMouseY < elementCenter;
+                (0, _gsap.gsap).killTweensOf(serviceBg);
+                (0, _gsap.gsap).set(serviceBg, {
+                    transformOrigin: fromTop ? 'top center' : 'bottom center',
+                    scaleY: 0
+                });
+                (0, _gsap.gsap).to(serviceBg, {
+                    scaleY: 1,
+                    duration: 0.6,
+                    ease: "expo.out"
+                });
+            }
+            // Animate text and symbol to black
+            if (plusSymbol) (0, _gsap.gsap).to(plusSymbol, {
+                color: '#000000',
+                x: -25,
+                rotation: -360,
+                duration: 0.4,
+                ease: "power2.out"
+            });
+            if (serviceName) (0, _gsap.gsap).to(serviceName, {
+                color: '#000000',
+                x: 25,
+                duration: 0.4,
+                ease: "power2.out"
+            });
+        });
+        item.addEventListener('mouseleave', (e)=>{
+            const serviceBg = item.querySelector('.service-link-bg');
+            const plusSymbol = item.querySelector('.plus-symbol-svg');
+            const serviceName = item.querySelector('.service-name-txt');
+            if (serviceBg) {
+                const rect = item.getBoundingClientRect();
+                const elementCenter = rect.top + rect.height / 2;
+                const fromTop = e.clientY < elementCenter;
+                (0, _gsap.gsap).killTweensOf(serviceBg);
+                (0, _gsap.gsap).set(serviceBg, {
+                    transformOrigin: fromTop ? 'top center' : 'bottom center'
+                });
+                (0, _gsap.gsap).to(serviceBg, {
+                    scaleY: 0,
+                    duration: 0.6,
+                    ease: "expo.out"
+                });
+            }
+            // Animate text and symbol back to white
+            if (plusSymbol) (0, _gsap.gsap).to(plusSymbol, {
+                color: '#FFFFFF',
+                x: 0,
+                rotation: 0,
+                duration: 0.4,
+                ease: "power2.out"
+            });
+            if (serviceName) (0, _gsap.gsap).to(serviceName, {
+                color: '#FFFFFF',
+                x: 0,
+                duration: 0.4,
+                ease: "power2.out"
+            });
+        });
+    });
 }
 function cleanupHomePage() {
     // Kill home-specific ScrollTriggers
