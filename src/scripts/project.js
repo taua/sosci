@@ -2,9 +2,11 @@
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
+import { createWorkLinksModule } from "./utils/workLinksModule";
 
 let projectScrollTriggers = [];
 let scrollCtaTimeline = null;
+let workLinksModule = null;
 
 function cleanupProjectPage() {
   // Kill any ScrollTrigger instances for this page
@@ -16,6 +18,12 @@ function cleanupProjectPage() {
     try { scrollCtaTimeline.kill && scrollCtaTimeline.kill(); } catch (e) {}
     try { scrollCtaTimeline.pause && scrollCtaTimeline.pause(); } catch (e) {}
     scrollCtaTimeline = null;
+  }
+
+  // Cleanup work-links module
+  if (workLinksModule) {
+    workLinksModule.cleanup();
+    workLinksModule = null;
   }
 }
 
@@ -232,8 +240,10 @@ function initProjectPage() {
     setTimeout(() => {
       ScrollTrigger.refresh(true);
     }, 50);
-    // Attach to window for global access
-    // No need to attach to window; use ES module exports
+
+    // Initialize work-links functionality
+    workLinksModule = createWorkLinksModule();
+    workLinksModule.init();
   }
 
 
