@@ -392,7 +392,115 @@ export function initHomePage() {
         lastMouseY = e.clientY; 
     });
 
+    // Track currently open accordion item
+    let currentlyOpenItem = null;
+
     document.querySelectorAll('.service-item-shell').forEach(item => {
+        // Click handler for accordion behavior
+        item.addEventListener('click', (e) => {
+            const serviceSpacer = item.querySelector('.service-link-spacer');
+            const serviceParagraph = item.querySelector('.service-paragraph-shell');
+            
+            if (!serviceSpacer || !serviceParagraph) return;
+            
+            const isOpen = item.classList.contains('open');
+            
+            // Close currently open item if it's different from this one
+            if (currentlyOpenItem && currentlyOpenItem !== item) {
+                const openSpacer = currentlyOpenItem.querySelector('.service-link-spacer');
+                const openBg = currentlyOpenItem.querySelector('.service-link-bg');
+                const openPlusSymbol = currentlyOpenItem.querySelector('.plus-symbol-svg');
+                const openServiceName = currentlyOpenItem.querySelector('.service-name-txt');
+                
+                if (openSpacer) {
+                    gsap.to(openSpacer, {
+                        height: 0,
+                        duration: 0.6,
+                        ease: "expo.inOut"
+                    });
+                }
+                
+                // Trigger hover out animations on previously open item
+                if (openBg) {
+                    gsap.to(openBg, {
+                        scaleY: 0,
+                        duration: 0.6,
+                        ease: "expo.out"
+                    });
+                }
+                if (openPlusSymbol) {
+                    gsap.to(openPlusSymbol, {
+                        color: '#FFFFFF',
+                        x: 0,
+                        rotation: 0,
+                        duration: 0.4,
+                        ease: "power2.out"
+                    });
+                }
+                if (openServiceName) {
+                    gsap.to(openServiceName, {
+                        color: '#FFFFFF',
+                        x: 0,
+                        duration: 0.4,
+                        ease: "power2.out"
+                    });
+                }
+                
+                currentlyOpenItem.classList.remove('open');
+            }
+            
+            if (isOpen) {
+                // Close this item
+                gsap.to(serviceSpacer, {
+                    height: 0,
+                    duration: 0.6,
+                    ease: "expo.inOut"
+                });
+                item.classList.remove('open');
+                currentlyOpenItem = null;
+                
+                // Trigger hover out animations
+                const serviceBg = item.querySelector('.service-link-bg');
+                const plusSymbol = item.querySelector('.plus-symbol-svg');
+                const serviceName = item.querySelector('.service-name-txt');
+                
+                if (serviceBg) {
+                    gsap.to(serviceBg, {
+                        scaleY: 0,
+                        duration: 0.6,
+                        ease: "expo.out"
+                    });
+                }
+                if (plusSymbol) {
+                    gsap.to(plusSymbol, {
+                        color: '#FFFFFF',
+                        x: 0,
+                        rotation: 0,
+                        duration: 0.4,
+                        ease: "power2.out"
+                    });
+                }
+                if (serviceName) {
+                    gsap.to(serviceName, {
+                        color: '#FFFFFF',
+                        x: 0,
+                        duration: 0.4,
+                        ease: "power2.out"
+                    });
+                }
+            } else {
+                // Open this item
+                const targetHeight = serviceParagraph.offsetHeight;
+                gsap.to(serviceSpacer, {
+                    height: targetHeight,
+                    duration: 0.6,
+                    ease: "expo.inOut"
+                });
+                item.classList.add('open');
+                currentlyOpenItem = item;
+            }
+        });
+
         item.addEventListener('mouseenter', (e) => {
             const serviceBg = item.querySelector('.service-link-bg');
             const plusSymbol = item.querySelector('.plus-symbol-svg');
@@ -436,6 +544,9 @@ export function initHomePage() {
         });
 
         item.addEventListener('mouseleave', (e) => {
+            // Don't trigger hover out if item is open
+            if (item.classList.contains('open')) return;
+            
             const serviceBg = item.querySelector('.service-link-bg');
             const plusSymbol = item.querySelector('.plus-symbol-svg');
             const serviceName = item.querySelector('.service-name-txt');
