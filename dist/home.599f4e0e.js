@@ -1209,7 +1209,7 @@ function initHomePage() {
                     opacity: 1,
                     duration: 0.4,
                     ease: "power2.out",
-                    delay: 0.3
+                    delay: 0.4
                 });
             }
         });
