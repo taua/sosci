@@ -417,6 +417,7 @@ export function initHomePage() {
                 const openParagraph = currentlyOpenItem.querySelector('.service-paragraph-shell');
                 
                 if (openSpacer) {
+                    gsap.killTweensOf(openSpacer);
                     gsap.to(openSpacer, {
                         height: 0,
                         duration: 0.6,
@@ -432,6 +433,7 @@ export function initHomePage() {
                 
                 // Trigger hover out animations on previously open item
                 if (openBg) {
+                    gsap.killTweensOf(openBg);
                     gsap.to(openBg, {
                         scaleY: 0,
                         duration: 0.6,
@@ -439,6 +441,7 @@ export function initHomePage() {
                     });
                 }
                 if (openPlusSymbol) {
+                    gsap.killTweensOf(openPlusSymbol);
                     gsap.to(openPlusSymbol, {
                         color: '#FFFFFF',
                         x: 0,
@@ -448,6 +451,7 @@ export function initHomePage() {
                     });
                 }
                 if (openServiceName) {
+                    gsap.killTweensOf(openServiceName);
                     gsap.to(openServiceName, {
                         color: '#FFFFFF',
                         x: 0,
@@ -458,6 +462,7 @@ export function initHomePage() {
                 
                 // Animate paragraph opacity to 0
                 if (openParagraph) {
+                    gsap.killTweensOf(openParagraph);
                     gsap.to(openParagraph, {
                         opacity: 0,
                         duration: 0.4,
@@ -470,6 +475,7 @@ export function initHomePage() {
             
             if (isOpen) {
                 // Close this item
+                gsap.killTweensOf(serviceSpacer);
                 gsap.to(serviceSpacer, {
                     height: 0,
                     duration: 0.6,
@@ -490,6 +496,7 @@ export function initHomePage() {
                 const serviceName = item.querySelector('.service-name-txt');
                 
                 if (serviceBg) {
+                    gsap.killTweensOf(serviceBg);
                     gsap.to(serviceBg, {
                         scaleY: 0,
                         duration: 0.6,
@@ -516,6 +523,7 @@ export function initHomePage() {
                     });
                 }
                 if (plusSymbol) {
+                    gsap.killTweensOf(plusSymbol);
                     gsap.to(plusSymbol, {
                         color: '#FFFFFF',
                         x: 0,
@@ -537,6 +545,7 @@ export function initHomePage() {
                     });
                 }
                 if (serviceName) {
+                    gsap.killTweensOf(serviceName);
                     gsap.to(serviceName, {
                         color: '#FFFFFF',
                         x: 0,
@@ -557,6 +566,7 @@ export function initHomePage() {
                 }
                 
                 // Animate paragraph opacity to 0
+                gsap.killTweensOf(serviceParagraph);
                 gsap.to(serviceParagraph, {
                     opacity: 0,
                     duration: 0.4,
@@ -565,6 +575,7 @@ export function initHomePage() {
             } else {
                 // Open this item
                 const targetHeight = serviceParagraph.offsetHeight;
+                gsap.killTweensOf(serviceSpacer);
                 gsap.to(serviceSpacer, {
                     height: targetHeight,
                     duration: 0.6,
@@ -603,6 +614,7 @@ export function initHomePage() {
                     }
                     
                     if (plusSymbol) {
+                        gsap.killTweensOf(plusSymbol);
                         gsap.to(plusSymbol, {
                             color: '#000000',
                             x: -25,
@@ -612,6 +624,7 @@ export function initHomePage() {
                         });
                     }
                     if (serviceName) {
+                        gsap.killTweensOf(serviceName);
                         gsap.to(serviceName, {
                             color: '#000000',
                             x: 25,
@@ -622,6 +635,7 @@ export function initHomePage() {
                 }
                 
                 // Animate paragraph opacity to 1
+                gsap.killTweensOf(serviceParagraph);
                 gsap.to(serviceParagraph, {
                     opacity: 1,
                     duration: 0.4,
