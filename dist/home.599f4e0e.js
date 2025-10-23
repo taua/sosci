@@ -1057,7 +1057,11 @@ function initHomePage() {
                 if (openSpacer) (0, _gsap.gsap).to(openSpacer, {
                     height: 0,
                     duration: 0.6,
-                    ease: "expo.inOut"
+                    ease: "expo.inOut",
+                    onUpdate: ()=>{
+                        // Update ScrollSmoother during animation
+                        if (window.smootherInstance && typeof window.smootherInstance.refresh === 'function') window.smootherInstance.refresh();
+                    }
                 });
                 // Trigger hover out animations on previously open item
                 if (openBg) (0, _gsap.gsap).to(openBg, {
@@ -1091,7 +1095,11 @@ function initHomePage() {
                 (0, _gsap.gsap).to(serviceSpacer, {
                     height: 0,
                     duration: 0.6,
-                    ease: "expo.inOut"
+                    ease: "expo.inOut",
+                    onUpdate: ()=>{
+                        // Update ScrollSmoother during animation
+                        if (window.smootherInstance && typeof window.smootherInstance.refresh === 'function') window.smootherInstance.refresh();
+                    }
                 });
                 item.classList.remove('open');
                 currentlyOpenItem = null;
@@ -1166,7 +1174,11 @@ function initHomePage() {
                 (0, _gsap.gsap).to(serviceSpacer, {
                     height: targetHeight,
                     duration: 0.6,
-                    ease: "expo.inOut"
+                    ease: "expo.inOut",
+                    onUpdate: ()=>{
+                        // Update ScrollSmoother during animation
+                        if (window.smootherInstance && typeof window.smootherInstance.refresh === 'function') window.smootherInstance.refresh();
+                    }
                 });
                 item.classList.add('open');
                 currentlyOpenItem = item;

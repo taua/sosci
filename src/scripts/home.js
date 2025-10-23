@@ -420,7 +420,13 @@ export function initHomePage() {
                     gsap.to(openSpacer, {
                         height: 0,
                         duration: 0.6,
-                        ease: "expo.inOut"
+                        ease: "expo.inOut",
+                        onUpdate: () => {
+                            // Update ScrollSmoother during animation
+                            if (window.smootherInstance && typeof window.smootherInstance.refresh === 'function') {
+                                window.smootherInstance.refresh();
+                            }
+                        }
                     });
                 }
                 
@@ -467,7 +473,13 @@ export function initHomePage() {
                 gsap.to(serviceSpacer, {
                     height: 0,
                     duration: 0.6,
-                    ease: "expo.inOut"
+                    ease: "expo.inOut",
+                    onUpdate: () => {
+                        // Update ScrollSmoother during animation
+                        if (window.smootherInstance && typeof window.smootherInstance.refresh === 'function') {
+                            window.smootherInstance.refresh();
+                        }
+                    }
                 });
                 item.classList.remove('open');
                 currentlyOpenItem = null;
@@ -556,7 +568,13 @@ export function initHomePage() {
                 gsap.to(serviceSpacer, {
                     height: targetHeight,
                     duration: 0.6,
-                    ease: "expo.inOut"
+                    ease: "expo.inOut",
+                    onUpdate: () => {
+                        // Update ScrollSmoother during animation
+                        if (window.smootherInstance && typeof window.smootherInstance.refresh === 'function') {
+                            window.smootherInstance.refresh();
+                        }
+                    }
                 });
                 item.classList.add('open');
                 currentlyOpenItem = item;
