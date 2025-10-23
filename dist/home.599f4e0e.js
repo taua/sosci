@@ -1039,6 +1039,8 @@ function initHomePage() {
     // Track currently open accordion item
     let currentlyOpenItem = null;
     document.querySelectorAll('.service-item-shell').forEach((item)=>{
+        // Track hover state
+        let isHovered = false;
         // Click handler for accordion behavior
         item.addEventListener('click', (e)=>{
             const serviceSpacer = item.querySelector('.service-link-spacer');
@@ -1051,6 +1053,7 @@ function initHomePage() {
                 const openBg = currentlyOpenItem.querySelector('.service-link-bg');
                 const openPlusSymbol = currentlyOpenItem.querySelector('.plus-symbol-svg');
                 const openServiceName = currentlyOpenItem.querySelector('.service-name-txt');
+                const openParagraph = currentlyOpenItem.querySelector('.service-paragraph-shell');
                 if (openSpacer) (0, _gsap.gsap).to(openSpacer, {
                     height: 0,
                     duration: 0.6,
@@ -1075,6 +1078,12 @@ function initHomePage() {
                     duration: 0.4,
                     ease: "power2.out"
                 });
+                // Animate paragraph opacity to 0
+                if (openParagraph) (0, _gsap.gsap).to(openParagraph, {
+                    opacity: 0,
+                    duration: 0.4,
+                    ease: "power2.out"
+                });
                 currentlyOpenItem.classList.remove('open');
             }
             if (isOpen) {
@@ -1093,18 +1102,61 @@ function initHomePage() {
                 if (serviceBg) (0, _gsap.gsap).to(serviceBg, {
                     scaleY: 0,
                     duration: 0.6,
-                    ease: "expo.out"
+                    ease: "expo.out",
+                    onComplete: ()=>{
+                        // If still hovered after closing, re-trigger hover animations
+                        if (isHovered) {
+                            const rect = item.getBoundingClientRect();
+                            const elementCenter = rect.top + rect.height / 2;
+                            const fromTop = lastMouseY < elementCenter;
+                            (0, _gsap.gsap).killTweensOf(serviceBg);
+                            (0, _gsap.gsap).set(serviceBg, {
+                                transformOrigin: fromTop ? 'top center' : 'bottom center',
+                                scaleY: 0
+                            });
+                            (0, _gsap.gsap).to(serviceBg, {
+                                scaleY: 1,
+                                duration: 0.6,
+                                ease: "expo.out"
+                            });
+                        }
+                    }
                 });
                 if (plusSymbol) (0, _gsap.gsap).to(plusSymbol, {
                     color: '#FFFFFF',
                     x: 0,
                     rotation: 0,
                     duration: 0.4,
-                    ease: "power2.out"
+                    ease: "power2.out",
+                    onComplete: ()=>{
+                        // If still hovered after closing, re-trigger hover animations
+                        if (isHovered) (0, _gsap.gsap).to(plusSymbol, {
+                            color: '#000000',
+                            x: -25,
+                            rotation: -360,
+                            duration: 0.4,
+                            ease: "power2.out"
+                        });
+                    }
                 });
                 if (serviceName) (0, _gsap.gsap).to(serviceName, {
                     color: '#FFFFFF',
                     x: 0,
+                    duration: 0.4,
+                    ease: "power2.out",
+                    onComplete: ()=>{
+                        // If still hovered after closing, re-trigger hover animations
+                        if (isHovered) (0, _gsap.gsap).to(serviceName, {
+                            color: '#000000',
+                            x: 25,
+                            duration: 0.4,
+                            ease: "power2.out"
+                        });
+                    }
+                });
+                // Animate paragraph opacity to 0
+                (0, _gsap.gsap).to(serviceParagraph, {
+                    opacity: 0,
                     duration: 0.4,
                     ease: "power2.out"
                 });
@@ -1118,9 +1170,53 @@ function initHomePage() {
                 });
                 item.classList.add('open');
                 currentlyOpenItem = item;
+                // Trigger hover in animations only if not already hovered
+                if (!isHovered) {
+                    const serviceBg = item.querySelector('.service-link-bg');
+                    const plusSymbol = item.querySelector('.plus-symbol-svg');
+                    const serviceName = item.querySelector('.service-name-txt');
+                    if (serviceBg) {
+                        const rect = item.getBoundingClientRect();
+                        const elementCenter = rect.top + rect.height / 2;
+                        const fromTop = lastMouseY < elementCenter;
+                        (0, _gsap.gsap).killTweensOf(serviceBg);
+                        (0, _gsap.gsap).set(serviceBg, {
+                            transformOrigin: fromTop ? 'top center' : 'bottom center',
+                            scaleY: 0
+                        });
+                        (0, _gsap.gsap).to(serviceBg, {
+                            scaleY: 1,
+                            duration: 0.6,
+                            ease: "expo.out"
+                        });
+                    }
+                    if (plusSymbol) (0, _gsap.gsap).to(plusSymbol, {
+                        color: '#000000',
+                        x: -25,
+                        rotation: -360,
+                        duration: 0.4,
+                        ease: "power2.out"
+                    });
+                    if (serviceName) (0, _gsap.gsap).to(serviceName, {
+                        color: '#000000',
+                        x: 25,
+                        duration: 0.4,
+                        ease: "power2.out"
+                    });
+                }
+                // Animate paragraph opacity to 1
+                (0, _gsap.gsap).to(serviceParagraph, {
+                    opacity: 1,
+                    duration: 0.4,
+                    ease: "power2.out",
+                    delay: 0.3
+                });
             }
         });
         item.addEventListener('mouseenter', (e)=>{
+            isHovered = true;
+            // Don't trigger hover animations if item is open
+            if (item.classList.contains('open')) return;
             const serviceBg = item.querySelector('.service-link-bg');
             const plusSymbol = item.querySelector('.plus-symbol-svg');
             const serviceName = item.querySelector('.service-name-txt');
@@ -1155,6 +1251,7 @@ function initHomePage() {
             });
         });
         item.addEventListener('mouseleave', (e)=>{
+            isHovered = false;
             // Don't trigger hover out if item is open
             if (item.classList.contains('open')) return;
             const serviceBg = item.querySelector('.service-link-bg');

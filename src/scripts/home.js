@@ -396,6 +396,9 @@ export function initHomePage() {
     let currentlyOpenItem = null;
 
     document.querySelectorAll('.service-item-shell').forEach(item => {
+        // Track hover state
+        let isHovered = false;
+        
         // Click handler for accordion behavior
         item.addEventListener('click', (e) => {
             const serviceSpacer = item.querySelector('.service-link-spacer');
@@ -411,6 +414,7 @@ export function initHomePage() {
                 const openBg = currentlyOpenItem.querySelector('.service-link-bg');
                 const openPlusSymbol = currentlyOpenItem.querySelector('.plus-symbol-svg');
                 const openServiceName = currentlyOpenItem.querySelector('.service-name-txt');
+                const openParagraph = currentlyOpenItem.querySelector('.service-paragraph-shell');
                 
                 if (openSpacer) {
                     gsap.to(openSpacer, {
@@ -446,6 +450,15 @@ export function initHomePage() {
                     });
                 }
                 
+                // Animate paragraph opacity to 0
+                if (openParagraph) {
+                    gsap.to(openParagraph, {
+                        opacity: 0,
+                        duration: 0.4,
+                        ease: "power2.out"
+                    });
+                }
+                
                 currentlyOpenItem.classList.remove('open');
             }
             
@@ -468,7 +481,26 @@ export function initHomePage() {
                     gsap.to(serviceBg, {
                         scaleY: 0,
                         duration: 0.6,
-                        ease: "expo.out"
+                        ease: "expo.out",
+                        onComplete: () => {
+                            // If still hovered after closing, re-trigger hover animations
+                            if (isHovered) {
+                                const rect = item.getBoundingClientRect();
+                                const elementCenter = rect.top + (rect.height / 2);
+                                const fromTop = lastMouseY < elementCenter;
+                                
+                                gsap.killTweensOf(serviceBg);
+                                gsap.set(serviceBg, {
+                                    transformOrigin: fromTop ? 'top center' : 'bottom center',
+                                    scaleY: 0
+                                });
+                                gsap.to(serviceBg, {
+                                    scaleY: 1,
+                                    duration: 0.6,
+                                    ease: "expo.out"
+                                });
+                            }
+                        }
                     });
                 }
                 if (plusSymbol) {
@@ -477,7 +509,19 @@ export function initHomePage() {
                         x: 0,
                         rotation: 0,
                         duration: 0.4,
-                        ease: "power2.out"
+                        ease: "power2.out",
+                        onComplete: () => {
+                            // If still hovered after closing, re-trigger hover animations
+                            if (isHovered) {
+                                gsap.to(plusSymbol, {
+                                    color: '#000000',
+                                    x: -25,
+                                    rotation: -360,
+                                    duration: 0.4,
+                                    ease: "power2.out"
+                                });
+                            }
+                        }
                     });
                 }
                 if (serviceName) {
@@ -485,9 +529,27 @@ export function initHomePage() {
                         color: '#FFFFFF',
                         x: 0,
                         duration: 0.4,
-                        ease: "power2.out"
+                        ease: "power2.out",
+                        onComplete: () => {
+                            // If still hovered after closing, re-trigger hover animations
+                            if (isHovered) {
+                                gsap.to(serviceName, {
+                                    color: '#000000',
+                                    x: 25,
+                                    duration: 0.4,
+                                    ease: "power2.out"
+                                });
+                            }
+                        }
                     });
                 }
+                
+                // Animate paragraph opacity to 0
+                gsap.to(serviceParagraph, {
+                    opacity: 0,
+                    duration: 0.4,
+                    ease: "power2.out"
+                });
             } else {
                 // Open this item
                 const targetHeight = serviceParagraph.offsetHeight;
@@ -498,10 +560,65 @@ export function initHomePage() {
                 });
                 item.classList.add('open');
                 currentlyOpenItem = item;
+                
+                // Trigger hover in animations only if not already hovered
+                if (!isHovered) {
+                    const serviceBg = item.querySelector('.service-link-bg');
+                    const plusSymbol = item.querySelector('.plus-symbol-svg');
+                    const serviceName = item.querySelector('.service-name-txt');
+                    
+                    if (serviceBg) {
+                        const rect = item.getBoundingClientRect();
+                        const elementCenter = rect.top + (rect.height / 2);
+                        const fromTop = lastMouseY < elementCenter;
+                        
+                        gsap.killTweensOf(serviceBg);
+                        gsap.set(serviceBg, {
+                            transformOrigin: fromTop ? 'top center' : 'bottom center',
+                            scaleY: 0
+                        });
+                        gsap.to(serviceBg, {
+                            scaleY: 1,
+                            duration: 0.6,
+                            ease: "expo.out"
+                        });
+                    }
+                    
+                    if (plusSymbol) {
+                        gsap.to(plusSymbol, {
+                            color: '#000000',
+                            x: -25,
+                            rotation: -360,
+                            duration: 0.4,
+                            ease: "power2.out"
+                        });
+                    }
+                    if (serviceName) {
+                        gsap.to(serviceName, {
+                            color: '#000000',
+                            x: 25,
+                            duration: 0.4,
+                            ease: "power2.out"
+                        });
+                    }
+                }
+                
+                // Animate paragraph opacity to 1
+                gsap.to(serviceParagraph, {
+                    opacity: 1,
+                    duration: 0.4,
+                    ease: "power2.out",
+                    delay: 0.3
+                });
             }
         });
 
         item.addEventListener('mouseenter', (e) => {
+            isHovered = true;
+            
+            // Don't trigger hover animations if item is open
+            if (item.classList.contains('open')) return;
+            
             const serviceBg = item.querySelector('.service-link-bg');
             const plusSymbol = item.querySelector('.plus-symbol-svg');
             const serviceName = item.querySelector('.service-name-txt');
@@ -544,6 +661,8 @@ export function initHomePage() {
         });
 
         item.addEventListener('mouseleave', (e) => {
+            isHovered = false;
+            
             // Don't trigger hover out if item is open
             if (item.classList.contains('open')) return;
             
