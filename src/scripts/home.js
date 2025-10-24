@@ -446,10 +446,26 @@ export function initHomePage() {
                         color: '#FFFFFF',
                         x: 0,
                         rotation: 0,
+                        opacity: 1,
                         duration: 0.4,
                         ease: "power2.out"
                     });
                 }
+                
+                // Scale minus symbol back to 0 and hide when closing previous item
+                const openMinusSymbol = currentlyOpenItem.querySelector('.minus-symbol');
+                if (openMinusSymbol) {
+                    gsap.killTweensOf(openMinusSymbol);
+                    gsap.to(openMinusSymbol, {
+                        scaleX: 0,
+                        duration: 0.4,
+                        ease: "power2.out",
+                        onComplete: () => {
+                            gsap.set(openMinusSymbol, { opacity: 0 });
+                        }
+                    });
+                }
+                
                 if (openServiceName) {
                     gsap.killTweensOf(openServiceName);
                     gsap.to(openServiceName, {
@@ -528,6 +544,7 @@ export function initHomePage() {
                         color: '#FFFFFF',
                         x: 0,
                         rotation: 0,
+                        opacity: 1,
                         duration: 0.4,
                         ease: "power2.out",
                         onComplete: () => {
@@ -541,6 +558,20 @@ export function initHomePage() {
                                     ease: "power2.out"
                                 });
                             }
+                        }
+                    });
+                }
+                
+                // Scale minus symbol back to 0 and hide when closing
+                const minusSymbol = item.querySelector('.minus-symbol');
+                if (minusSymbol) {
+                    gsap.killTweensOf(minusSymbol);
+                    gsap.to(minusSymbol, {
+                        scaleX: 0,
+                        duration: 0.4,
+                        ease: "power2.out",
+                        onComplete: () => {
+                            gsap.set(minusSymbol, { opacity: 0 });
                         }
                     });
                 }
@@ -589,6 +620,34 @@ export function initHomePage() {
                 });
                 item.classList.add('open');
                 currentlyOpenItem = item;
+                
+                // Fade out plus symbol and scale in minus symbol when opening
+                const plusSymbol = item.querySelector('.plus-symbol-svg');
+                const minusSymbol = item.querySelector('.minus-symbol');
+                
+                if (plusSymbol) {
+                    gsap.killTweensOf(plusSymbol);
+                    gsap.to(plusSymbol, {
+                        opacity: 0,
+                        duration: 0.2,
+                        ease: "power2.out"
+                    });
+                }
+                
+                if (minusSymbol) {
+                    gsap.killTweensOf(minusSymbol);
+                    gsap.set(minusSymbol, {
+                        transformOrigin: 'left center',
+                        scaleX: 0,
+                        opacity: 1
+                    });
+                    gsap.to(minusSymbol, {
+                        scaleX: 1,
+                        duration: 0.4,
+                        delay: 0.6,
+                        ease: "power2.out"
+                    });
+                }
                 
                 // Trigger hover in animations only if not already hovered
                 if (!isHovered) {
