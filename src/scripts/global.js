@@ -201,13 +201,30 @@ function initPageScripts() {
 // current page cleanup reference (set by page modules when they export a cleanup)
 let currentPageCleanup = null;
 
+// Track if a page transition is in progress
+let isTransitioning = false;
 
 // Barba.js initialization
 barba.init({
+  prevent: ({ el, href }) => {
+    // Prevent navigation if a transition is already in progress
+    if (isTransitioning) {
+      return true;
+    }
+    return false;
+  },
   transitions: [{
     name: 'default-transition',
     async leave(data) {
   // Barba leave: page cleanup (if any)
+      // Mark transition as in progress
+      isTransitioning = true;
+      
+      // Disable all navigation links to prevent rapid clicking
+      const barbaWrapper = document.querySelector('[data-barba="wrapper"]');
+      if (barbaWrapper) {
+        barbaWrapper.style.pointerEvents = 'none';
+      }
       // Call page-specific cleanup if available before removing the container
       try {
         if (typeof currentPageCleanup === 'function') {
@@ -488,6 +505,13 @@ try {
           if (navHoverSplit?.chars?.length) {
             gsap.set(navHoverSplit.chars, { transform: 'translate3d(0, 0, 0)' });
           }
+          // Re-enable navigation links now that page is ready
+          const barbaWrapper = document.querySelector('[data-barba="wrapper"]');
+          if (barbaWrapper) {
+            barbaWrapper.style.pointerEvents = 'auto';
+          }
+          // Mark transition as complete
+          isTransitioning = false;
           if (navBtmSplit?.chars?.length) {
             gsap.set(navBtmSplit.chars, { transform: 'translate3d(0, 0, 0)' });
           }
