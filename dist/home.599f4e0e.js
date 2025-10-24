@@ -1063,6 +1063,10 @@ function initHomePage() {
                         onUpdate: ()=>{
                             // Update ScrollSmoother during animation
                             if (window.smootherInstance && typeof window.smootherInstance.refresh === 'function') window.smootherInstance.refresh();
+                        },
+                        onComplete: ()=>{
+                            // Final refresh after animation completes
+                            if (window.smootherInstance && typeof window.smootherInstance.refresh === 'function') window.smootherInstance.refresh();
                         }
                     });
                 }
@@ -1130,6 +1134,10 @@ function initHomePage() {
                     ease: "expo.inOut",
                     onUpdate: ()=>{
                         // Update ScrollSmoother during animation
+                        if (window.smootherInstance && typeof window.smootherInstance.refresh === 'function') window.smootherInstance.refresh();
+                    },
+                    onComplete: ()=>{
+                        // Final refresh after animation completes
                         if (window.smootherInstance && typeof window.smootherInstance.refresh === 'function') window.smootherInstance.refresh();
                     }
                 });
@@ -1236,6 +1244,10 @@ function initHomePage() {
                     ease: "expo.inOut",
                     onUpdate: ()=>{
                         // Update ScrollSmoother during animation
+                        if (window.smootherInstance && typeof window.smootherInstance.refresh === 'function') window.smootherInstance.refresh();
+                    },
+                    onComplete: ()=>{
+                        // Final refresh after animation completes
                         if (window.smootherInstance && typeof window.smootherInstance.refresh === 'function') window.smootherInstance.refresh();
                     }
                 });
