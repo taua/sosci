@@ -1970,6 +1970,8 @@ window.addEventListener('DOMContentLoaded', ()=>{
             });
             const enter = ()=>{
                 try {
+                    // Don't trigger hover if nav is animating
+                    if (navAnimating) return;
                     // If this link's container is already marked active, skip hover animation
                     const container = link.closest('.takeover-nav-link');
                     if (container && container.classList.contains('active')) return;
@@ -1986,6 +1988,8 @@ window.addEventListener('DOMContentLoaded', ()=>{
             };
             const leave = ()=>{
                 try {
+                    // Don't trigger hover if nav is animating
+                    if (navAnimating) return;
                     // If this link's container is marked active, don't collapse the underline
                     const container = link.closest('.takeover-nav-link');
                     if (container && container.classList.contains('active')) return;
