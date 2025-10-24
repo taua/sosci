@@ -1,8 +1,9 @@
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { SplitText } from "gsap/SplitText";
 import horizontalLoop from "./horizontalLoop";
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, SplitText);
 
 let _vennSVG = null;
 let _vennTL = null;
@@ -687,6 +688,48 @@ function createVennCircles() {
       }
     }
   } catch (e) {}
+
+  // Animate the venn-sub-txt elements (left and right side text)
+  // using SplitText to fade/blur in from bottom after circles finish joining
+  try {
+    const subTextElements = shell.querySelectorAll('.venn-sub-txt');
+    if (subTextElements.length > 0) {
+      const tlDur = tl.duration() || 1.2;
+      // Start the text animation after circles have joined (60% through)
+      const textStartTime = tlDur * 0.6; // Start at 60% through the animation
+      const textDuration = tlDur * 0.4; // Use 40% of timeline for text animation
+      
+      subTextElements.forEach(textEl => {
+        // Split the text into words
+        const split = new SplitText(textEl, { type: 'words' });
+        
+        // Set initial state: invisible, blurred, and shifted down
+        gsap.set(split.words, {
+          opacity: 0,
+          filter: 'blur(10px)',
+          y: 15
+        });
+        
+        // Animate words in from bottom with blur fade
+        tl.to(split.words, {
+          opacity: 1,
+          filter: 'blur(0px)',
+          y: 0,
+          duration: textDuration,
+          stagger: 0.05,
+          ease: 'power2.out'
+        }, textStartTime);
+      });
+      
+      // Extend the pin duration to give users time to read
+      if (tl.scrollTrigger) {
+        tl.scrollTrigger.vars.end = '+=200%'; // Increased from 100% to 200%
+        tl.scrollTrigger.refresh();
+      }
+    }
+  } catch (e) {
+    console.error('Error setting up venn-sub-txt animation:', e);
+  }
 
   // initialize
   updateShapes();

@@ -673,9 +673,10 @@ parcelHelpers.export(exports, "initSciencePage", ()=>initSciencePage);
 parcelHelpers.export(exports, "cleanupSciencePage", ()=>cleanupSciencePage);
 var _gsap = require("gsap");
 var _scrollTrigger = require("gsap/ScrollTrigger");
+var _splitText = require("gsap/SplitText");
 var _horizontalLoop = require("./horizontalLoop");
 var _horizontalLoopDefault = parcelHelpers.interopDefault(_horizontalLoop);
-(0, _gsap.gsap).registerPlugin((0, _scrollTrigger.ScrollTrigger));
+(0, _gsap.gsap).registerPlugin((0, _scrollTrigger.ScrollTrigger), (0, _splitText.SplitText));
 let _vennSVG = null;
 let _vennTL = null;
 let _vennClonedVideo = null;
@@ -1440,6 +1441,45 @@ function createVennCircles() {
             }
         }
     } catch (e) {}
+    // Animate the venn-sub-txt elements (left and right side text)
+    // using SplitText to fade/blur in from bottom after circles finish joining
+    try {
+        const subTextElements = shell.querySelectorAll('.venn-sub-txt');
+        if (subTextElements.length > 0) {
+            const tlDur = tl.duration() || 1.2;
+            // Start the text animation after circles have joined (60% through)
+            const textStartTime = tlDur * 0.6; // Start at 60% through the animation
+            const textDuration = tlDur * 0.4; // Use 40% of timeline for text animation
+            subTextElements.forEach((textEl)=>{
+                // Split the text into words
+                const split = new (0, _splitText.SplitText)(textEl, {
+                    type: 'words'
+                });
+                // Set initial state: invisible, blurred, and shifted down
+                (0, _gsap.gsap).set(split.words, {
+                    opacity: 0,
+                    filter: 'blur(10px)',
+                    y: 15
+                });
+                // Animate words in from bottom with blur fade
+                tl.to(split.words, {
+                    opacity: 1,
+                    filter: 'blur(0px)',
+                    y: 0,
+                    duration: textDuration,
+                    stagger: 0.05,
+                    ease: 'power2.out'
+                }, textStartTime);
+            });
+            // Extend the pin duration to give users time to read
+            if (tl.scrollTrigger) {
+                tl.scrollTrigger.vars.end = '+=200%'; // Increased from 100% to 200%
+                tl.scrollTrigger.refresh();
+            }
+        }
+    } catch (e) {
+        console.error('Error setting up venn-sub-txt animation:', e);
+    }
     // initialize
     updateShapes();
     _vennTL = tl;
@@ -1553,7 +1593,7 @@ function shortestAngleDiff(a, b) {
     return diff;
 }
 
-},{"gsap":"fPSuC","gsap/ScrollTrigger":"7wnFk","./horizontalLoop":"02lVZ","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"02lVZ":[function(require,module,exports,__globalThis) {
+},{"gsap":"fPSuC","gsap/ScrollTrigger":"7wnFk","./horizontalLoop":"02lVZ","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","gsap/SplitText":"63tvY"}],"02lVZ":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "default", ()=>horizontalLoop);
