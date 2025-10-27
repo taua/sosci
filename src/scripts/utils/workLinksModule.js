@@ -142,8 +142,43 @@ export function createWorkLinksModule() {
     state.onMouseMoveLastY = onMouseMoveLastY;
     window.addEventListener('mousemove', onMouseMoveLastY);
 
+    // Check current project URL and disable matching links
+    const currentPath = window.location.pathname;
+    const projectMatch = currentPath.match(/projects\/([^\/]+)/);
+    const currentProjectSlug = projectMatch ? projectMatch[1] : null;
+
     // Handle matching z-index updates and video control
     workLinks.forEach((link, index) => {
+      // Check if this link matches the current project
+      let isCurrentProject = false;
+      
+      if (currentProjectSlug) {
+        // Check href for match
+        const href = link.getAttribute('href');
+        if (href && href.includes(`projects/${currentProjectSlug}`)) {
+          isCurrentProject = true;
+        }
+        
+        // Also check headline text for match (normalize both strings)
+        if (!isCurrentProject) {
+          const headlineEl = link.querySelector('.work-link-headline-txt');
+          if (headlineEl) {
+            const headlineText = headlineEl.textContent.trim().toLowerCase().replace(/\s+/g, '-');
+            if (headlineText === currentProjectSlug.toLowerCase()) {
+              isCurrentProject = true;
+            }
+          }
+        }
+      }
+      
+      // If this is the current project, disable click and add visual indicator
+      if (isCurrentProject) {
+        link.style.pointerEvents = 'none';
+        link.style.opacity = '0.5';
+        link.setAttribute('data-current-project', 'true');
+        return; // Skip adding event listeners for this link
+      }
+      
       link.addEventListener('mouseenter', (e) => {
         state.currentIndex++;
         
