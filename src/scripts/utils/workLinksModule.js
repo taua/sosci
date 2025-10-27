@@ -171,12 +171,15 @@ export function createWorkLinksModule() {
         }
       }
       
-      // If this is the current project, disable click and add visual indicator
+      // If this is the current project, prevent clicks but keep hover
       if (isCurrentProject) {
-        link.style.pointerEvents = 'none';
         link.style.opacity = '0.5';
         link.setAttribute('data-current-project', 'true');
-        return; // Skip adding event listeners for this link
+        // Prevent click navigation
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        });
       }
       
       link.addEventListener('mouseenter', (e) => {
