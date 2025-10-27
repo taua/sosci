@@ -157,6 +157,26 @@ export function createWorkLinksModule() {
           });
         }
         
+        // Animate work-link-num to the right
+        const workLinkNum = link.querySelector('.work-link-num');
+        if (workLinkNum) {
+          gsap.to(workLinkNum, {
+            x: 30,
+            duration: 0.4,
+            ease: "power2.out"
+          });
+        }
+        
+        // Animate work-link-client to the left
+        const workLinkClient = link.querySelector('.work-link-client');
+        if (workLinkClient) {
+          gsap.to(workLinkClient, {
+            x: -30,
+            duration: 0.4,
+            ease: "power2.out"
+          });
+        }
+        
         // Animate links-bg with directional scale
         const linksBg = link.querySelector('.links-bg');
         if (linksBg) {
@@ -232,6 +252,26 @@ export function createWorkLinksModule() {
         if (textElements.length) {
           gsap.to(textElements, {
             color: '#FFFFFF',
+            duration: 0.4,
+            ease: "power2.out"
+          });
+        }
+        
+        // Animate work-link-num back to original position
+        const workLinkNum = link.querySelector('.work-link-num');
+        if (workLinkNum) {
+          gsap.to(workLinkNum, {
+            x: 0,
+            duration: 0.4,
+            ease: "power2.out"
+          });
+        }
+        
+        // Animate work-link-client back to original position
+        const workLinkClient = link.querySelector('.work-link-client');
+        if (workLinkClient) {
+          gsap.to(workLinkClient, {
+            x: 0,
             duration: 0.4,
             ease: "power2.out"
           });
