@@ -695,8 +695,8 @@ function createVennCircles() {
     const subTextElements = shell.querySelectorAll('.venn-sub-txt');
     if (subTextElements.length > 0) {
       const tlDur = tl.duration() || 1.2;
-      // Start the text animation after circles have joined (60% through)
-      const textStartTime = tlDur * 0.6; // Start at 60% through the animation
+      // Start the text animation after circles are fully overlapped (100% through)
+      const textStartTime = tlDur * 1.0; // Start at 100% through the animation
       const textDuration = tlDur * 0.4; // Use 40% of timeline for text animation
       
       subTextElements.forEach(textEl => {
@@ -716,7 +716,7 @@ function createVennCircles() {
           filter: 'blur(0px)',
           y: 0,
           duration: textDuration,
-          stagger: 0.05,
+          stagger: 0.09,
           ease: 'power2.out'
         }, textStartTime);
       });
