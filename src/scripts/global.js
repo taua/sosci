@@ -70,7 +70,7 @@ function initVideoVisibility() {
     videoScrollTriggers = [];
   }
   if (window.location.pathname.includes('work')) return;
-  const videos = document.querySelectorAll('.bg-proj-video video');
+  const videos = document.querySelectorAll('video');
   if (!videos.length) return;
   videos.forEach((video) => {
     video.muted = true;
