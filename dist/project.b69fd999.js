@@ -94,7 +94,54 @@
 
     function localRequire(x) {
       var res = localRequire.resolve(x);
-      return res === false ? {} : newRequire(res);
+      if (res === false) {
+        return {};
+      }
+      // Synthesize a module to follow re-exports.
+      if (Array.isArray(res)) {
+        var m = {__esModule: true};
+        res.forEach(function (v) {
+          var key = v[0];
+          var id = v[1];
+          var exp = v[2] || v[0];
+          var x = newRequire(id);
+          if (key === '*') {
+            Object.keys(x).forEach(function (key) {
+              if (
+                key === 'default' ||
+                key === '__esModule' ||
+                Object.prototype.hasOwnProperty.call(m, key)
+              ) {
+                return;
+              }
+
+              Object.defineProperty(m, key, {
+                enumerable: true,
+                get: function () {
+                  return x[key];
+                },
+              });
+            });
+          } else if (exp === '*') {
+            Object.defineProperty(m, key, {
+              enumerable: true,
+              value: x,
+            });
+          } else {
+            Object.defineProperty(m, key, {
+              enumerable: true,
+              get: function () {
+                if (exp === 'default') {
+                  return x.__esModule ? x.default : x;
+                }
+                return x[exp];
+              },
+            });
+          }
+        });
+        return m;
+      }
+      return newRequire(res);
     }
 
     function resolve(x) {
@@ -1011,7 +1058,7 @@ function initProjectPage() {
     else run();
 }
 
-},{"gsap":"fPSuC","gsap/ScrollTrigger":"7wnFk","gsap/SplitText":"63tvY","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./utils/workLinksModule":"dJji4"}],"dJji4":[function(require,module,exports,__globalThis) {
+},{"gsap":"fPSuC","gsap/ScrollTrigger":"7wnFk","gsap/SplitText":"63tvY","./utils/workLinksModule":"dJji4","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dJji4":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 // Shared work-links functionality that can be used by multiple pages

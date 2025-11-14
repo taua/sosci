@@ -19,6 +19,7 @@
   "homepage": "https://github.com/taua/sosci#readme",
   "description": "",
   "devDependencies": {
+    "baseline-browser-mapping": "^2.8.28",
     "parcel": "^2.15.4"
   },
   "dependencies": {
