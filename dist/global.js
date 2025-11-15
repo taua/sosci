@@ -2256,17 +2256,30 @@ window.playProjectEnterAnimation = function(data) {
 };
 window.playWorkEnterAnimation = function(data) {
     console.log('Work Page enter animation triggered');
-    const workHeader = document.querySelector('.work-intro-header-txt');
-    if (workHeader) {
-        // Create a wrapper parent with overflow hidden for bottom-up animation
-        const txtWrapper = document.createElement('span');
-        txtWrapper.style.overflow = 'hidden';
-        txtWrapper.style.width = '100%';
-        txtWrapper.style.display = 'inline-block';
-        txtWrapper.style.verticalAlign = 'bottom';
-        // Insert txtWrapper before the text element and move the text inside
-        workHeader.parentNode.insertBefore(txtWrapper, workHeader);
-        txtWrapper.appendChild(workHeader);
+    // Determine delay based on whether this is a Barba transition or initial page load
+    const isBarbaTransition = data !== undefined;
+    const animationDelay = isBarbaTransition ? 0.9 : 0.5;
+    // Use requestAnimationFrame to ensure DOM is ready
+    requestAnimationFrame(()=>{
+        const workHeader = document.querySelector('.proj-rich-headline-shell');
+        if (!workHeader) {
+            console.log('proj-rich-headline-shell not found, skipping animation');
+            return;
+        }
+        // Check if element is already wrapped (from previous navigation)
+        const existingWrapper = workHeader.parentElement;
+        const isAlreadyWrapped = existingWrapper && existingWrapper.tagName === 'SPAN' && existingWrapper.style.overflow === 'hidden';
+        if (!isAlreadyWrapped) {
+            // Create a wrapper parent with overflow hidden for bottom-up animation
+            const txtWrapper = document.createElement('span');
+            txtWrapper.style.overflow = 'hidden';
+            txtWrapper.style.width = '100%';
+            txtWrapper.style.display = 'inline-block';
+            txtWrapper.style.verticalAlign = 'bottom';
+            // Insert txtWrapper before the text element and move the text inside
+            workHeader.parentNode.insertBefore(txtWrapper, workHeader);
+            txtWrapper.appendChild(workHeader);
+        }
         let workSplit = null;
         try {
             workSplit = new (0, _splitText.SplitText)(workHeader, {
@@ -2274,7 +2287,7 @@ window.playWorkEnterAnimation = function(data) {
                 position: "relative"
             });
         } catch (error) {
-            console.error('SplitText error (work-intro-header-txt):', error);
+            console.error('SplitText error (proj-rich-headline-shell):', error);
         }
         if (workSplit?.chars?.length) {
             (0, _gsap.gsap).set(workSplit.chars, {
@@ -2285,11 +2298,11 @@ window.playWorkEnterAnimation = function(data) {
                 duration: 1,
                 ease: "expo.out",
                 stagger: 0.02,
-                delay: 0.5,
+                delay: animationDelay,
                 overwrite: "auto"
             });
         }
-    }
+    });
 };
 window.playHomeEnterAnimation = function(data) {
     console.log('Home Page enter animation triggered');
