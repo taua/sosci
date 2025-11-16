@@ -1631,7 +1631,8 @@ window.playProjectEnterAnimation = function(data) {
     
     // Determine delay based on whether this is a Barba transition or initial page load
     const isBarbaTransition = data !== undefined;
-    const animationDelay = isBarbaTransition ? 0.9 : 0.5;
+    const animationDelay = isBarbaTransition ? 0.95 : 0.5;
+    const wordStagger = 0.05;
     
     // Use requestAnimationFrame to ensure DOM is ready
     requestAnimationFrame(() => {
@@ -1642,8 +1643,16 @@ window.playProjectEnterAnimation = function(data) {
         return;
       }
       
+      // Target the child element (h2, p, etc.) within the rich text, not the rich text wrapper itself
+      const richTextChild = workHeader.querySelector('h1, h2, h3, h4, h5, h6, p');
+      
+      if (!richTextChild) {
+        console.log('No child element found in proj-rich-headline-shell, skipping animation');
+        return;
+      }
+      
       // Check if element is already wrapped (from previous navigation)
-      const existingWrapper = workHeader.parentElement;
+      const existingWrapper = richTextChild.parentElement;
       const isAlreadyWrapped = existingWrapper && 
                                existingWrapper.tagName === 'SPAN' && 
                                existingWrapper.style.overflow === 'hidden';
@@ -1656,23 +1665,27 @@ window.playProjectEnterAnimation = function(data) {
         txtWrapper.style.display = 'inline-block';
         txtWrapper.style.verticalAlign = 'bottom';
         // Insert txtWrapper before the text element and move the text inside
-        workHeader.parentNode.insertBefore(txtWrapper, workHeader);
-        txtWrapper.appendChild(workHeader);
+        richTextChild.parentNode.insertBefore(txtWrapper, richTextChild);
+        txtWrapper.appendChild(richTextChild);
       }
 
       let workSplit = null;
       try {
-        workSplit = new SplitText(workHeader, { type: "chars", position: "relative" });
+        workSplit = new SplitText(richTextChild, { 
+          type: "words"
+        });
       } catch (error) {
         console.error('SplitText error (proj-rich-headline-shell):', error);
       }
-      if (workSplit?.chars?.length) {
-        gsap.set(workSplit.chars, { transform: 'translate3d(0,100%,0)'});
-        gsap.to(workSplit.chars, {
+      if (workSplit?.words?.length) {
+        gsap.set(workSplit.words, { 
+          transform: 'translate3d(0,100%,0)'
+        });
+        gsap.to(workSplit.words, {
           transform: 'translate3d(0,0%,0)',
           duration: 1,
           ease: "expo.out",
-          stagger: 0.02,
+          stagger: wordStagger,
           delay: animationDelay,
           overwrite: "auto"
         });

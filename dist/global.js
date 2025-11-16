@@ -2258,7 +2258,8 @@ window.playWorkEnterAnimation = function(data) {
     console.log('Work Page enter animation triggered');
     // Determine delay based on whether this is a Barba transition or initial page load
     const isBarbaTransition = data !== undefined;
-    const animationDelay = isBarbaTransition ? 0.9 : 0.5;
+    const animationDelay = isBarbaTransition ? 0.95 : 0.5;
+    const wordStagger = 0.05;
     // Use requestAnimationFrame to ensure DOM is ready
     requestAnimationFrame(()=>{
         const workHeader = document.querySelector('.proj-rich-headline-shell');
@@ -2266,8 +2267,14 @@ window.playWorkEnterAnimation = function(data) {
             console.log('proj-rich-headline-shell not found, skipping animation');
             return;
         }
+        // Target the child element (h2, p, etc.) within the rich text, not the rich text wrapper itself
+        const richTextChild = workHeader.querySelector('h1, h2, h3, h4, h5, h6, p');
+        if (!richTextChild) {
+            console.log('No child element found in proj-rich-headline-shell, skipping animation');
+            return;
+        }
         // Check if element is already wrapped (from previous navigation)
-        const existingWrapper = workHeader.parentElement;
+        const existingWrapper = richTextChild.parentElement;
         const isAlreadyWrapped = existingWrapper && existingWrapper.tagName === 'SPAN' && existingWrapper.style.overflow === 'hidden';
         if (!isAlreadyWrapped) {
             // Create a wrapper parent with overflow hidden for bottom-up animation
@@ -2277,27 +2284,26 @@ window.playWorkEnterAnimation = function(data) {
             txtWrapper.style.display = 'inline-block';
             txtWrapper.style.verticalAlign = 'bottom';
             // Insert txtWrapper before the text element and move the text inside
-            workHeader.parentNode.insertBefore(txtWrapper, workHeader);
-            txtWrapper.appendChild(workHeader);
+            richTextChild.parentNode.insertBefore(txtWrapper, richTextChild);
+            txtWrapper.appendChild(richTextChild);
         }
         let workSplit = null;
         try {
-            workSplit = new (0, _splitText.SplitText)(workHeader, {
-                type: "chars",
-                position: "relative"
+            workSplit = new (0, _splitText.SplitText)(richTextChild, {
+                type: "words"
             });
         } catch (error) {
             console.error('SplitText error (proj-rich-headline-shell):', error);
         }
-        if (workSplit?.chars?.length) {
-            (0, _gsap.gsap).set(workSplit.chars, {
+        if (workSplit?.words?.length) {
+            (0, _gsap.gsap).set(workSplit.words, {
                 transform: 'translate3d(0,100%,0)'
             });
-            (0, _gsap.gsap).to(workSplit.chars, {
+            (0, _gsap.gsap).to(workSplit.words, {
                 transform: 'translate3d(0,0%,0)',
                 duration: 1,
                 ease: "expo.out",
-                stagger: 0.02,
+                stagger: wordStagger,
                 delay: animationDelay,
                 overwrite: "auto"
             });
