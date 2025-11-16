@@ -1550,6 +1550,7 @@ function imgTrailEffect() {
                 y: 0,
                 opacity: 0
             };
+            this.isLoaded = false;
             // get sizes/position
             this.getRect();
             // init/bind events
@@ -1567,6 +1568,8 @@ function imgTrailEffect() {
         }
         getRect() {
             this.rect = this.DOM.el.getBoundingClientRect();
+            // Check if image has valid dimensions (loaded)
+            this.isLoaded = this.rect.width > 0 && this.rect.height > 0;
         }
         isActive() {
             // check if image is animating or if it's visible
@@ -1613,6 +1616,8 @@ function imgTrailEffect() {
         showNextImage() {
             // show image at position [this.imgPosition]
             const img = this.images[this.imgPosition];
+            // Don't show image if it's not loaded yet
+            if (!img.isLoaded) return;
             // kill any tween on the image
             (0, _gsapDefault.default).killTweensOf(img.DOM.el);
             let theIndex = $(img.DOM.el).index();
@@ -1688,7 +1693,15 @@ function imgTrailEffect() {
     // Preload images
     const preloadImages = ()=>{
         return new Promise((resolve, reject)=>{
-            (0, _imagesloadedDefault.default)(document.querySelectorAll('.content__img'), resolve);
+            const images = document.querySelectorAll('.content__img');
+            if (images.length === 0) {
+                resolve();
+                return;
+            }
+            // Use imagesLoaded with background option to ensure all images are truly loaded
+            (0, _imagesloadedDefault.default)(images, {
+                background: true
+            }, resolve);
         });
     };
     // And then..
@@ -1702,6 +1715,11 @@ function imgTrailEffect() {
             y: currentMouse.y
         };
         imageTrailInstance = new ImageTrail();
+        // Double-check all images are loaded and have valid dimensions
+        imageTrailInstance.images.forEach((img)=>{
+            img.getRect();
+            if (!img.isLoaded) console.warn('Image not fully loaded:', img.DOM.el);
+        });
     });
     // Return a cleanup function to remove the event listener
     return function cleanup() {
