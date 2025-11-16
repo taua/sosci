@@ -315,6 +315,8 @@ barba.init({
             initVideoVisibility();
             initPageScripts();
             ScrollTrigger.refresh();
+            // Refresh again after a short delay to catch any images that load
+            setTimeout(() => ScrollTrigger.refresh(), 100);
           });
         });
       } else {
@@ -325,6 +327,8 @@ barba.init({
             initVideoVisibility();
             initPageScripts();
             ScrollTrigger.refresh();
+            // Refresh again after a short delay to catch any images that load
+            setTimeout(() => ScrollTrigger.refresh(), 100);
           });
         });
       }
@@ -478,6 +482,9 @@ requestAnimationFrame(() => {
       initPageScripts();
       ScrollTrigger.refresh();
       try { robustScrollReset(); } catch (e) {}
+      // Refresh again after short delays to catch any images that load
+      setTimeout(() => ScrollTrigger.refresh(), 100);
+      setTimeout(() => ScrollTrigger.refresh(), 500);
       // Clear bootstrapping after a short delay so per-page logic has time to
       // measure layout and set initial states. 150ms is generous but small.
       setTimeout(() => { try { window._pageBootstrapping = false; } catch (e) {} }, 150);

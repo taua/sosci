@@ -984,6 +984,8 @@ let isTransitioning = false;
                         initVideoVisibility();
                         initPageScripts();
                         (0, _scrollTrigger.ScrollTrigger).refresh();
+                        // Refresh again after a short delay to catch any images that load
+                        setTimeout(()=>(0, _scrollTrigger.ScrollTrigger).refresh(), 100);
                     });
                 });
                 else // For nav open: init smoother and page scripts now since closeNav will handle the animation
@@ -993,6 +995,8 @@ let isTransitioning = false;
                         initVideoVisibility();
                         initPageScripts();
                         (0, _scrollTrigger.ScrollTrigger).refresh();
+                        // Refresh again after a short delay to catch any images that load
+                        setTimeout(()=>(0, _scrollTrigger.ScrollTrigger).refresh(), 100);
                     });
                 });
             },
@@ -1151,6 +1155,9 @@ requestAnimationFrame(()=>{
             try {
                 robustScrollReset();
             } catch (e) {}
+            // Refresh again after short delays to catch any images that load
+            setTimeout(()=>(0, _scrollTrigger.ScrollTrigger).refresh(), 100);
+            setTimeout(()=>(0, _scrollTrigger.ScrollTrigger).refresh(), 500);
             // Clear bootstrapping after a short delay so per-page logic has time to
             // measure layout and set initial states. 150ms is generous but small.
             setTimeout(()=>{
