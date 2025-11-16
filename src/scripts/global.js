@@ -719,11 +719,26 @@ function openNav() {
     }
     // ensure origin and start state
     gsap.set(navBg, { transformOrigin: 'top center', scaleY: 0, force3D: true });
+    
+    // Animate takeover logo opacity to 1 (ensure it starts at 0)
+    const takeoverLogo = document.querySelector('.global-nav-takeover-logo');
+    if (takeoverLogo) {
+      gsap.set(takeoverLogo, { opacity: 0 });
+    }
+    
     tl.to(navBg, {
       scaleY: 1,
       duration: 1,
       ease: 'expo.inOut'
     });
+    
+    if (takeoverLogo) {
+      tl.to(takeoverLogo, {
+        opacity: 1,
+        duration: 0.6,
+        ease: 'power2.out'
+      }, 0.4); // Start shortly after nav begins opening
+    }
     
     if (mainShell) {
       tl.to(mainShell, {
@@ -939,6 +954,16 @@ function openNav() {
       ease: 'power2.in'
     }, 0);
     
+    // Animate takeover logo opacity to 0
+    const takeoverLogoCloseAlt = document.querySelector('.global-nav-takeover-logo');
+    if (takeoverLogoCloseAlt) {
+      tl.to(takeoverLogoCloseAlt, {
+        opacity: 0,
+        duration: 0.3,
+        ease: 'power2.in'
+      }, 0);
+    }
+    
     /*
     // Animate logo back to white
     if (logoNav) {
@@ -1116,6 +1141,16 @@ function closeNav() {
       }, 0);
     }
 
+    // Animate takeover logo opacity to 0
+    const takeoverLogoClose = document.querySelector('.global-nav-takeover-logo');
+    if (takeoverLogoClose) {
+      tl.to(takeoverLogoClose, {
+        opacity: 0,
+        duration: 0.3,
+        ease: 'power2.in'
+      }, 0);
+    }
+
     // Then close the nav using the same .global-nav-bg scaleY approach
     const navBgClose = document.querySelector('.global-nav-bg');
 
@@ -1134,6 +1169,12 @@ function closeNav() {
           gsap.set(link, { opacity: 1 });
         });
       } catch (e) {}
+      
+      // Ensure takeover logo is set to opacity 0
+      const takeoverLogoReset = document.querySelector('.global-nav-takeover-logo');
+      if (takeoverLogoReset) {
+        gsap.set(takeoverLogoReset, { opacity: 0 });
+      }
 
       // Ensure header nav trigger and its split text are visible after the takeover
       try {
@@ -1392,6 +1433,13 @@ window.addEventListener('DOMContentLoaded', () => {
     const navTrigger = e.target.closest('.nav-hover');
     if (navTrigger) {
       openNav();
+      e.preventDefault();
+    }
+    
+    // Setup close nav handler for x-shell
+    const closeButton = e.target.closest('.x-shell');
+    if (closeButton) {
+      closeNav();
       e.preventDefault();
     }
   });
