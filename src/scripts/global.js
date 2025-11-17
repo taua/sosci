@@ -773,6 +773,18 @@ function openNav() {
       gsap.set(takeoverLogo, { opacity: 0 });
     }
     
+    // Animate takeover social shell opacity to 1 (ensure it starts at 0)
+    const takeoverSocial = document.querySelector('.takeover-social-shell');
+    if (takeoverSocial) {
+      gsap.set(takeoverSocial, { opacity: 0 });
+    }
+    
+    // Animate global info address shell opacity to 1 (ensure it starts at 0)
+    const infoAddress = document.querySelector('.global-info-address-shell');
+    if (infoAddress) {
+      gsap.set(infoAddress, { opacity: 0 });
+    }
+    
     tl.to(navBg, {
       scaleY: 1,
       duration: 1,
@@ -781,6 +793,22 @@ function openNav() {
     
     if (takeoverLogo) {
       tl.to(takeoverLogo, {
+        opacity: 1,
+        duration: 0.6,
+        ease: 'power2.out'
+      }, 0.4); // Start shortly after nav begins opening
+    }
+    
+    if (takeoverSocial) {
+      tl.to(takeoverSocial, {
+        opacity: 1,
+        duration: 0.6,
+        ease: 'power2.out'
+      }, 0.4); // Start shortly after nav begins opening
+    }
+    
+    if (infoAddress) {
+      tl.to(infoAddress, {
         opacity: 1,
         duration: 0.6,
         ease: 'power2.out'
@@ -1055,6 +1083,26 @@ function closeNav(skipScrollRefresh = false) {
         ease: 'power2.in'
       }, 0);
     }
+    
+    // Animate takeover social shell opacity to 0
+    const takeoverSocialClose = document.querySelector('.takeover-social-shell');
+    if (takeoverSocialClose) {
+      tl.to(takeoverSocialClose, {
+        opacity: 0,
+        duration: 0.3,
+        ease: 'power2.in'
+      }, 0);
+    }
+    
+    // Animate global info address shell opacity to 0
+    const infoAddressClose = document.querySelector('.global-info-address-shell');
+    if (infoAddressClose) {
+      tl.to(infoAddressClose, {
+        opacity: 0,
+        duration: 0.3,
+        ease: 'power2.in'
+      }, 0);
+    }
 
     // Fade out any visible underlines at the start of nav close
     const allLines = document.querySelectorAll('.strike-through-line');
@@ -1089,6 +1137,18 @@ function closeNav(skipScrollRefresh = false) {
       const takeoverLogoReset = document.querySelector('.global-nav-takeover-logo');
       if (takeoverLogoReset) {
         gsap.set(takeoverLogoReset, { opacity: 0 });
+      }
+      
+      // Ensure takeover social shell is set to opacity 0
+      const takeoverSocialReset = document.querySelector('.takeover-social-shell');
+      if (takeoverSocialReset) {
+        gsap.set(takeoverSocialReset, { opacity: 0 });
+      }
+      
+      // Ensure global info address shell is set to opacity 0
+      const infoAddressReset = document.querySelector('.global-info-address-shell');
+      if (infoAddressReset) {
+        gsap.set(infoAddressReset, { opacity: 0 });
       }
 
       // Ensure header nav trigger and its split text are visible after the takeover
