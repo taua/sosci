@@ -395,17 +395,14 @@ barba.init({
     console.log('Nav is open, closing nav without main-shell animation');
     // Removed main-shell translate animation when navigating with nav open
     
-    // Wait for the active underline animation to complete, then close the nav
+    // Wait for both the active underline animation (in) and inactive animation (out) to complete, then close the nav
     (async () => {
       try {
-        const p = window._navActiveLinePromise;
-        if (p && typeof p.then === 'function') {
-          const timeout = new Promise(res => setTimeout(res, 1200));
-          await Promise.race([p, timeout]);
-        } else {
-          // fallback short delay
-          await new Promise(res => setTimeout(res, 250));
-        }
+        // Wait for underline animations to complete:
+        // - Out animation: 0.35s (scale collapse)
+        // - In animation: 0.45s (scale expand)
+        // Use a much longer delay to ensure animations are fully visible
+        await new Promise(res => setTimeout(res, 800));
       } catch (e) {}
       try { if (typeof closeNav === 'function') closeNav(); } catch (e) {}
     })();
@@ -571,8 +568,18 @@ function animateUnderlineOut(line, options) {
   const mode = options && options.mode ? options.mode : 'fade';
   try {
     if (mode === 'scale') {
-      // Collapse using scaleX (visual width collapse)
-      gsap.to(line, { scaleX: 0, duration: 0.35, ease: 'expo.in' });
+      // Collapse using scaleX (visual width collapse) while keeping opacity at 1
+      const tween = gsap.to(line, { scaleX: 0, opacity: 1, duration: 0.35, ease: 'expo.in' });
+      // Track this animation so closeNav can wait for it
+      try {
+        window._navInactiveLineTween = tween;
+        window._navInactiveLinePromise = new Promise((resolve) => {
+          tween.eventCallback('onComplete', () => {
+            try { resolve(); } catch (e) {}
+          });
+        });
+      } catch (e) {}
+      return tween;
     } else {
       // Default: fade out then ensure scale is reset
       gsap.to(line, { opacity: 0, duration: 0.25, ease: 'power2.in', onComplete: () => { try { gsap.set(line, { scaleX: 0 }); } catch (e) {} } });
@@ -859,7 +866,7 @@ function openNav() {
                   // nav-active debug log removed
                 } catch (e) {}
                 gsap.set(line, { transformOrigin: 'left center' });
-                gsap.to(line, { scaleX: 1, duration: 0.5, ease: 'expo.out', onComplete: () => {
+                gsap.to(line, { scaleX: 1, opacity: 1, duration: 0.5, ease: 'expo.out', onComplete: () => {
                   try { /* nav-active debug log removed */ } catch (e) {}
                 } });
               }
@@ -1083,11 +1090,15 @@ function closeNav() {
         }, 0); // Start at the same time as navBgClose
       }
 
-      // Ensure underline lines collapse at the same time as the nav closes / text fades
+      // Reset all underline lines when nav closes - just set scaleX to 0, no animations
       try {
         const allLines = document.querySelectorAll('.strike-through-line');
         if (allLines && allLines.length) {
-          tl.to(allLines, { opacity: 0, duration: 0.25, ease: 'power2.in', onComplete: () => { try { gsap.set(allLines, { scaleX: 0 }); } catch (e) {} } }, 0.0);
+          tl.call(() => {
+            allLines.forEach(line => {
+              try { gsap.set(line, { scaleX: 0, opacity: 1 }); } catch (e) {}
+            });
+          }, null, '>');
         }
       } catch (e) {}
     }
@@ -1302,8 +1313,8 @@ window.addEventListener('DOMContentLoaded', () => {
         
         // Only setup hover/focus for links with strike-through lines
         if (line) {
-          // start collapsed
-          gsap.set(line, { transformOrigin: 'left center', scaleX: 0, force3D: true });
+          // start collapsed with full opacity
+          gsap.set(line, { transformOrigin: 'left center', scaleX: 0, opacity: 1, force3D: true });
 
           const enter = () => {
             try {
@@ -1373,14 +1384,31 @@ window.addEventListener('DOMContentLoaded', () => {
               return;
             }
             
-            // Otherwise, if nav is open, we need to close it before Barba navigates
-            if (navOpen && !line) {
-              // This is the logo (no strike-through line)
-              // Let Barba handle the navigation naturally, closeNav will be called in the transition
-              // Mark active first if it's a nav link with a line
-            } else if (line) {
-              // Regular nav link with underline - mark active and let animation complete
-              setActiveContainer(container, { mode: 'scale' });
+            // For all links (including logo), mark the target as active
+            // Find the actual nav link that matches the target path
+            const allNavLinks = document.querySelectorAll('.takeover-nav-link');
+            let targetContainer = null;
+            
+            allNavLinks.forEach(navLink => {
+              const navAnchor = navLink.matches('a[href]') ? navLink : navLink.querySelector('a[href]');
+              if (!navAnchor) return;
+              
+              let navPath = '';
+              try {
+                navPath = new URL(navAnchor.href, window.location.origin).pathname.replace(/\/+$/, '');
+              } catch (e) {
+                navPath = navAnchor.getAttribute('href') || '';
+              }
+              if (!navPath) navPath = '/';
+              
+              if (navPath === targetPath) {
+                targetContainer = navLink;
+              }
+            });
+            
+            // Mark the target container as active (this will animate the underline)
+            if (targetContainer) {
+              setActiveContainer(targetContainer, { mode: 'scale' });
             }
           } catch (e) {}
         });
