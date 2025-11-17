@@ -1634,7 +1634,8 @@ function openNav() {
 // Remove this function from global.js
 // Close the navigation with the same sequence used in the openNav() close branch.
 // Returns a Promise that resolves when the close animation completes. Idempotent.
-function closeNav() {
+// @param {boolean} skipScrollRefresh - If true, skip ScrollTrigger refresh (used for manual close via x-shell)
+function closeNav(skipScrollRefresh = false) {
     // If already animating, return a resolved promise to avoid re-entrancy
     if (navAnimating) return Promise.resolve();
     // If already closed, no-op
@@ -1656,8 +1657,8 @@ function closeNav() {
                 if (smootherInstance && typeof smootherInstance.paused === 'function') try {
                     smootherInstance.paused(false);
                 } catch (e) {}
-                // Refresh ScrollTrigger after nav closes to fix positions
-                requestAnimationFrame(()=>{
+                // Refresh ScrollTrigger after nav closes to fix positions (skip if manually closed)
+                if (!skipScrollRefresh) requestAnimationFrame(()=>{
                     try {
                         (0, _scrollTrigger.ScrollTrigger).refresh();
                     } catch (e) {}
@@ -1932,7 +1933,7 @@ window.addEventListener('DOMContentLoaded', ()=>{
         // Setup close nav handler for x-shell
         const closeButton = e.target.closest('.x-shell');
         if (closeButton) {
-            closeNav();
+            closeNav(true); // Skip ScrollTrigger refresh when manually closing
             e.preventDefault();
         }
     });
