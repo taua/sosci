@@ -1056,10 +1056,9 @@ let isTransitioning = false;
                     (async ()=>{
                         try {
                             // Wait for underline animations to complete:
-                            // - Out animation: 0.35s (scale collapse)
-                            // - In animation: 0.45s (scale expand)
-                            // Use a much longer delay to ensure animations are fully visible
-                            await new Promise((res)=>setTimeout(res, 800));
+                            // - Out animation: 0.55s (scale collapse)
+                            // Delay adjusted to match new animation duration
+                            await new Promise((res)=>setTimeout(res, 650));
                         } catch (e) {}
                         try {
                             if (typeof closeNav === 'function') closeNav();
@@ -1250,25 +1249,28 @@ function animateUnderlineIn(line) {
     } catch (e) {}
 }
 function animateUnderlineOut(line, options) {
-    // options: { mode: 'fade' | 'scale' }
+    // options: { mode: 'fade' | 'scale', origin: 'left' | 'right' }
     if (!line) return;
     try {
         (0, _gsap.gsap).killTweensOf(line);
     } catch (e) {}
+    const mode = options && options.mode ? options.mode : 'fade';
+    const origin = options && options.origin ? options.origin : 'left';
+    // Set transform origin based on the origin option
     try {
         (0, _gsap.gsap).set(line, {
-            transformOrigin: 'left center'
+            transformOrigin: origin + ' center'
         });
     } catch (e) {}
-    const mode = options && options.mode ? options.mode : 'fade';
     try {
         if (mode === 'scale') {
             // Collapse using scaleX (visual width collapse) while keeping opacity at 1
+            // Use expo.inOut for all scale animations for consistency
             const tween = (0, _gsap.gsap).to(line, {
                 scaleX: 0,
                 opacity: 1,
-                duration: 0.35,
-                ease: 'expo.in'
+                duration: 0.55,
+                ease: 'expo.inOut'
             });
             // Track this animation so closeNav can wait for it
             try {
@@ -1680,6 +1682,13 @@ function closeNav() {
             duration: 0.3,
             ease: 'power2.in'
         }, 0);
+        // Fade out any visible underlines at the start of nav close
+        const allLines = document.querySelectorAll('.strike-through-line');
+        if (allLines && allLines.length) tl.to(allLines, {
+            opacity: 0,
+            duration: 0.3,
+            ease: 'power2.in'
+        }, 0);
         // Then close the nav using the same .global-nav-bg scaleY approach
         const navBgClose = document.querySelector('.global-nav-bg');
         const closeComplete = ()=>{
@@ -2027,8 +2036,33 @@ window.addEventListener('DOMContentLoaded', ()=>{
                         if (!navPath) navPath = '/';
                         if (navPath === targetPath) targetContainer = navLink;
                     });
-                    // Mark the target container as active (this will animate the underline)
-                    if (targetContainer) setActiveContainer(targetContainer, {
+                    // Mark the target container as active (this will animate underlines)
+                    // If we're clicking on a link that has an underline, we need custom handling
+                    if (targetContainer && line && container === targetContainer) {
+                        // This is a direct click on a nav link with an underline
+                        // Manually handle the animation so the clicked link collapses from right
+                        const prev = document.querySelector('.takeover-nav-link.active');
+                        if (prev && prev !== targetContainer) {
+                            // Animate the old active link out from left (normal)
+                            prev.classList.remove('active');
+                            const prevAnchor = prev.matches('a[href]') ? prev : prev.querySelector('a[href]');
+                            if (prevAnchor) prevAnchor.removeAttribute('aria-current');
+                            const prevLine = prev.querySelector('.strike-through-line');
+                            animateUnderlineOut(prevLine, {
+                                mode: 'scale',
+                                origin: 'left'
+                            });
+                        }
+                        // Animate the clicked link out from right (opposite direction)
+                        targetContainer.classList.add('active');
+                        const newAnchor = targetContainer.matches('a[href]') ? targetContainer : targetContainer.querySelector('a[href]');
+                        if (newAnchor) newAnchor.setAttribute('aria-current', 'page');
+                        animateUnderlineOut(line, {
+                            mode: 'scale',
+                            origin: 'right'
+                        });
+                    } else if (targetContainer) // For logo clicks or other cases, use normal setActiveContainer
+                    setActiveContainer(targetContainer, {
                         mode: 'scale'
                     });
                 } catch (e) {}
