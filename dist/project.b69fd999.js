@@ -756,7 +756,7 @@ function initProjectPage() {
             const tryReset = ()=>{
                 try {
                     if (typeof window !== 'undefined' && window._smootherInstance && typeof window._smootherInstance.scrollTo === 'function') {
-                        window._smootherInstance.scrollTo(0, true);
+                        window._smootherInstance.scrollTo(0, false);
                         return true;
                     }
                 } catch (e) {}

@@ -204,6 +204,12 @@ let currentPageCleanup = null;
 // Track if a page transition is in progress
 let isTransitioning = false;
 
+// Force full page reload on browser back/forward instead of Barba transitions
+window.addEventListener('popstate', (e) => {
+  e.preventDefault();
+  window.location.reload();
+});
+
 // Barba.js initialization
 barba.init({
   prevent: ({ el, href }) => {
