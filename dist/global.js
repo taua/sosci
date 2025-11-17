@@ -1423,7 +1423,7 @@ function openNav() {
         // Opening the navigation
         const tl = (0, _gsap.gsap).timeline({
             onComplete: ()=>{
-                navAnimating = false;
+            // navAnimating is now set to false earlier when text animations complete
             }
         });
         // First, open the nav using a scaleY reveal on .global-nav-bg (better GPU perf)
@@ -1535,6 +1535,10 @@ function openNav() {
                 overwrite: "auto"
             }, 0.36 + index * 0.1); // Start when the nav is already opening
         });
+        // Enable hover interactions early - right after first link starts animating
+        tl.call(()=>{
+            navAnimating = false;
+        }, null, 0.5);
         // After the text animation completes, underline the active nav link and disable its hover
         // Run this call 0.3s earlier so the underline starts sooner when the nav opens
         tl.call(()=>{
