@@ -6,6 +6,11 @@ import { SplitText } from "gsap/SplitText";
 import grainEffect from "./grainEffect";
 import barba from '@barba/core';
 
+// Disable browser scroll restoration immediately to prevent scroll position jumping
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual';
+}
+
 gsap.registerPlugin(ScrollTrigger, ScrollSmoother, SplitText);
 
 // Centralized timing constants for nav animations

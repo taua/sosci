@@ -720,9 +720,58 @@ parcelHelpers.export(exports, "initWorkPage", ()=>initWorkPage);
 parcelHelpers.export(exports, "cleanupWorkPage", ()=>cleanupWorkPage);
 var _gsap = require("gsap");
 var _workLinksModule = require("./utils/workLinksModule");
+var _scrollReset = require("./utils/scrollReset");
 // Create work-links module instance
 let workLinksModule = null;
 function initWorkPage() {
+    // Use the same scroll reset as home page - handles browser scroll restoration
+    (0, _scrollReset.initScrollReset)();
+    // Immediate scroll reset before anything else
+    window.scrollTo(0, 0);
+    // Robust scroll reset with smooth scrolling temporarily disabled
+    let originalSmooth = null;
+    let smoothDisabled = false;
+    const tryReset = ()=>{
+        try {
+            if (typeof window !== 'undefined' && window._smootherInstance && typeof window._smootherInstance.scrollTo === 'function') {
+                // Only disable smooth once on first call
+                if (!smoothDisabled && typeof window._smootherInstance.smooth === 'function') {
+                    originalSmooth = window._smootherInstance.smooth();
+                    if (originalSmooth) {
+                        window._smootherInstance.smooth(0);
+                        smoothDisabled = true;
+                    }
+                }
+                window._smootherInstance.scrollTo(0, false);
+                return true;
+            }
+        } catch (e) {}
+        try {
+            window.scrollTo(0, 0);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    };
+    // Multiple reset attempts to handle timing issues
+    tryReset();
+    requestAnimationFrame(()=>{
+        window.scrollTo(0, 0);
+        requestAnimationFrame(()=>{
+            window.scrollTo(0, 0);
+            tryReset();
+        });
+    });
+    setTimeout(()=>{
+        window.scrollTo(0, 0);
+        tryReset();
+    }, 120);
+    // Restore smooth scrolling after all reset attempts complete
+    if (smoothDisabled && originalSmooth) setTimeout(()=>{
+        try {
+            if (window._smootherInstance && typeof window._smootherInstance.smooth === 'function') window._smootherInstance.smooth(originalSmooth);
+        } catch (e) {}
+    }, 400);
     // Initialize the shared work-links module
     workLinksModule = (0, _workLinksModule.createWorkLinksModule)();
     workLinksModule.init();
@@ -746,7 +795,7 @@ window.initPageTransitions = function() {
     });
 };
 
-},{"gsap":"fPSuC","./utils/workLinksModule":"dJji4","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dJji4":[function(require,module,exports,__globalThis) {
+},{"gsap":"fPSuC","./utils/workLinksModule":"dJji4","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./utils/scrollReset":"eHkwM"}],"dJji4":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 // Shared work-links functionality that can be used by multiple pages
@@ -1103,6 +1152,28 @@ function createWorkLinksModule() {
     };
 }
 
-},{"gsap":"fPSuC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["2tWFu"], null, "parcelRequire60dc", {})
+},{"gsap":"fPSuC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"eHkwM":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "initScrollReset", ()=>initScrollReset);
+function initScrollReset() {
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    if (window.scrollY !== 0) {
+        window.location.reload();
+        return;
+    }
+    document.body.style.overflow = 'hidden';
+    window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: 'instant'
+    });
+    requestAnimationFrame(()=>{
+        window.scrollTo(0, 0);
+        document.body.style.overflow = '';
+    });
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["2tWFu"], null, "parcelRequire60dc", {})
 
 //# sourceMappingURL=work.88846810.js.map
