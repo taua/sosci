@@ -1716,7 +1716,25 @@ function closeNav(skipScrollRefresh = false) {
             // Ensure header nav trigger and its split text are visible after the takeover
             try {
                 const headerNavHover = document.querySelector('.nav-hover');
-                headerNavHover;
+                if (headerNavHover) // Reset nav-hover state and animations
+                try {
+                    // Reset the hover state flag
+                    isNavHoverActive = false;
+                    // Reset top text characters to default position
+                    if (navHoverSplit?.chars?.length) {
+                        (0, _gsap.gsap).killTweensOf(navHoverSplit.chars);
+                        (0, _gsap.gsap).set(navHoverSplit.chars, {
+                            transform: 'translate3d(0, 0, 0)'
+                        });
+                    }
+                    // Reset bottom text characters to default position
+                    if (navBtmSplit?.chars?.length) {
+                        (0, _gsap.gsap).killTweensOf(navBtmSplit.chars);
+                        (0, _gsap.gsap).set(navBtmSplit.chars, {
+                            transform: 'translate3d(0, 0, 0)'
+                        });
+                    }
+                } catch (e) {}
             } catch (e) {}
             // Hide link shell and x-shell after nav closes to prevent interaction/FOUC
             const linksShellClose = document.querySelector('.takeover-nav-links-shell');

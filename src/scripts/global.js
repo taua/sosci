@@ -1055,8 +1055,26 @@ function closeNav(skipScrollRefresh = false) {
       try {
         const headerNavHover = document.querySelector('.nav-hover');
         if (headerNavHover) {
-          // Cleanup after nav close
+          // Reset nav-hover state and animations
           try {
+            // Reset the hover state flag
+            isNavHoverActive = false;
+            
+            // Reset top text characters to default position
+            if (navHoverSplit?.chars?.length) {
+              gsap.killTweensOf(navHoverSplit.chars);
+              gsap.set(navHoverSplit.chars, {
+                transform: 'translate3d(0, 0, 0)'
+              });
+            }
+            
+            // Reset bottom text characters to default position
+            if (navBtmSplit?.chars?.length) {
+              gsap.killTweensOf(navBtmSplit.chars);
+              gsap.set(navBtmSplit.chars, {
+                transform: 'translate3d(0, 0, 0)'
+              });
+            }
           } catch (e) {}
         }
       } catch (e) {}
