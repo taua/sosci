@@ -436,10 +436,23 @@ function restoreScrolling() {
 // double rAF, timeout, and load event) to cover timing races with browser
 // restoration or smoother initialization.
 function robustScrollReset() {
+  let originalSmooth = null;
+  let smoothDisabled = false;
+  
   const tryReset = () => {
     try {
       if (smootherInstance && typeof smootherInstance.scrollTo === 'function') {
-        try { smootherInstance.scrollTo(0, true); } catch (e) {}
+        try {
+          // Only disable smooth once on first call
+          if (!smoothDisabled && typeof smootherInstance.smooth === 'function') {
+            originalSmooth = smootherInstance.smooth();
+            if (originalSmooth) {
+              smootherInstance.smooth(0);
+              smoothDisabled = true;
+            }
+          }
+          smootherInstance.scrollTo(0, false);
+        } catch (e) {}
         return true;
       }
     } catch (e) {}
@@ -452,6 +465,17 @@ function robustScrollReset() {
     setTimeout(() => tryReset(), 120);
     const onLoad = () => { tryReset(); window.removeEventListener('load', onLoad); };
     try { window.addEventListener('load', onLoad); } catch (e) {}
+    
+    // Restore smooth scrolling after all reset attempts complete
+    if (smoothDisabled && originalSmooth) {
+      setTimeout(() => {
+        try { 
+          if (smootherInstance && typeof smootherInstance.smooth === 'function') {
+            smootherInstance.smooth(originalSmooth);
+          }
+        } catch (e) {}
+      }, 400);
+    }
   } catch (e) {}
 }
 
@@ -1218,7 +1242,7 @@ function playLoadingAnimation() {
           // Use smoother if available; fallback to native scrollTo
           try {
             if (smootherInstance && typeof smootherInstance.scrollTo === 'function') {
-              try { smootherInstance.scrollTo(0, true); } catch (e) {}
+              try { smootherInstance.scrollTo(0, false); } catch (e) {}
             } else {
               try { window.scrollTo(0, 0); } catch (e) {}
             }
