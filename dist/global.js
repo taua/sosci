@@ -1643,6 +1643,12 @@ function closeNav() {
                 if (smootherInstance && typeof smootherInstance.paused === 'function') try {
                     smootherInstance.paused(false);
                 } catch (e) {}
+                // Refresh ScrollTrigger after nav closes to fix positions
+                requestAnimationFrame(()=>{
+                    try {
+                        (0, _scrollTrigger.ScrollTrigger).refresh();
+                    } catch (e) {}
+                });
                 resolve();
             }
         });
@@ -1917,70 +1923,87 @@ window.addEventListener('DOMContentLoaded', ()=>{
         const takeoverLinks = document.querySelectorAll('.takeover-nav-link');
         if (takeoverLinks && takeoverLinks.length) takeoverLinks.forEach((link)=>{
             const line = link.querySelector('.strike-through-line');
-            if (!line) return;
-            // start collapsed
-            (0, _gsap.gsap).set(line, {
-                transformOrigin: 'left center',
-                scaleX: 0,
-                force3D: true
-            });
-            const enter = ()=>{
-                try {
-                    // Don't trigger hover if nav is animating
-                    if (navAnimating) return;
-                    // If this link's container is already marked active, skip hover animation
-                    const container = link.closest('.takeover-nav-link');
-                    if (container && container.classList.contains('active')) return;
-                    (0, _gsap.gsap).killTweensOf(line);
-                    (0, _gsap.gsap).set(line, {
-                        transformOrigin: 'left center'
-                    });
-                    (0, _gsap.gsap).to(line, {
-                        scaleX: 1,
-                        duration: 0.4,
-                        ease: 'expo.out'
-                    });
-                } catch (e) {}
-            };
-            const leave = ()=>{
-                try {
-                    // Don't trigger hover if nav is animating
-                    if (navAnimating) return;
-                    // If this link's container is marked active, don't collapse the underline
-                    const container = link.closest('.takeover-nav-link');
-                    if (container && container.classList.contains('active')) return;
-                    (0, _gsap.gsap).killTweensOf(line);
-                    // keep the same transform origin (left) when collapsing
-                    (0, _gsap.gsap).set(line, {
-                        transformOrigin: 'left center'
-                    });
-                    (0, _gsap.gsap).to(line, {
-                        scaleX: 0,
-                        duration: 1,
-                        ease: 'expo.in'
-                    });
-                } catch (e) {}
-            };
-            link.addEventListener('mouseenter', enter);
-            link.addEventListener('mouseleave', leave);
-            // keyboard accessibility
-            link.addEventListener('focus', enter);
-            link.addEventListener('blur', leave);
-            // Click should immediately mark this link active and animate underline (SPA navigation will follow)
-            // Use scale mode so the previously selected line collapses by width when user clicks a new link
-            link.addEventListener('click', (ev)=>{
+            // Only setup hover/focus for links with strike-through lines
+            if (line) {
+                // start collapsed
+                (0, _gsap.gsap).set(line, {
+                    transformOrigin: 'left center',
+                    scaleX: 0,
+                    force3D: true
+                });
+                const enter = ()=>{
+                    try {
+                        // Don't trigger hover if nav is animating
+                        if (navAnimating) return;
+                        // If this link's container is already marked active, skip hover animation
+                        const container = link.closest('.takeover-nav-link');
+                        if (container && container.classList.contains('active')) return;
+                        (0, _gsap.gsap).killTweensOf(line);
+                        (0, _gsap.gsap).set(line, {
+                            transformOrigin: 'left center'
+                        });
+                        (0, _gsap.gsap).to(line, {
+                            scaleX: 1,
+                            duration: 0.4,
+                            ease: 'expo.out'
+                        });
+                    } catch (e) {}
+                };
+                const leave = ()=>{
+                    try {
+                        // Don't trigger hover if nav is animating
+                        if (navAnimating) return;
+                        // If this link's container is marked active, don't collapse the underline
+                        const container = link.closest('.takeover-nav-link');
+                        if (container && container.classList.contains('active')) return;
+                        (0, _gsap.gsap).killTweensOf(line);
+                        // keep the same transform origin (left) when collapsing
+                        (0, _gsap.gsap).set(line, {
+                            transformOrigin: 'left center'
+                        });
+                        (0, _gsap.gsap).to(line, {
+                            scaleX: 0,
+                            duration: 1,
+                            ease: 'expo.in'
+                        });
+                    } catch (e) {}
+                };
+                link.addEventListener('mouseenter', enter);
+                link.addEventListener('mouseleave', leave);
+                // keyboard accessibility
+                link.addEventListener('focus', enter);
+                link.addEventListener('blur', leave);
+            }
+            // Click handler applies to ALL takeover-nav-link elements (with or without strike-through)
+            // This allows the logo to trigger page transitions
+            link.addEventListener('click', async (ev)=>{
                 try {
                     const container = link.closest('.takeover-nav-link');
                     if (!container) return;
-                    // If this container is already active, prevent navigation/click behavior
-                    if (container.classList.contains('active')) {
+                    // Get the href to check if we're already on that page
+                    const anchor = container.matches('a[href]') ? container : container.querySelector('a[href]');
+                    if (!anchor) return;
+                    let targetPath = '';
+                    try {
+                        targetPath = new URL(anchor.href, window.location.origin).pathname.replace(/\/+$/, '');
+                    } catch (e) {
+                        targetPath = anchor.getAttribute('href') || '';
+                    }
+                    if (!targetPath) targetPath = '/';
+                    let currentPath = window.location.pathname.replace(/\/+$/, '');
+                    if (!currentPath) currentPath = '/';
+                    // If we're already on the target page, prevent navigation and close nav
+                    if (currentPath === targetPath) {
                         try {
                             ev.preventDefault();
                             ev.stopImmediatePropagation();
+                            closeNav(); // Close the nav when clicking current page
                         } catch (e) {}
                         return;
                     }
-                    // Otherwise mark active and collapse previous underline by scale
+                    // Otherwise, if nav is open, we need to close it before Barba navigates
+                    if (navOpen && !line) ;
+                    else if (line) // Regular nav link with underline - mark active and let animation complete
                     setActiveContainer(container, {
                         mode: 'scale'
                     });

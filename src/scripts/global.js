@@ -965,6 +965,12 @@ function closeNav() {
             smootherInstance.paused(false);
           } catch (e) {}
         }
+        // Refresh ScrollTrigger after nav closes to fix positions
+        requestAnimationFrame(() => {
+          try {
+            ScrollTrigger.refresh();
+          } catch (e) {}
+        });
         resolve();
       }
     });
@@ -1293,57 +1299,89 @@ window.addEventListener('DOMContentLoaded', () => {
     if (takeoverLinks && takeoverLinks.length) {
       takeoverLinks.forEach(link => {
         const line = link.querySelector('.strike-through-line');
-        if (!line) return;
-        // start collapsed
-        gsap.set(line, { transformOrigin: 'left center', scaleX: 0, force3D: true });
+        
+        // Only setup hover/focus for links with strike-through lines
+        if (line) {
+          // start collapsed
+          gsap.set(line, { transformOrigin: 'left center', scaleX: 0, force3D: true });
 
-        const enter = () => {
-          try {
-            // Don't trigger hover if nav is animating
-            if (navAnimating) return;
-            
-            // If this link's container is already marked active, skip hover animation
-            const container = link.closest('.takeover-nav-link');
-            if (container && container.classList.contains('active')) return;
-            gsap.killTweensOf(line);
-            gsap.set(line, { transformOrigin: 'left center' });
-            gsap.to(line, { scaleX: 1, duration: 0.4, ease: 'expo.out' });
-          } catch (e) {}
-        };
+          const enter = () => {
+            try {
+              // Don't trigger hover if nav is animating
+              if (navAnimating) return;
+              
+              // If this link's container is already marked active, skip hover animation
+              const container = link.closest('.takeover-nav-link');
+              if (container && container.classList.contains('active')) return;
+              gsap.killTweensOf(line);
+              gsap.set(line, { transformOrigin: 'left center' });
+              gsap.to(line, { scaleX: 1, duration: 0.4, ease: 'expo.out' });
+            } catch (e) {}
+          };
 
-        const leave = () => {
-          try {
-            // Don't trigger hover if nav is animating
-            if (navAnimating) return;
-            
-            // If this link's container is marked active, don't collapse the underline
-            const container = link.closest('.takeover-nav-link');
-            if (container && container.classList.contains('active')) return;
-            gsap.killTweensOf(line);
-            // keep the same transform origin (left) when collapsing
-            gsap.set(line, { transformOrigin: 'left center' });
-            gsap.to(line, { scaleX: 0, duration: 1, ease: 'expo.in' });
-          } catch (e) {}
-        };
+          const leave = () => {
+            try {
+              // Don't trigger hover if nav is animating
+              if (navAnimating) return;
+              
+              // If this link's container is marked active, don't collapse the underline
+              const container = link.closest('.takeover-nav-link');
+              if (container && container.classList.contains('active')) return;
+              gsap.killTweensOf(line);
+              // keep the same transform origin (left) when collapsing
+              gsap.set(line, { transformOrigin: 'left center' });
+              gsap.to(line, { scaleX: 0, duration: 1, ease: 'expo.in' });
+            } catch (e) {}
+          };
 
-        link.addEventListener('mouseenter', enter);
-        link.addEventListener('mouseleave', leave);
-        // keyboard accessibility
-        link.addEventListener('focus', enter);
-        link.addEventListener('blur', leave);
-        // Click should immediately mark this link active and animate underline (SPA navigation will follow)
-        // Use scale mode so the previously selected line collapses by width when user clicks a new link
-        link.addEventListener('click', (ev) => {
+          link.addEventListener('mouseenter', enter);
+          link.addEventListener('mouseleave', leave);
+          // keyboard accessibility
+          link.addEventListener('focus', enter);
+          link.addEventListener('blur', leave);
+        }
+        
+        // Click handler applies to ALL takeover-nav-link elements (with or without strike-through)
+        // This allows the logo to trigger page transitions
+        link.addEventListener('click', async (ev) => {
           try {
             const container = link.closest('.takeover-nav-link');
             if (!container) return;
-            // If this container is already active, prevent navigation/click behavior
-            if (container.classList.contains('active')) {
-              try { ev.preventDefault(); ev.stopImmediatePropagation(); } catch (e) {}
+            
+            // Get the href to check if we're already on that page
+            const anchor = container.matches('a[href]') ? container : container.querySelector('a[href]');
+            if (!anchor) return;
+            
+            let targetPath = '';
+            try {
+              targetPath = new URL(anchor.href, window.location.origin).pathname.replace(/\/+$/, '');
+            } catch (e) {
+              targetPath = anchor.getAttribute('href') || '';
+            }
+            if (!targetPath) targetPath = '/';
+            
+            let currentPath = window.location.pathname.replace(/\/+$/, '');
+            if (!currentPath) currentPath = '/';
+            
+            // If we're already on the target page, prevent navigation and close nav
+            if (currentPath === targetPath) {
+              try { 
+                ev.preventDefault(); 
+                ev.stopImmediatePropagation(); 
+                closeNav(); // Close the nav when clicking current page
+              } catch (e) {}
               return;
             }
-            // Otherwise mark active and collapse previous underline by scale
-            setActiveContainer(container, { mode: 'scale' });
+            
+            // Otherwise, if nav is open, we need to close it before Barba navigates
+            if (navOpen && !line) {
+              // This is the logo (no strike-through line)
+              // Let Barba handle the navigation naturally, closeNav will be called in the transition
+              // Mark active first if it's a nav link with a line
+            } else if (line) {
+              // Regular nav link with underline - mark active and let animation complete
+              setActiveContainer(container, { mode: 'scale' });
+            }
           } catch (e) {}
         });
       });
