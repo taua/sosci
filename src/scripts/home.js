@@ -10,6 +10,8 @@ import { initScrollReset } from './utils/scrollReset';
 gsap.registerPlugin(Observer, ScrollTrigger, SplitText);
 
 let homeScrollTriggers = [];
+let tickerCleanups = []; // Store ticker cleanup functions for resize handling
+let tickerResizeHandler = null; // Store resize handler reference
 
 // Track the last real mouse position globally
 window._lastRealMousePos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
@@ -231,15 +233,72 @@ export function initHomePage() {
             try { disableEffect(); } catch (e) { /* ignore */ }
         };
 
-    // Loop through each ticker group container on the page with alternating directions
-    document.querySelectorAll('.home-project-scroll-txt-shell').forEach((shell, index) => {
-        const txts = shell.querySelectorAll('.home-project-txt');
-        if (txts.length > 0) {
-            // Alternate direction based on index (even = normal, odd = reversed)
-            const initialDirection = index % 2 === 0 ? 1 : -1;
-            introTicker(txts, shell, initialDirection);
-        }
-    });
+    // Function to initialize all tickers
+    function initTickers() {
+        // Clean up existing tickers first
+        tickerCleanups.forEach(cleanup => {
+            try { cleanup(); } catch (e) { /* ignore */ }
+        });
+        tickerCleanups = [];
+
+        // Loop through each ticker group container on the page with alternating directions
+        document.querySelectorAll('.home-project-scroll-txt-shell').forEach((shell, index) => {
+            const txts = shell.querySelectorAll('.home-project-txt');
+            if (txts.length > 0) {
+                // Reset any existing GSAP transforms on the text elements
+                gsap.set(txts, { clearProps: 'all' });
+                
+                // Alternate direction based on index (even = normal, odd = reversed)
+                const initialDirection = index % 2 === 0 ? 1 : -1;
+                const cleanup = introTicker(txts, shell, initialDirection);
+                if (cleanup) tickerCleanups.push(cleanup);
+            }
+        });
+    }
+
+    // Initialize tickers
+    initTickers();
+
+    // Debounced resize handler to recreate tickers on breakpoint changes
+    let resizeTimeout;
+    let lastWidth = window.innerWidth;
+    tickerResizeHandler = () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            // Only reinitialize if width changed significantly (to catch breakpoint changes)
+            const currentWidth = window.innerWidth;
+            if (Math.abs(currentWidth - lastWidth) > 50) {
+                lastWidth = currentWidth;
+                
+                // Clear all ScrollTriggers for ticker shells before reinitializing
+                ScrollTrigger.getAll().forEach(st => {
+                    try {
+                        const trigger = st.vars?.trigger;
+                        if (trigger && typeof trigger === 'object' && trigger.classList?.contains('home-project-scroll-txt-shell')) {
+                            st.kill();
+                        }
+                    } catch (e) { /* ignore */ }
+                });
+                
+                // Force a reflow to ensure CSS has applied after breakpoint change
+                document.querySelectorAll('.home-project-scroll-txt-shell').forEach(shell => {
+                    const txts = shell.querySelectorAll('.home-project-txt');
+                    txts.forEach(txt => {
+                        // Force browser to recalculate styles
+                        void txt.offsetWidth;
+                    });
+                });
+                
+                // Use double rAF to ensure styles are fully applied before reinitializing
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        initTickers();
+                    });
+                });
+            }
+        }, 300);
+    };
+    window.addEventListener('resize', tickerResizeHandler);
 
     // Updated ticker function with proper direction handling
     function introTicker(txtNodes, shell, initialDirection = 1) {
@@ -260,32 +319,42 @@ export function initHomePage() {
 
         let scrollTimeout;
         let currentDirection = initialDirection;
+        let isInView = false;
         
         const pauseLoop = () => {
+            isInView = false;
             gsap.killTweensOf(heroLoop);
             heroLoop.pause();
         };
         
         const resumeLoop = () => {
-            heroLoop.resume();
-            heroLoop.timeScale(absBaseSpeed);
+            if (!isInView) {
+                isInView = true;
+                heroLoop.resume();
+                heroLoop.timeScale(absBaseSpeed);
+            }
         };
 
-        ScrollTrigger.create({
+        const st = ScrollTrigger.create({
             trigger: shell,
             start: "top+=20% bottom",
             end: "bottom-=20% top",
-            onUpdate: ({ isActive, getVelocity }) => {
-                if (!isActive) {
+            onToggle: ({ isActive }) => {
+                if (isActive) {
+                    resumeLoop();
+                } else {
                     pauseLoop();
-                    return;
                 }
-                
-                gsap.killTweensOf(heroLoop);
+            },
+            onUpdate: ({ getVelocity }) => {
+                // Only process scroll velocity when in view
+                if (!isInView) return;
                 
                 const scrollVelocity = getVelocity();
                 // Only consider significant movement
                 if (Math.abs(scrollVelocity) > 0.5) {
+                    gsap.killTweensOf(heroLoop);
+                    
                     const scrollDirection = Math.sign(scrollVelocity);
                     // Flip the scroll direction if this is a reversed ticker
                     const effectiveDirection = initialDirection < 0 ? -scrollDirection : scrollDirection;
@@ -300,23 +369,40 @@ export function initHomePage() {
                 clearTimeout(scrollTimeout);
                 scrollTimeout = setTimeout(() => {
                     // When scrolling stops, normalize speed but keep direction
-                    gsap.to(heroLoop, {
-                        timeScale: absBaseSpeed * Math.sign(currentDirection),
-                        duration: 0.5,
-                        ease: "power1.out",
-                        overwrite: true
-                    });
+                    if (isInView) {
+                        gsap.to(heroLoop, {
+                            timeScale: absBaseSpeed * Math.sign(currentDirection),
+                            duration: 0.5,
+                            ease: "power1.out",
+                            overwrite: true
+                        });
+                    }
                 }, 150);
-            },
-            onLeave: pauseLoop,
-            onEnter: resumeLoop,
-            onLeaveBack: pauseLoop,
-            onEnterBack: resumeLoop
+            }
         });
+
+        // Check if ticker is already in view and start it immediately
+        // Use getBoundingClientRect for accurate viewport check
+        const checkAndStart = () => {
+            const rect = shell.getBoundingClientRect();
+            const windowHeight = window.innerHeight;
+            // Check if element is in viewport
+            const inView = rect.top < windowHeight && rect.bottom > 0;
+            if (inView) {
+                resumeLoop();
+            }
+        };
+        
+        // Run check immediately and after delays to ensure it catches all cases
+        checkAndStart();
+        requestAnimationFrame(checkAndStart);
+        setTimeout(checkAndStart, 50);
+        setTimeout(checkAndStart, 150);
 
         return () => {
             clearTimeout(scrollTimeout);
             gsap.killTweensOf(heroLoop);
+            try { st.kill(); } catch (e) { /* ignore */ }
             heroLoop.kill();
         };
     }
@@ -824,6 +910,20 @@ export function cleanupHomePage() {
             try { if (st && typeof st.kill === 'function') st.kill(); } catch (e) { /* ignore */ }
         });
         homeScrollTriggers = [];
+    }
+
+    // Clean up ticker loops
+    if (Array.isArray(tickerCleanups)) {
+        tickerCleanups.forEach(cleanup => {
+            try { cleanup(); } catch (e) { /* ignore */ }
+        });
+        tickerCleanups = [];
+    }
+
+    // Remove ticker resize handler
+    if (tickerResizeHandler) {
+        window.removeEventListener('resize', tickerResizeHandler);
+        tickerResizeHandler = null;
     }
 
     // Clear any img-trail effect
