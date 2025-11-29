@@ -727,6 +727,18 @@ var _core = require("@barba/core");
 var _coreDefault = parcelHelpers.interopDefault(_core);
 // Disable browser scroll restoration immediately to prevent scroll position jumping
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+// Hide scrollbar
+const style = document.createElement('style');
+style.textContent = `
+  ::-webkit-scrollbar {
+    display: none;
+  }
+  body, html {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+`;
+document.head.appendChild(style);
 (0, _gsap.gsap).registerPlugin((0, _scrollTrigger.ScrollTrigger), (0, _scrollSmoother.ScrollSmoother), (0, _splitText.SplitText));
 // Centralized timing constants for nav animations
 const NAV_CLOSE_OVERLAP = .8; // seconds to overlap the nav-bottom fade when closing

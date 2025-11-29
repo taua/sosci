@@ -11,6 +11,19 @@ if ('scrollRestoration' in history) {
   history.scrollRestoration = 'manual';
 }
 
+// Hide scrollbar
+const style = document.createElement('style');
+style.textContent = `
+  ::-webkit-scrollbar {
+    display: none;
+  }
+  body, html {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+`;
+document.head.appendChild(style);
+
 gsap.registerPlugin(ScrollTrigger, ScrollSmoother, SplitText);
 
 // Centralized timing constants for nav animations
