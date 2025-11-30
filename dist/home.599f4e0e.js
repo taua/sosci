@@ -756,30 +756,45 @@ function initHomePage() {
     });
     // Slide-in top nav (.global-nav-links) when user starts scrolling on Home
     const globalNavLinks = document.querySelector('.global-nav-links');
-    if (globalNavLinks) {
-        // Calculate hide offset (element height + its computed top margin). This accounts for a 30px top margin.
+    let navShowTrigger = null;
+    let isResizing = false;
+    // Helper to calculate nav hide offset
+    const getNavHideY = ()=>{
+        if (!globalNavLinks) return -100;
         const cs = getComputedStyle(globalNavLinks);
         const marginTop = parseFloat(cs.marginTop) || 0;
-        const hideY = -(globalNavLinks.offsetHeight + marginTop);
-        // Start hidden above the viewport using translate3d with pixel offset
-        (0, _gsap.gsap).set(globalNavLinks, {
-            transform: `translate3d(0, ${hideY}px, 0)`
+        return -(globalNavLinks.offsetHeight + marginTop);
+    };
+    if (globalNavLinks) {
+        // Set initial state based on scroll position
+        const scrolled = window.scrollY > 120;
+        if (scrolled) (0, _gsap.gsap).set(globalNavLinks, {
+            transform: 'translate3d(0, 0, 0)'
         });
-        const navShowTrigger = (0, _scrollTrigger.ScrollTrigger).create({
+        else (0, _gsap.gsap).set(globalNavLinks, {
+            transform: `translate3d(0, ${getNavHideY()}px, 0)`
+        });
+        navShowTrigger = (0, _scrollTrigger.ScrollTrigger).create({
             trigger: document.body,
             start: '120px top',
             onEnter: ()=>{
+                // Don't animate during resize
+                if (isResizing) return;
                 (0, _gsap.gsap).to(globalNavLinks, {
                     transform: 'translate3d(0, 0, 0)',
                     duration: 1,
-                    ease: 'power4.out'
+                    ease: 'power4.out',
+                    overwrite: true
                 });
             },
             onLeaveBack: ()=>{
+                // Don't animate during resize
+                if (isResizing) return;
                 (0, _gsap.gsap).to(globalNavLinks, {
-                    transform: `translate3d(0, ${hideY}px, 0)`,
+                    transform: `translate3d(0, ${getNavHideY()}px, 0)`,
                     duration: 1,
-                    ease: 'power4.out'
+                    ease: 'power4.out',
+                    overwrite: true
                 });
             }
         });
@@ -787,35 +802,74 @@ function initHomePage() {
     }
     // Slide-in bottom footer (.global-footer-shell) from below viewport using same timings/trigger
     const globalFooter = document.querySelector('.global-footer-shell');
-    if (globalFooter) {
-        // Calculate hide offset (element height + its computed bottom margin)
+    let footerShowTrigger = null;
+    // Helper to calculate footer hide offset
+    const getFooterHideY = ()=>{
+        if (!globalFooter) return 100;
         const fcs = getComputedStyle(globalFooter);
         const marginBottom = parseFloat(fcs.marginBottom) || 0;
-        const hideFooterY = globalFooter.offsetHeight + marginBottom; // positive Y to move below
-        // Start hidden below the viewport using translate3d with pixel offset
-        (0, _gsap.gsap).set(globalFooter, {
-            transform: `translate3d(0, ${hideFooterY}px, 0)`
+        return globalFooter.offsetHeight + marginBottom;
+    };
+    if (globalFooter) {
+        // Set initial state based on scroll position
+        const scrolled = window.scrollY > 120;
+        if (scrolled) (0, _gsap.gsap).set(globalFooter, {
+            transform: 'translate3d(0, 0, 0)'
         });
-        const footerShowTrigger = (0, _scrollTrigger.ScrollTrigger).create({
+        else (0, _gsap.gsap).set(globalFooter, {
+            transform: `translate3d(0, ${getFooterHideY()}px, 0)`
+        });
+        footerShowTrigger = (0, _scrollTrigger.ScrollTrigger).create({
             trigger: document.body,
             start: '120px top',
             onEnter: ()=>{
+                // Don't animate during resize
+                if (isResizing) return;
                 (0, _gsap.gsap).to(globalFooter, {
                     transform: 'translate3d(0, 0, 0)',
                     duration: 1,
-                    ease: 'power4.out'
+                    ease: 'power4.out',
+                    overwrite: true
                 });
             },
             onLeaveBack: ()=>{
+                // Don't animate during resize
+                if (isResizing) return;
                 (0, _gsap.gsap).to(globalFooter, {
-                    transform: `translate3d(0, ${hideFooterY}px, 0)`,
+                    transform: `translate3d(0, ${getFooterHideY()}px, 0)`,
                     duration: 1,
-                    ease: 'power4.out'
+                    ease: 'power4.out',
+                    overwrite: true
                 });
             }
         });
         homeScrollTriggers.push(footerShowTrigger);
     }
+    // Resize handler for nav/footer - update positions and refresh ScrollTrigger
+    let navFooterResizeTimeout;
+    const navFooterResizeHandler = ()=>{
+        isResizing = true;
+        clearTimeout(navFooterResizeTimeout);
+        navFooterResizeTimeout = setTimeout(()=>{
+            // After resize settles, update hidden elements to correct position
+            requestAnimationFrame(()=>{
+                const scrolled = window.scrollY > 120;
+                if (globalNavLinks && !scrolled) (0, _gsap.gsap).set(globalNavLinks, {
+                    transform: `translate3d(0, ${getNavHideY()}px, 0)`
+                });
+                if (globalFooter && !scrolled) (0, _gsap.gsap).set(globalFooter, {
+                    transform: `translate3d(0, ${getFooterHideY()}px, 0)`
+                });
+                // Refresh the specific ScrollTriggers to recalculate positions
+                if (navShowTrigger) navShowTrigger.refresh();
+                if (footerShowTrigger) footerShowTrigger.refresh();
+                isResizing = false;
+            });
+        }, 300);
+    };
+    window.addEventListener('resize', navFooterResizeHandler);
+    // Store cleanup reference
+    homeScrollTriggers._navFooterResizeHandler = navFooterResizeHandler;
     // Add scroll CTA line animation (only if element exists)
     const ctaLineEl = document.querySelector('.scroll-cta-line');
     const ctaShellEl = document.querySelector('.scroll-cta-shell');
@@ -1527,6 +1581,8 @@ function initHomePage() {
 function cleanupHomePage() {
     // Kill home-specific ScrollTriggers
     if (Array.isArray(homeScrollTriggers)) {
+        // Remove nav/footer resize handler if stored
+        if (homeScrollTriggers._navFooterResizeHandler) window.removeEventListener('resize', homeScrollTriggers._navFooterResizeHandler);
         homeScrollTriggers.forEach((st)=>{
             try {
                 if (st && typeof st.kill === 'function') st.kill();
