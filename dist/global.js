@@ -937,7 +937,10 @@ window.addEventListener('popstate', (e)=>{
                 if (navOpen) // If nav is open, skip the transition animation
                 return;
                 const tl = (0, _gsap.gsap).timeline();
-                tl.fromTo(document.querySelector('.global-transition'), {
+                const globalTransitionEl = document.querySelector('.global-transition');
+                // Make visible before animating (hidden after loading animation)
+                if (globalTransitionEl) globalTransitionEl.style.visibility = 'visible';
+                tl.fromTo(globalTransitionEl, {
                     y: '100%'
                 }, {
                     y: '0%',
@@ -1060,13 +1063,18 @@ window.addEventListener('popstate', (e)=>{
                             }
                         }, 0.2);
                     }
-                    tl.fromTo(document.querySelector('.global-transition'), {
+                    const globalTransitionEl = document.querySelector('.global-transition');
+                    tl.fromTo(globalTransitionEl, {
                         y: '0%'
                     }, {
                         y: '-100%',
                         duration: 0.8,
                         ease: 'expo.inOut',
-                        force3D: true
+                        force3D: true,
+                        onComplete: ()=>{
+                            // Hide after transition completes to prevent resize issues
+                            if (globalTransitionEl) globalTransitionEl.style.visibility = 'hidden';
+                        }
                     }, 0.2);
                 } else {
                     console.log('Nav is open, closing nav without main-shell animation');
@@ -1998,6 +2006,11 @@ function playLoadingAnimation() {
             } else if (window.location.pathname.includes('projects')) {
                 if (typeof window.playProjectEnterAnimation === 'function') window.playProjectEnterAnimation();
             }
+        },
+        onComplete: ()=>{
+            // Hide global-transition after loading animation completes
+            // It will be made visible again for page transitions
+            if (globalTransition) globalTransition.style.visibility = 'hidden';
         }
     }, ">");
     if (transMainShell) tl.from(transMainShell, {

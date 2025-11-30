@@ -265,8 +265,13 @@ barba.init({
         return;
       }
       const tl = gsap.timeline();
+      const globalTransitionEl = document.querySelector('.global-transition');
+      // Make visible before animating (hidden after loading animation)
+      if (globalTransitionEl) {
+        globalTransitionEl.style.visibility = 'visible';
+      }
       tl.fromTo(
-        document.querySelector('.global-transition'),
+        globalTransitionEl,
         { y: '100%' },
         { y: '0%', duration: 0.8, ease: 'expo.inOut', force3D: true }
       );
@@ -409,10 +414,18 @@ barba.init({
       }, 0.2);
     }
     
+    const globalTransitionEl = document.querySelector('.global-transition');
     tl.fromTo(
-      document.querySelector('.global-transition'),
+      globalTransitionEl,
       { y: '0%' },
-      { y: '-100%', duration: 0.8, ease: 'expo.inOut', force3D: true },
+      { y: '-100%', duration: 0.8, ease: 'expo.inOut', force3D: true,
+        onComplete: () => {
+          // Hide after transition completes to prevent resize issues
+          if (globalTransitionEl) {
+            globalTransitionEl.style.visibility = 'hidden';
+          }
+        }
+      },
       0.2
     );
   } else {
@@ -1400,7 +1413,13 @@ function playLoadingAnimation() {
         } else {
           // Default animation or no-op
         }
-       
+      },
+      onComplete: () => {
+        // Hide global-transition after loading animation completes
+        // It will be made visible again for page transitions
+        if (globalTransition) {
+          globalTransition.style.visibility = 'hidden';
+        }
       }
     }, ">");
   }
