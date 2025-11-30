@@ -9811,37 +9811,50 @@ function grainEffect(config = {}) {
         willReadFrequently: true
     });
     let frameRequest;
-    // Handle resize
+    let patterns = [];
+    // Generate noise patterns at current canvas size
+    function generatePatterns() {
+        patterns = Array.from({
+            length: settings.patterns
+        }, ()=>{
+            const pattern = ctx.createImageData(canvas.width, canvas.height);
+            const data = pattern.data;
+            for(let i = 0; i < data.length; i += 16){
+                // Add variation around middle grey
+                const noise = Math.floor(settings.greyness + (Math.random() - 0.5) * 255);
+                for(let j = 0; j < 4; j++){
+                    const idx = i + j * 4;
+                    data[idx] = noise;
+                    data[idx + 1] = noise;
+                    data[idx + 2] = noise;
+                    data[idx + 3] = settings.grainAlpha;
+                }
+            }
+            return pattern;
+        });
+    }
+    // Handle resize - debounced to avoid regenerating patterns too frequently
+    let resizeTimeout;
     function resize() {
         canvas.width = Math.floor(window.innerWidth * settings.grainScale);
         canvas.height = Math.floor(window.innerHeight * settings.grainScale);
+        // Debounce pattern regeneration
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(()=>{
+            generatePatterns();
+        }, 150);
     }
     window.addEventListener('resize', resize);
     resize();
-    // Pre-calculate noise patterns at higher resolution
-    const patterns = Array.from({
-        length: settings.patterns
-    }, ()=>{
-        const pattern = ctx.createImageData(canvas.width, canvas.height);
-        const data = pattern.data;
-        for(let i = 0; i < data.length; i += 16){
-            // Add variation around middle grey
-            const noise = Math.floor(settings.greyness + (Math.random() - 0.5) * 255);
-            for(let j = 0; j < 4; j++){
-                const idx = i + j * 4;
-                data[idx] = noise;
-                data[idx + 1] = noise;
-                data[idx + 2] = noise;
-                data[idx + 3] = settings.grainAlpha;
-            }
-        }
-        return pattern;
-    });
+    // Initial pattern generation
+    generatePatterns();
     let patternIndex = 0;
     // Animation loop
     function animate() {
-        ctx.putImageData(patterns[patternIndex], 0, 0);
-        patternIndex = (patternIndex + 1) % patterns.length;
+        if (patterns.length > 0) {
+            ctx.putImageData(patterns[patternIndex], 0, 0);
+            patternIndex = (patternIndex + 1) % patterns.length;
+        }
         frameRequest = setTimeout(()=>requestAnimationFrame(animate), settings.fps);
     }
     // Start animation
@@ -9849,6 +9862,7 @@ function grainEffect(config = {}) {
     // Return cleanup function
     return ()=>{
         clearTimeout(frameRequest);
+        clearTimeout(resizeTimeout);
         canvas.remove();
         window.removeEventListener('resize', resize);
     };
