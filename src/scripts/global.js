@@ -1812,6 +1812,12 @@ window.addEventListener('DOMContentLoaded', () => {
 window.playProjectEnterAnimation = function(data) {
     console.log('Project Page enter animation triggered');
     
+    // Skip SplitText animation on mobile (viewport < 568px)
+    if (window.innerWidth < 568) {
+      console.log('Mobile viewport detected, skipping SplitText animation');
+      return;
+    }
+    
     // Use requestAnimationFrame to ensure DOM is ready
     requestAnimationFrame(() => {
       const projectInfoHeader = document.querySelector('.proj-rich-headline-shell');
@@ -1821,27 +1827,42 @@ window.playProjectEnterAnimation = function(data) {
         return;
       }
       
+      // Target the h2 element directly
+      const headlineText = projectInfoHeader.querySelector('.proj-rich-headline-txt') || 
+                           projectInfoHeader.querySelector('h1, h2, h3, h4, h5, h6, p');
+      
+      if (!headlineText) {
+        console.log('No headline text element found, skipping animation');
+        return;
+      }
+      
       // Check if element is already wrapped (from previous navigation)
-      const existingWrapper = projectInfoHeader.parentElement;
+      const existingWrapper = headlineText.parentElement;
       const isAlreadyWrapped = existingWrapper && 
                                existingWrapper.tagName === 'SPAN' && 
                                existingWrapper.style.overflow === 'hidden';
       
+      let txtWrapper = null;
       if (!isAlreadyWrapped) {
         // Create a wrapper parent with overflow hidden for bottom-up animation
-        const txtWrapper = document.createElement('span');
+        txtWrapper = document.createElement('span');
         txtWrapper.style.overflow = 'hidden';
         txtWrapper.style.width = '100%';
-        txtWrapper.style.display = 'inline-block';
+        txtWrapper.style.display = 'block';
         txtWrapper.style.verticalAlign = 'bottom';
         // Insert txtWrapper before the text element and move the text inside
-        projectInfoHeader.parentNode.insertBefore(txtWrapper, projectInfoHeader);
-        txtWrapper.appendChild(projectInfoHeader);
+        headlineText.parentNode.insertBefore(txtWrapper, headlineText);
+        txtWrapper.appendChild(headlineText);
+      } else {
+        txtWrapper = existingWrapper;
       }
 
       let projectSplit = null;
       try {
-        projectSplit = new SplitText(projectInfoHeader, { type: "chars", position: "relative" });
+        // Split into chars only
+        projectSplit = new SplitText(headlineText, { 
+          type: "chars"
+        });
       } catch (error) {
         console.error('SplitText error (proj-rich-headline-shell):', error);
       }
@@ -1861,10 +1882,15 @@ window.playProjectEnterAnimation = function(data) {
   window.playWorkEnterAnimation = function(data) {
     console.log('Work Page enter animation triggered');
     
+    // Skip SplitText animation on mobile (viewport < 568px)
+    if (window.innerWidth < 568) {
+      console.log('Mobile viewport detected, skipping SplitText animation');
+      return;
+    }
+    
     // Determine delay based on whether this is a Barba transition or initial page load
     const isBarbaTransition = data !== undefined;
     const animationDelay = isBarbaTransition ? 0.95 : 0.5;
-    const wordStagger = 0.05;
     
     // Use requestAnimationFrame to ensure DOM is ready
     requestAnimationFrame(() => {
@@ -1875,8 +1901,9 @@ window.playProjectEnterAnimation = function(data) {
         return;
       }
       
-      // Target the child element (h2, p, etc.) within the rich text, not the rich text wrapper itself
-      const richTextChild = workHeader.querySelector('h1, h2, h3, h4, h5, h6, p');
+      // Target the h2 element directly
+      const richTextChild = workHeader.querySelector('.proj-rich-headline-txt') || 
+                            workHeader.querySelector('h1, h2, h3, h4, h5, h6, p');
       
       if (!richTextChild) {
         console.log('No child element found in proj-rich-headline-shell, skipping animation');
@@ -1889,35 +1916,39 @@ window.playProjectEnterAnimation = function(data) {
                                existingWrapper.tagName === 'SPAN' && 
                                existingWrapper.style.overflow === 'hidden';
       
+      let txtWrapper = null;
       if (!isAlreadyWrapped) {
         // Create a wrapper parent with overflow hidden for bottom-up animation
-        const txtWrapper = document.createElement('span');
+        txtWrapper = document.createElement('span');
         txtWrapper.style.overflow = 'hidden';
         txtWrapper.style.width = '100%';
-        txtWrapper.style.display = 'inline-block';
+        txtWrapper.style.display = 'block';
         txtWrapper.style.verticalAlign = 'bottom';
         // Insert txtWrapper before the text element and move the text inside
         richTextChild.parentNode.insertBefore(txtWrapper, richTextChild);
         txtWrapper.appendChild(richTextChild);
+      } else {
+        txtWrapper = existingWrapper;
       }
 
       let workSplit = null;
       try {
+        // Split into chars only
         workSplit = new SplitText(richTextChild, { 
-          type: "words"
+          type: "chars"
         });
       } catch (error) {
         console.error('SplitText error (proj-rich-headline-shell):', error);
       }
-      if (workSplit?.words?.length) {
-        gsap.set(workSplit.words, { 
+      if (workSplit?.chars?.length) {
+        gsap.set(workSplit.chars, { 
           transform: 'translate3d(0,100%,0)'
         });
-        gsap.to(workSplit.words, {
+        gsap.to(workSplit.chars, {
           transform: 'translate3d(0,0%,0)',
           duration: 1,
           ease: "expo.out",
-          stagger: wordStagger,
+          stagger: 0.015,
           delay: animationDelay,
           overwrite: "auto"
         });
