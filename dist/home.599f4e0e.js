@@ -2299,11 +2299,8 @@ parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "initScrollReset", ()=>initScrollReset);
 function initScrollReset() {
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-    if (window.scrollY !== 0) {
-        window.location.reload();
-        return;
-    }
-    document.body.style.overflow = 'hidden';
+    // Don't reload on scroll position - this causes infinite loops and scroll issues
+    // Just reset scroll position directly
     window.scrollTo({
         top: 0,
         left: 0,
@@ -2311,7 +2308,6 @@ function initScrollReset() {
     });
     requestAnimationFrame(()=>{
         window.scrollTo(0, 0);
-        document.body.style.overflow = '';
     });
 }
 

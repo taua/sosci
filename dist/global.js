@@ -844,7 +844,14 @@ function initVideoVisibility() {
     });
 }
 let smootherInstance = null;
+let smootherCreationTime = 0;
 function initScrollSmoother() {
+    // Prevent rapid re-creation (within 500ms)
+    const now = Date.now();
+    if (smootherInstance && now - smootherCreationTime < 500) {
+        console.log('[smoother] Skipping recreation - too soon since last creation');
+        return;
+    }
     // Kill previous ScrollSmoother instance if it exists
     if (smootherInstance && typeof smootherInstance.kill === 'function') {
         smootherInstance.kill();
@@ -862,6 +869,9 @@ function initScrollSmoother() {
             smooth: 1.2,
             effects: true
         });
+        // Expose globally so page scripts can access it
+        window._smootherInstance = smootherInstance;
+        smootherCreationTime = Date.now();
         console.log('[smoother] ScrollSmoother created');
         // ScrollSmoother initialized
         // Force GSAP to recalculate layout
@@ -2030,6 +2040,12 @@ function playLoadingAnimation() {
         duration: .4,
         ease: "power2.inOut"
     }, "<");
+    // Ensure ScrollSmoother is unpaused after loading animation completes
+    tl.call(()=>{
+        if (smootherInstance && typeof smootherInstance.paused === 'function') try {
+            smootherInstance.paused(false);
+        } catch (e) {}
+    });
 // GSAP will animate vw values using decimals, not just whole numbers.
 // For example, animating width from '7.7vw' to '0vw' will interpolate with decimal precision.
 // ...existing code...
@@ -2037,6 +2053,58 @@ function playLoadingAnimation() {
 // ...existing code...
 window.addEventListener('DOMContentLoaded', ()=>{
     playLoadingAnimation();
+    // Failsafe: Ensure ScrollSmoother is unpaused and body overflow is not stuck
+    // This catches edge cases where animations might not complete properly
+    setTimeout(()=>{
+        if (smootherInstance && typeof smootherInstance.paused === 'function') try {
+            smootherInstance.paused(false);
+        } catch (e) {}
+        // Ensure body overflow is not stuck at hidden
+        document.body.style.overflow = '';
+        // Also refresh ScrollTrigger to ensure proper scroll behavior
+        try {
+            (0, _scrollTrigger.ScrollTrigger).refresh();
+        } catch (e) {}
+    }, 3000);
+    // Ultimate failsafe: detect broken ScrollSmoother by checking if content actually moves
+    setTimeout(()=>{
+        const contentShell = document.querySelector('.content-shell');
+        if (smootherInstance && contentShell) {
+            // Get current transform of content-shell
+            const initialTransform = contentShell.style.transform || window.getComputedStyle(contentShell).transform;
+            console.log('[global] Failsafe check - initial transform:', initialTransform);
+            // Try to scroll programmatically
+            try {
+                smootherInstance.scrollTo(50, false);
+            } catch (e) {}
+            // Check if transform actually changed after a brief delay
+            setTimeout(()=>{
+                const newTransform = contentShell.style.transform || window.getComputedStyle(contentShell).transform;
+                console.log('[global] Failsafe check - new transform:', newTransform);
+                // If transform didn't change, ScrollSmoother is broken
+                if (initialTransform === newTransform) {
+                    console.log('[global] ScrollSmoother appears broken (content not moving), recreating...');
+                    try {
+                        smootherInstance.kill();
+                        smootherInstance = (0, _scrollSmoother.ScrollSmoother).create({
+                            wrapper: ".main-shell",
+                            content: ".content-shell",
+                            smooth: 1.2,
+                            effects: true
+                        });
+                        window._smootherInstance = smootherInstance;
+                        (0, _scrollTrigger.ScrollTrigger).refresh();
+                        console.log('[global] ScrollSmoother recreated');
+                    } catch (e) {
+                        console.warn('[global] Failed to recreate ScrollSmoother:', e);
+                    }
+                } else // Scroll back to top
+                try {
+                    smootherInstance.scrollTo(0, false);
+                } catch (e) {}
+            }, 200);
+        }
+    }, 2500);
     // Setup nav click handler
     document.addEventListener('click', (e)=>{
         const navTrigger = e.target.closest('.nav-hover');

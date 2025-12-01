@@ -1,16 +1,23 @@
 import { gsap } from "gsap";
 import { createWorkLinksModule } from "./utils/workLinksModule";
-import { initScrollReset } from "./utils/scrollReset";
 
 // Create work-links module instance
 let workLinksModule = null;
 
 export function initWorkPage() {
-    // Use the same scroll reset as home page - handles browser scroll restoration
-    initScrollReset();
-    
     // Immediate scroll reset before anything else
     window.scrollTo(0, 0);
+    
+    // Ensure ScrollSmoother is not paused
+    if (window._smootherInstance && typeof window._smootherInstance.paused === 'function') {
+        try {
+            window._smootherInstance.paused(false);
+        } catch (e) {}
+    }
+    
+    // Ensure body overflow is not stuck
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
     
     // Robust scroll reset with smooth scrolling temporarily disabled
     let originalSmooth = null;
@@ -51,6 +58,12 @@ export function initWorkPage() {
     setTimeout(() => {
         window.scrollTo(0, 0);
         tryReset();
+        // Ensure smoother is unpaused after scroll reset
+        if (window._smootherInstance && typeof window._smootherInstance.paused === 'function') {
+            try {
+                window._smootherInstance.paused(false);
+            } catch (e) {}
+        }
     }, 120);
     
     // Restore smooth scrolling after all reset attempts complete
@@ -63,6 +76,19 @@ export function initWorkPage() {
             } catch (e) {}
         }, 400);
     }
+    
+    // Additional failsafe for scroll functionality
+    setTimeout(() => {
+        // Ensure body/html can scroll
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+        // Ensure smoother is running
+        if (window._smootherInstance && typeof window._smootherInstance.paused === 'function') {
+            try {
+                window._smootherInstance.paused(false);
+            } catch (e) {}
+        }
+    }, 500);
     
     // Initialize the shared work-links module
     workLinksModule = createWorkLinksModule();
