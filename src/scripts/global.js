@@ -229,72 +229,98 @@ function initAnimateText() {
   
   animationTypes.forEach(config => {
     const elements = document.querySelectorAll(config.selector);
-    
     elements.forEach(element => {
       // Skip if already processed
       if (element.dataset.animateTextProcessed) return;
       element.dataset.animateTextProcessed = 'true';
-      
-      // Split text based on type
+      // Special handling for animate-letters: split with SplitText into words (add overflow hidden to words), then split each word into chars (no overflow hidden on chars). Use only GSAP SplitText wrappers.
+      if (config.splitType === 'chars') {
+        // First split into words (SplitText creates div wrappers for words)
+        const wordSplit = new SplitText(element, { type: 'words', reduceWhiteSpace: false });
+        wordSplit.words.forEach(word => {
+          word.style.overflow = 'hidden';
+          word.style.display = 'inline-block';
+          word.classList.add('animate-word-wrapper');
+          word.style.lineHeight = 'inherit';
+          word.style.fontSize = 'inherit';
+          word.style.fontFamily = 'inherit';
+          word.style.fontWeight = 'inherit';
+          word.style.fontStyle = 'inherit';
+          word.style.margin = '0';
+          word.style.padding = '0';
+          word.style.verticalAlign = 'top';
+        });
+        // Now split each word into chars (SplitText creates span wrappers for chars)
+        let allChars = [];
+        wordSplit.words.forEach(word => {
+          const charSplit = new SplitText(word, { type: 'chars', reduceWhiteSpace: false });
+          charSplit.chars.forEach(char => {
+            char.classList.add(config.wrapperClass);
+            // Do NOT set overflow hidden on chars
+            char.style.lineHeight = 'inherit';
+            char.style.fontSize = 'inherit';
+            char.style.fontFamily = 'inherit';
+            char.style.fontWeight = 'inherit';
+            char.style.fontStyle = 'inherit';
+            char.style.margin = '0';
+            char.style.padding = '0';
+            char.style.verticalAlign = 'top';
+          });
+          allChars = allChars.concat(charSplit.chars);
+        });
+        // Set initial state for chars
+        gsap.set(allChars, { yPercent: 100, opacity: 0 });
+        // Animate chars
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: element,
+            start: 'top 85%',
+            once: true
+          }
+        });
+        tl.to(allChars, {
+          yPercent: 0,
+          opacity: 1,
+          duration: config.duration,
+          ease: 'expo.out',
+          stagger: config.stagger
+        });
+        // Store cleanup function
+        const cleanup = () => {
+          if (tl.scrollTrigger) tl.scrollTrigger.kill();
+          tl.kill();
+        };
+        animateTextCleanups.push(cleanup);
+        return;
+      }
+      // Default: lines or words (SplitText creates wrappers)
       const splitConfig = { type: config.splitType, reduceWhiteSpace: false };
-      // For lines, add class
       if (config.splitType === 'lines') {
         splitConfig.linesClass = config.itemClass;
       }
       const split = new SplitText(element, splitConfig);
-      
-      // Get the items to animate based on split type
-      const items = config.splitType === 'lines' ? split.lines : 
-                    config.splitType === 'words' ? split.words : 
-                    split.chars;
-      
-      // For lines and words: wrap each item in overflow:hidden for mask effect
-      // For letters (chars): use a single parent wrapper to avoid letter-spacing issues
-      if (config.splitType === 'chars') {
-        // Wrap the entire element content in a single overflow:hidden container
-        const wrapper = document.createElement('div');
-        wrapper.style.overflow = 'hidden';
-        wrapper.style.display = 'inline-block';
-        wrapper.classList.add(config.wrapperClass);
-        
-        // Move all children into the wrapper
-        while (element.firstChild) {
-          wrapper.appendChild(element.firstChild);
-        }
-        element.appendChild(wrapper);
-        
-        // Set initial state - letters start below
-        gsap.set(items, { 
-          yPercent: 100,
-          opacity: 0
-        });
-      } else {
-        // Lines and words: wrap each item individually
-        items.forEach(item => {
-          const wrapper = document.createElement('div');
-          wrapper.style.overflow = 'hidden';
-          wrapper.style.display = 'inline-block';
-          wrapper.classList.add(config.wrapperClass);
-          item.parentNode.insertBefore(wrapper, item);
-          wrapper.appendChild(item);
-        });
-        
-        // Set initial state - items start below (hidden by overflow)
-        gsap.set(items, { 
-          yPercent: 100,
-          opacity: 0
-        });
-      }
-      
-      // Create scroll-triggered animation
+      const items = config.splitType === 'lines' ? split.lines : split.words;
+      items.forEach(item => {
+        item.style.overflow = 'hidden';
+        item.style.display = config.splitType === 'lines' ? 'block' : 'inline-block';
+        item.classList.add(config.wrapperClass);
+        item.style.lineHeight = 'inherit';
+        item.style.fontSize = 'inherit';
+        item.style.fontFamily = 'inherit';
+        item.style.fontWeight = 'inherit';
+        item.style.fontStyle = 'inherit';
+        item.style.margin = '0';
+        item.style.padding = '0';
+        item.style.verticalAlign = 'top';
+      });
+      gsap.set(items, { yPercent: 100, opacity: 0 });
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: element,
           start: 'top 85%',
-          once: true // Only animate once
+          once: true
         }
       });
-      
       tl.to(items, {
         yPercent: 0,
         opacity: 1,
@@ -302,13 +328,10 @@ function initAnimateText() {
         ease: 'expo.out',
         stagger: config.stagger
       });
-      
-      // Store cleanup function
       const cleanup = () => {
         if (tl.scrollTrigger) tl.scrollTrigger.kill();
         tl.kill();
       };
-      
       animateTextCleanups.push(cleanup);
     });
   });
