@@ -878,6 +878,116 @@ function initScrollSmoother() {
         if (typeof (0, _scrollSmoother.ScrollSmoother).refresh === 'function') (0, _scrollSmoother.ScrollSmoother).refresh();
     } else console.warn('ScrollSmoother: .main-shell or .content-shell not found in DOM.');
 }
+// Store animate text cleanup functions
+let animateTextCleanups = [];
+// Global utility: Animate text with [animate-lines], [animate-words], or [animate-letters] attribute on scroll
+function initAnimateText() {
+    // Clean up previous instances
+    animateTextCleanups.forEach((cleanup)=>{
+        try {
+            cleanup();
+        } catch (e) {}
+    });
+    animateTextCleanups = [];
+    // Configuration for each animation type
+    const animationTypes = [
+        {
+            selector: '[animate-lines]',
+            splitType: 'lines',
+            itemClass: 'animate-line',
+            wrapperClass: 'animate-line-wrapper',
+            stagger: 0.15,
+            duration: 1.2
+        },
+        {
+            selector: '[animate-words]',
+            splitType: 'words',
+            itemClass: 'animate-word',
+            wrapperClass: 'animate-word-wrapper',
+            stagger: 0.07,
+            duration: 0.8
+        },
+        {
+            selector: '[animate-letters]',
+            splitType: 'chars',
+            itemClass: 'animate-letter',
+            wrapperClass: 'animate-letter-wrapper',
+            stagger: 0.05,
+            duration: 1
+        }
+    ];
+    animationTypes.forEach((config)=>{
+        const elements = document.querySelectorAll(config.selector);
+        elements.forEach((element)=>{
+            // Skip if already processed
+            if (element.dataset.animateTextProcessed) return;
+            element.dataset.animateTextProcessed = 'true';
+            // Split text based on type
+            const splitConfig = {
+                type: config.splitType,
+                reduceWhiteSpace: false
+            };
+            // For lines, add class
+            if (config.splitType === 'lines') splitConfig.linesClass = config.itemClass;
+            const split = new (0, _splitText.SplitText)(element, splitConfig);
+            // Get the items to animate based on split type
+            const items = config.splitType === 'lines' ? split.lines : config.splitType === 'words' ? split.words : split.chars;
+            // For lines and words: wrap each item in overflow:hidden for mask effect
+            // For letters (chars): use a single parent wrapper to avoid letter-spacing issues
+            if (config.splitType === 'chars') {
+                // Wrap the entire element content in a single overflow:hidden container
+                const wrapper = document.createElement('div');
+                wrapper.style.overflow = 'hidden';
+                wrapper.style.display = 'inline-block';
+                wrapper.classList.add(config.wrapperClass);
+                // Move all children into the wrapper
+                while(element.firstChild)wrapper.appendChild(element.firstChild);
+                element.appendChild(wrapper);
+                // Set initial state - letters start below
+                (0, _gsap.gsap).set(items, {
+                    yPercent: 100,
+                    opacity: 0
+                });
+            } else {
+                // Lines and words: wrap each item individually
+                items.forEach((item)=>{
+                    const wrapper = document.createElement('div');
+                    wrapper.style.overflow = 'hidden';
+                    wrapper.style.display = 'inline-block';
+                    wrapper.classList.add(config.wrapperClass);
+                    item.parentNode.insertBefore(wrapper, item);
+                    wrapper.appendChild(item);
+                });
+                // Set initial state - items start below (hidden by overflow)
+                (0, _gsap.gsap).set(items, {
+                    yPercent: 100,
+                    opacity: 0
+                });
+            }
+            // Create scroll-triggered animation
+            const tl = (0, _gsap.gsap).timeline({
+                scrollTrigger: {
+                    trigger: element,
+                    start: 'top 85%',
+                    once: true // Only animate once
+                }
+            });
+            tl.to(items, {
+                yPercent: 0,
+                opacity: 1,
+                duration: config.duration,
+                ease: 'expo.out',
+                stagger: config.stagger
+            });
+            // Store cleanup function
+            const cleanup = ()=>{
+                if (tl.scrollTrigger) tl.scrollTrigger.kill();
+                tl.kill();
+            };
+            animateTextCleanups.push(cleanup);
+        });
+    });
+}
 function initPageScripts() {
     // Page-specific imports
     // Run any existing cleanup first
@@ -909,6 +1019,11 @@ function initPageScripts() {
         if (typeof module.initProjectPage === 'function') module.initProjectPage();
         if (typeof module.cleanupProjectPage === 'function') currentPageCleanup = module.cleanupProjectPage;
     });
+    // Initialize global animate-lines utility
+    // Use setTimeout to ensure DOM is fully ready after page scripts
+    setTimeout(()=>{
+        initAnimateText();
+    }, 100);
 }
 // current page cleanup reference (set by page modules when they export a cleanup)
 let currentPageCleanup = null;
