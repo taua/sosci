@@ -339,6 +339,17 @@ function initAnimateText() {
   });
 }
 
+function runInitAnimateTextWhenFontsReady() {
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => {
+      initAnimateText();
+    });
+  } else {
+    // Fallback: run immediately if Font Loading API is not supported
+    initAnimateText();
+  }
+}
+
 function initPageScripts() {
   // Page-specific imports
   // Run any existing cleanup first
@@ -379,7 +390,7 @@ function initPageScripts() {
   // Initialize global animate-lines utility
   // Use setTimeout to ensure DOM is fully ready after page scripts
   setTimeout(() => {
-    initAnimateText();
+    runInitAnimateTextWhenFontsReady();
   }, 100);
 }
 
@@ -1961,8 +1972,6 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
-
-
 
 
 window.playProjectEnterAnimation = function(data) {
