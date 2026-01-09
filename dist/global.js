@@ -922,7 +922,7 @@ function initAnimateText() {
             // Skip if already processed
             if (element.dataset.animateTextProcessed) return;
             element.dataset.animateTextProcessed = 'true';
-            // Special handling for animate-letters: split with SplitText into words (add overflow hidden to words), then split each word into chars (no overflow hidden on chars). Use only GSAP SplitText wrappers.
+            // Special handling for animate-letters: split to words, then chars, only using GSAP wrappers
             if (config.splitType === 'chars') {
                 // First split into words (SplitText creates div wrappers for words)
                 const wordSplit = new (0, _splitText.SplitText)(element, {
@@ -965,10 +965,9 @@ function initAnimateText() {
                 });
                 // Set initial state for chars
                 (0, _gsap.gsap).set(allChars, {
-                    yPercent: 100,
-                    opacity: 0
+                    yPercent: 100
                 });
-                // Animate chars
+                // Animate chars (no opacity)
                 const tl = (0, _gsap.gsap).timeline({
                     scrollTrigger: {
                         trigger: element,
@@ -978,7 +977,6 @@ function initAnimateText() {
                 });
                 tl.to(allChars, {
                     yPercent: 0,
-                    opacity: 1,
                     duration: config.duration,
                     ease: 'expo.out',
                     stagger: config.stagger
@@ -996,12 +994,13 @@ function initAnimateText() {
                 type: config.splitType,
                 reduceWhiteSpace: false
             };
-            if (config.splitType === 'lines') splitConfig.linesClass = config.itemClass;
+            if (config.splitType === 'lines') {
+                splitConfig.mask = 'lines';
+                splitConfig.linesClass = 'line-mask';
+            }
             const split = new (0, _splitText.SplitText)(element, splitConfig);
             const items = config.splitType === 'lines' ? split.lines : split.words;
             items.forEach((item)=>{
-                item.style.overflow = 'hidden';
-                item.style.display = config.splitType === 'lines' ? 'block' : 'inline-block';
                 item.classList.add(config.wrapperClass);
                 item.style.lineHeight = 'inherit';
                 item.style.fontSize = 'inherit';
@@ -1011,10 +1010,14 @@ function initAnimateText() {
                 item.style.margin = '0';
                 item.style.padding = '0';
                 item.style.verticalAlign = 'top';
+                if (config.splitType === 'words') {
+                    item.style.overflow = 'hidden';
+                    item.style.display = 'inline-block';
+                }
+            // For lines, SplitText mask: 'lines' already handles overflow and display
             });
             (0, _gsap.gsap).set(items, {
-                yPercent: 100,
-                opacity: 0
+                yPercent: 100
             });
             const tl = (0, _gsap.gsap).timeline({
                 scrollTrigger: {
@@ -1025,7 +1028,6 @@ function initAnimateText() {
             });
             tl.to(items, {
                 yPercent: 0,
-                opacity: 1,
                 duration: config.duration,
                 ease: 'expo.out',
                 stagger: config.stagger
