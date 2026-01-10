@@ -301,29 +301,28 @@ function initAnimateText() {
         return;
       }
       
-      // Special handling for animate-words: split to lines with mask, then words
+      // Special handling for animate-words: use native SplitText masking like animate-lines
       if (config.splitType === 'words') {
-        // First split into lines with mask
-        const lineSplit = SplitText.create(element, { 
+        // Force layout reflow to ensure line breaks are calculated
+        element.style.visibility = 'visible';
+        const forceReflow = element.offsetHeight; // Force layout calculation
+        
+        // Use SplitText's native mask feature (same as animate-lines)
+        const split = SplitText.create(element, { 
           type: 'lines, words',
           mask: 'lines',
           linesClass: 'line-mask',
-          autoSplit: true
+          wordsClass: 'word-item++',
+          autoSplit: true,
+          reduceWhiteSpace: false
         });
         
-        let allWords = lineSplit.words || [];
+        // Get all words
+        let allWords = split.words || [];
+        
+        // Style the words
         allWords.forEach(word => {
           word.classList.add(config.wrapperClass);
-          word.style.overflow = 'visible';
-          word.style.display = 'inline-block';
-          word.style.lineHeight = 'inherit';
-          word.style.fontSize = 'inherit';
-          word.style.fontFamily = 'inherit';
-          word.style.fontWeight = 'inherit';
-          word.style.fontStyle = 'inherit';
-          word.style.margin = '0';
-          word.style.padding = '0';
-          word.style.verticalAlign = 'top';
         });
         
         // Set initial state for words
@@ -365,14 +364,6 @@ function initAnimateText() {
       
       items.forEach(item => {
         item.classList.add(config.wrapperClass);
-        item.style.lineHeight = 'inherit';
-        item.style.fontSize = 'inherit';
-        item.style.fontFamily = 'inherit';
-        item.style.fontWeight = 'inherit';
-        item.style.fontStyle = 'inherit';
-        item.style.margin = '0';
-        item.style.padding = '0';
-        item.style.verticalAlign = 'top';
       });
       
       gsap.set(items, { yPercent: 100 });
@@ -401,11 +392,20 @@ function initAnimateText() {
 function runInitAnimateTextWhenFontsReady() {
   if (document.fonts && document.fonts.ready) {
     document.fonts.ready.then(() => {
-      initAnimateText();
+      // Add additional delay to ensure layout is fully computed
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          initAnimateText();
+        });
+      });
     });
   } else {
-    // Fallback: run immediately if Font Loading API is not supported
-    initAnimateText();
+    // Fallback: run with delay if Font Loading API is not supported
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        initAnimateText();
+      });
+    });
   }
 }
 
