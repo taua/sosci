@@ -925,9 +925,10 @@ function initAnimateText() {
             // Special handling for animate-letters: split to words, then chars, only using GSAP wrappers
             if (config.splitType === 'chars') {
                 // First split into words (SplitText creates div wrappers for words)
-                const wordSplit = new (0, _splitText.SplitText)(element, {
+                const wordSplit = (0, _splitText.SplitText).create(element, {
                     type: 'words',
-                    reduceWhiteSpace: false
+                    reduceWhiteSpace: false,
+                    autoSplit: true
                 });
                 wordSplit.words.forEach((word)=>{
                     word.style.overflow = 'hidden';
@@ -945,9 +946,10 @@ function initAnimateText() {
                 // Now split each word into chars (SplitText creates span wrappers for chars)
                 let allChars = [];
                 wordSplit.words.forEach((word)=>{
-                    const charSplit = new (0, _splitText.SplitText)(word, {
+                    const charSplit = (0, _splitText.SplitText).create(word, {
                         type: 'chars',
-                        reduceWhiteSpace: false
+                        reduceWhiteSpace: false,
+                        autoSplit: true
                     });
                     charSplit.chars.forEach((char)=>{
                         char.classList.add(config.wrapperClass);
@@ -989,17 +991,64 @@ function initAnimateText() {
                 animateTextCleanups.push(cleanup);
                 return;
             }
-            // Default: lines or words (SplitText creates wrappers)
-            const splitConfig = {
-                type: config.splitType,
-                reduceWhiteSpace: false
-            };
-            if (config.splitType === 'lines') {
-                splitConfig.mask = 'lines';
-                splitConfig.linesClass = 'line-mask';
+            // Special handling for animate-words: split to lines with mask, then words
+            if (config.splitType === 'words') {
+                // First split into lines with mask
+                const lineSplit = (0, _splitText.SplitText).create(element, {
+                    type: 'lines, words',
+                    mask: 'lines',
+                    linesClass: 'line-mask',
+                    autoSplit: true
+                });
+                let allWords = lineSplit.words || [];
+                allWords.forEach((word)=>{
+                    word.classList.add(config.wrapperClass);
+                    word.style.overflow = 'visible';
+                    word.style.display = 'inline-block';
+                    word.style.lineHeight = 'inherit';
+                    word.style.fontSize = 'inherit';
+                    word.style.fontFamily = 'inherit';
+                    word.style.fontWeight = 'inherit';
+                    word.style.fontStyle = 'inherit';
+                    word.style.margin = '0';
+                    word.style.padding = '0';
+                    word.style.verticalAlign = 'top';
+                });
+                // Set initial state for words
+                (0, _gsap.gsap).set(allWords, {
+                    yPercent: 100
+                });
+                // Animate words
+                const tl = (0, _gsap.gsap).timeline({
+                    scrollTrigger: {
+                        trigger: element,
+                        start: 'top 85%',
+                        once: true
+                    }
+                });
+                tl.to(allWords, {
+                    yPercent: 0,
+                    duration: config.duration,
+                    ease: 'expo.out',
+                    stagger: config.stagger
+                });
+                // Store cleanup function
+                const cleanup = ()=>{
+                    if (tl.scrollTrigger) tl.scrollTrigger.kill();
+                    tl.kill();
+                };
+                animateTextCleanups.push(cleanup);
+                return;
             }
-            const split = new (0, _splitText.SplitText)(element, splitConfig);
-            const items = config.splitType === 'lines' ? split.lines : split.words;
+            // Default: lines only (SplitText creates wrappers with mask)
+            const split = (0, _splitText.SplitText).create(element, {
+                type: 'lines',
+                mask: 'lines',
+                linesClass: 'line-mask',
+                reduceWhiteSpace: false,
+                autoSplit: true
+            });
+            const items = split.lines;
             items.forEach((item)=>{
                 item.classList.add(config.wrapperClass);
                 item.style.lineHeight = 'inherit';
@@ -1010,11 +1059,6 @@ function initAnimateText() {
                 item.style.margin = '0';
                 item.style.padding = '0';
                 item.style.verticalAlign = 'top';
-                if (config.splitType === 'words') {
-                    item.style.overflow = 'hidden';
-                    item.style.display = 'inline-block';
-                }
-            // For lines, SplitText mask: 'lines' already handles overflow and display
             });
             (0, _gsap.gsap).set(items, {
                 yPercent: 100
