@@ -222,7 +222,7 @@ function initAnimateText() {
       splitType: 'chars', 
       itemClass: 'animate-letter',
       wrapperClass: 'animate-letter-wrapper',
-      stagger: 0.05,
+      stagger: 0.03,
       duration: 1
     }
   ];
