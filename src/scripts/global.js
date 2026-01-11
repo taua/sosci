@@ -30,7 +30,7 @@ const NAV_CLOSE_OVERLAP = .8; // seconds to overlap the nav-bottom fade when clo
 
 // Silence console.log calls while keeping console.error/warn intact.
 // Toggle ENABLE_LOGS to true to re-enable logs during debugging.
-const ENABLE_LOGS = false;
+const ENABLE_LOGS = true;
 if (typeof ENABLE_LOGS !== 'undefined' && !ENABLE_LOGS) {
   try {
     if (typeof console !== 'undefined' && console && typeof console.log === 'function') {
@@ -207,7 +207,7 @@ function initAnimateText() {
       itemClass: 'animate-line',
       wrapperClass: 'animate-line-wrapper',
       stagger: 0.15,
-      duration: 1.2
+      duration: 1
     },
     { 
       selector: '[animate-words]', 
@@ -229,10 +229,15 @@ function initAnimateText() {
   
   animationTypes.forEach(config => {
     const elements = document.querySelectorAll(config.selector);
-    elements.forEach(element => {
+    console.log(`[initAnimateText] Found ${elements.length} elements with ${config.selector}`);
+    elements.forEach((element, index) => {
       // Skip if already processed
-      if (element.dataset.animateTextProcessed) return;
+      if (element.dataset.animateTextProcessed) {
+        console.log(`[initAnimateText] Skipping already processed element ${index} with ${config.selector}`);
+        return;
+      }
       element.dataset.animateTextProcessed = 'true';
+      console.log(`[initAnimateText] Processing element ${index} with ${config.selector}`);
       // Special handling for animate-letters: split to words, then chars, only using GSAP wrappers
       if (config.splitType === 'chars') {
         // First split into words (SplitText creates div wrappers for words)

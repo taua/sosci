@@ -85,6 +85,51 @@ export function initAboutPage() {
       });
     }
   } catch (e) {}
+
+  // Animate experience logo shells on scroll (triggered by parent)
+  const logoGridParents = document.querySelectorAll('.logos-grid-parent');
+  if (logoGridParents && logoGridParents.length) {
+    logoGridParents.forEach((parent) => {
+      const childLogos = parent.querySelectorAll('.experience-logo-shell');
+      const leftShells = parent.querySelectorAll('.experience-left-shell');
+      
+      // Set initial state for all elements
+      gsap.set([...childLogos, ...leftShells], { yPercent: 100, opacity: 0 });
+      
+      // Animate left shells first
+      if (leftShells && leftShells.length) {
+        gsap.to(leftShells, {
+          yPercent: 0,
+          opacity: 1,
+          duration: 0.8,
+          ease: 'expo.out',
+          stagger: 0.1,
+          scrollTrigger: {
+            trigger: parent,
+            start: 'top 75%',
+            once: true
+          }
+        });
+      }
+      
+      // Then animate logos with a delay
+      if (childLogos && childLogos.length) {
+        gsap.to(childLogos, {
+          yPercent: 0,
+          opacity: 1,
+          duration: 0.8,
+          ease: 'expo.out',
+          stagger: 0.1,
+          delay: 0.3,
+          scrollTrigger: {
+            trigger: parent,
+            start: 'top 75%',
+            once: true
+          }
+        });
+      }
+    });
+  }
 }
 
 window.initPageTransitions = function() {
