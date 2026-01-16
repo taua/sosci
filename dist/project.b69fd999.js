@@ -1220,8 +1220,12 @@ function createWorkLinksModule() {
                     }
                 }
             }
-            // If this is the current project, prevent clicks but keep hover
-            if (isCurrentProject) {
+            // Check if link contains "Coming Soon" text
+            let isComingSoon = false;
+            const linkText = link.textContent || link.innerText || '';
+            if (linkText.toLowerCase().includes('coming soon')) isComingSoon = true;
+            // If this is the current project or coming soon, prevent clicks but keep hover
+            if (isCurrentProject || isComingSoon) {
                 link.style.opacity = '0.5';
                 link.setAttribute('data-current-project', 'true');
                 // Prevent click navigation
