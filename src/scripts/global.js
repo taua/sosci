@@ -1598,15 +1598,20 @@ function playLoadingAnimation() {
 
   tl.call(() => console.log('[loader] playLoadingAnimation timeline running'));
 
+  // Use different width values for mobile (568px or less)
+  const isMobile = window.innerWidth <= 568;
+  const spacerWidth = isMobile ? '15vw' : '8vw';
+  const imgShellWidth = isMobile ? '12vw' : '6.8vw';
+
   // Animate spacer and img-shell widths in parallel, after logo anim
   tl.to(transSpacer, {
-    width: '8vw',
+    width: spacerWidth,
     duration: 0.8,
     ease: "expo.inOut"
   }, "-=0.3");
-
+  
   tl.to(transImgShell, {
-    width: '6.8vw',
+    width: imgShellWidth,
     duration: 0.8,
     ease: "expo.inOut"
   }, "<");
