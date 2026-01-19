@@ -89,61 +89,105 @@ function initVideoVisibility() {
   if (window.location.pathname.includes('work')) return;
   const videos = document.querySelectorAll('video');
   if (!videos.length) return;
-  videos.forEach((video) => {
-    video.muted = true;
-    video.playsInline = true;
-    video.loop = true;
+  
+  // Create triggers immediately, then update as images load
+  const createTriggers = () => {
+    videos.forEach((video) => {
+      video.muted = true;
+      video.playsInline = true;
+      video.loop = true;
 
-    // Safe play/pause wrappers: suppress benign AbortError logs when a
-    // play() is immediately interrupted by pause(). Only log unexpected errors.
-    const safePlay = () => {
-      try {
-        return video.play().catch(err => {
-          try {
-            const name = err && err.name;
-            const msg = err && err.message;
-            if (name === 'AbortError' || (msg && msg.includes('interrupted'))) {
-              return; // ignore common benign error
-            }
-          } catch (e) {}
-          console.error(err);
-        });
-      } catch (e) {
+      // Safe play/pause wrappers: suppress benign AbortError logs when a
+      // play() is immediately interrupted by pause(). Only log unexpected errors.
+      const safePlay = () => {
         try {
-          if (e && e.name === 'AbortError') return;
-        } catch (ee) {}
-        console.error(e);
+          return video.play().catch(err => {
+            try {
+              const name = err && err.name;
+              const msg = err && err.message;
+              if (name === 'AbortError' || (msg && msg.includes('interrupted'))) {
+                return; // ignore common benign error
+              }
+            } catch (e) {}
+            console.error(err);
+          });
+        } catch (e) {
+          try {
+            if (e && e.name === 'AbortError') return;
+          } catch (ee) {}
+          console.error(e);
+        }
+      };
+
+      const safePause = () => { try { video.pause(); } catch (e) { /* ignore */ } };
+
+      const trigger = ScrollTrigger.create({
+        trigger: video.parentElement,
+        start: 'top bottom',
+        end: 'bottom top',
+        onEnter: safePlay,
+        onLeave: safePause,
+        onEnterBack: safePlay,
+        onLeaveBack: safePause,
+        onRefresh: (self) => {
+          // On refresh, check if video is in view and play if so
+          if (self.isActive) {
+            safePlay();
+          } else {
+            safePause();
+          }
+        },
+        invalidateOnRefresh: true
+      });
+      videoScrollTriggers.push(trigger);
+      
+      // Check initial state - if video is already in viewport, play it
+      requestAnimationFrame(() => {
+        if (trigger.isActive) {
+          safePlay();
+        }
+      });
+    });
+  };
+  
+  // Create triggers immediately
+  createTriggers();
+  
+  // Set up progressive refresh as images load
+  const images = document.querySelectorAll('img');
+  let loadedCount = 0;
+  const totalImages = images.length;
+  
+  if (totalImages > 0) {
+    const handleImageLoad = () => {
+      loadedCount++;
+      // Refresh ScrollTrigger after each image loads to update positions
+      ScrollTrigger.refresh();
+      
+      // If all images loaded, do a final refresh
+      if (loadedCount === totalImages) {
+        requestAnimationFrame(() => {
+          ScrollTrigger.refresh();
+        });
       }
     };
-
-    const safePause = () => { try { video.pause(); } catch (e) { /* ignore */ } };
-
-    const trigger = ScrollTrigger.create({
-      trigger: video.parentElement,
-      start: 'top bottom',
-      end: 'bottom top',
-      onEnter: safePlay,
-      onLeave: safePause,
-      onEnterBack: safePlay,
-      onLeaveBack: safePause,
-      onRefresh: (self) => {
-        // On refresh, check if video is in view and play if so
-        if (self.isActive) {
-          safePlay();
-        } else {
-          safePause();
-        }
-      }
-    });
-    videoScrollTriggers.push(trigger);
     
-    // Check initial state - if video is already in viewport, play it
-    requestAnimationFrame(() => {
-      if (trigger.isActive) {
-        safePlay();
+    images.forEach(img => {
+      if (img.complete) {
+        loadedCount++;
+      } else {
+        img.addEventListener('load', handleImageLoad, { once: true });
+        img.addEventListener('error', handleImageLoad, { once: true });
       }
     });
-  });
+    
+    // If all images were already loaded, do a single refresh
+    if (loadedCount === totalImages) {
+      requestAnimationFrame(() => {
+        ScrollTrigger.refresh();
+      });
+    }
+  }
 }
 
 let smootherInstance = null;
