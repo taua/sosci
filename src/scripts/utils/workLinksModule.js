@@ -142,10 +142,20 @@ export function createWorkLinksModule() {
     state.onMouseMoveLastY = onMouseMoveLastY;
     window.addEventListener('mousemove', onMouseMoveLastY);
 
+    // Helper function to normalize text by removing accents and converting to slug format
+    const normalizeToSlug = (text) => {
+      return text
+        .trim()
+        .toLowerCase()
+        .normalize('NFD') // Decompose accented characters
+        .replace(/[\u0300-\u036f]/g, '') // Remove diacritical marks
+        .replace(/\s+/g, '-'); // Replace spaces with hyphens
+    };
+
     // Check current project URL and disable matching links
     const currentPath = window.location.pathname;
     const projectMatch = currentPath.match(/projects\/([^\/]+)/);
-    const currentProjectSlug = projectMatch ? projectMatch[1] : null;
+    const currentProjectSlug = projectMatch ? normalizeToSlug(projectMatch[1]) : null;
 
     // Handle matching z-index updates and video control
     workLinks.forEach((link, index) => {
@@ -155,16 +165,22 @@ export function createWorkLinksModule() {
       if (currentProjectSlug) {
         // Check href for match
         const href = link.getAttribute('href');
-        if (href && href.includes(`projects/${currentProjectSlug}`)) {
-          isCurrentProject = true;
+        if (href && href.includes(`projects/`)) {
+          const linkSlugMatch = href.match(/projects\/([^\/]+)/);
+          if (linkSlugMatch) {
+            const linkSlug = normalizeToSlug(linkSlugMatch[1]);
+            if (linkSlug === currentProjectSlug) {
+              isCurrentProject = true;
+            }
+          }
         }
         
         // Also check headline text for match (normalize both strings)
         if (!isCurrentProject) {
           const headlineEl = link.querySelector('.work-link-headline-txt');
           if (headlineEl) {
-            const headlineText = headlineEl.textContent.trim().toLowerCase().replace(/\s+/g, '-');
-            if (headlineText === currentProjectSlug.toLowerCase()) {
+            const headlineSlug = normalizeToSlug(headlineEl.textContent);
+            if (headlineSlug === currentProjectSlug) {
               isCurrentProject = true;
             }
           }
