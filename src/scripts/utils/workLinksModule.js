@@ -2,6 +2,7 @@ import { gsap } from "gsap";
 
 // Shared work-links functionality that can be used by multiple pages
 export function createWorkLinksModule() {
+  console.log('workLinksModule loaded yall');
   // Module-scoped state
   const state = {
     workImgShell: null,
