@@ -820,7 +820,7 @@ parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "createWorkLinksModule", ()=>createWorkLinksModule);
 var _gsap = require("gsap");
 function createWorkLinksModule() {
-    console.log('workLinksModule loaded yall');
+    console.log('workLinksModule loaded yall!!!!');
     // Module-scoped state
     const state = {
         workImgShell: null,
