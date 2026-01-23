@@ -725,7 +725,6 @@ var _horizontalLoop = require("./horizontalLoop");
 var _horizontalLoopDefault = parcelHelpers.interopDefault(_horizontalLoop);
 (0, _gsap.gsap).registerPlugin((0, _scrollTrigger.ScrollTrigger), (0, _splitText.SplitText));
 function initAboutPage() {
-    console.log('About page JS loaded!');
     try {
         const aboutTickerCleanups = [];
         document.querySelectorAll('.formula-scroll-txt-shell').forEach((shell, index)=>{
@@ -858,8 +857,7 @@ function initAboutPage() {
     });
 }
 window.initPageTransitions = function() {
-    // Your page-specific GSAP intro animation here
-    console.log('Project Page transition animation triggered');
+// Your page-specific GSAP intro animation here
 };
 function cleanupAboutPage() {
     // cleanup any tickers created here

@@ -106,7 +106,6 @@ void main() {
   camera.position.z = 1;
 
   if(typeof renderer != "undefined") {
-    console.log("clear canvas");
     renderer.clear();
   }
 

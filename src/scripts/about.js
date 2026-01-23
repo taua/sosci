@@ -6,8 +6,6 @@ import horizontalLoop from "./horizontalLoop";
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
 export function initAboutPage() {
-  console.log('About page JS loaded!');
-
   try {
     const aboutTickerCleanups = [];
     document.querySelectorAll('.formula-scroll-txt-shell').forEach((shell, index) => {
@@ -134,7 +132,6 @@ export function initAboutPage() {
 
 window.initPageTransitions = function() {
   // Your page-specific GSAP intro animation here
-  console.log('Project Page transition animation triggered');
 };
 
 export function cleanupAboutPage() {

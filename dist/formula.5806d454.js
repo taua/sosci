@@ -730,7 +730,6 @@ let _vennClonedVideo = null;
 let _vennCanvas = null;
 let _vennCanvasRAF = null;
 function initSciencePage() {
-    console.log('Formula page JS loaded!');
     try {
         createVennCircles();
     } catch (e) {
@@ -783,8 +782,7 @@ function initSciencePage() {
     } catch (e) {}
 }
 window.initPageTransitions = function() {
-    // Your page-specific GSAP intro animation here
-    console.log('Science Page transition animation triggered');
+// Your page-specific GSAP intro animation here
 };
 function cleanupSciencePage() {
     // Remove SVG and kill timeline/scrolltrigger

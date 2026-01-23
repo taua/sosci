@@ -885,10 +885,7 @@ let smootherCreationTime = 0;
 function initScrollSmoother() {
     // Prevent rapid re-creation (within 500ms)
     const now = Date.now();
-    if (smootherInstance && now - smootherCreationTime < 500) {
-        console.log('[smoother] Skipping recreation - too soon since last creation');
-        return;
-    }
+    if (smootherInstance && now - smootherCreationTime < 500) return;
     // Kill previous ScrollSmoother instance if it exists
     if (smootherInstance && typeof smootherInstance.kill === 'function') {
         smootherInstance.kill();
@@ -909,7 +906,6 @@ function initScrollSmoother() {
         // Expose globally so page scripts can access it
         window._smootherInstance = smootherInstance;
         smootherCreationTime = Date.now();
-        console.log('[smoother] ScrollSmoother created');
         // ScrollSmoother initialized
         // Force GSAP to recalculate layout
         if (typeof (0, _scrollSmoother.ScrollSmoother).refresh === 'function') (0, _scrollSmoother.ScrollSmoother).refresh();
@@ -955,15 +951,10 @@ function initAnimateText() {
     ];
     animationTypes.forEach((config)=>{
         const elements = document.querySelectorAll(config.selector);
-        console.log(`[initAnimateText] Found ${elements.length} elements with ${config.selector}`);
         elements.forEach((element, index)=>{
             // Skip if already processed
-            if (element.dataset.animateTextProcessed) {
-                console.log(`[initAnimateText] Skipping already processed element ${index} with ${config.selector}`);
-                return;
-            }
+            if (element.dataset.animateTextProcessed) return;
             element.dataset.animateTextProcessed = 'true';
-            console.log(`[initAnimateText] Processing element ${index} with ${config.selector}`);
             // Special handling for animate-letters: split to words, then chars, only using GSAP wrappers
             if (config.splitType === 'chars') {
                 // First split into words (SplitText creates div wrappers for words)
@@ -1344,22 +1335,19 @@ window.addEventListener('popstate', (e)=>{
                             if (globalTransitionEl) globalTransitionEl.style.visibility = 'hidden';
                         }
                     }, 0.2);
-                } else {
-                    console.log('Nav is open, closing nav without main-shell animation');
-                    // Removed main-shell translate animation when navigating with nav open
-                    // Wait for both the active underline animation (in) and inactive animation (out) to complete, then close the nav
-                    (async ()=>{
-                        try {
-                            // Wait for underline animations to complete:
-                            // - Out animation: 0.55s (scale collapse)
-                            // Delay adjusted to match new animation duration
-                            await new Promise((res)=>setTimeout(res, 650));
-                        } catch (e) {}
-                        try {
-                            if (typeof closeNav === 'function') closeNav();
-                        } catch (e) {}
-                    })();
-                }
+                } else // Removed main-shell translate animation when navigating with nav open
+                // Wait for both the active underline animation (in) and inactive animation (out) to complete, then close the nav
+                (async ()=>{
+                    try {
+                        // Wait for underline animations to complete:
+                        // - Out animation: 0.55s (scale collapse)
+                        // Delay adjusted to match new animation duration
+                        await new Promise((res)=>setTimeout(res, 650));
+                    } catch (e) {}
+                    try {
+                        if (typeof closeNav === 'function') closeNav();
+                    } catch (e) {}
+                })();
                 return tl;
             // Re-attach global listeners if needed
             //initGlobalListeners();
@@ -2189,7 +2177,6 @@ function closeNav(skipScrollRefresh = false) {
     });
 }
 function playLoadingAnimation() {
-    console.log('[loader] playLoadingAnimation start');
     // Hide project indicators immediately to prevent flashing during initial load
     const indicatorShells = document.querySelectorAll('.indicator-item-shell');
     if (indicatorShells.length) try {
@@ -2218,7 +2205,6 @@ function playLoadingAnimation() {
         duration: 1.4,
         ease: "power4.out",
         onComplete: ()=>{
-            console.log("[loader] logo animation complete \u2014 resetting scroll");
             // Use smoother if available; fallback to native scrollTo
             try {
                 if (smootherInstance && typeof smootherInstance.scrollTo === 'function') try {
@@ -2230,7 +2216,6 @@ function playLoadingAnimation() {
             } catch (e) {}
         }
     });
-    tl.call(()=>console.log('[loader] playLoadingAnimation timeline running'));
     // Use different width values for mobile (568px or less)
     const isMobile = window.innerWidth <= 568;
     const spacerWidth = isMobile ? '15vw' : '8vw';
@@ -2334,7 +2319,6 @@ window.addEventListener('DOMContentLoaded', ()=>{
         if (smootherInstance && contentShell) {
             // Get current transform of content-shell
             const initialTransform = contentShell.style.transform || window.getComputedStyle(contentShell).transform;
-            console.log('[global] Failsafe check - initial transform:', initialTransform);
             // Try to scroll programmatically
             try {
                 smootherInstance.scrollTo(50, false);
@@ -2342,25 +2326,21 @@ window.addEventListener('DOMContentLoaded', ()=>{
             // Check if transform actually changed after a brief delay
             setTimeout(()=>{
                 const newTransform = contentShell.style.transform || window.getComputedStyle(contentShell).transform;
-                console.log('[global] Failsafe check - new transform:', newTransform);
                 // If transform didn't change, ScrollSmoother is broken
-                if (initialTransform === newTransform) {
-                    console.log('[global] ScrollSmoother appears broken (content not moving), recreating...');
-                    try {
-                        smootherInstance.kill();
-                        smootherInstance = (0, _scrollSmoother.ScrollSmoother).create({
-                            wrapper: ".main-shell",
-                            content: ".content-shell",
-                            smooth: 1.2,
-                            effects: true
-                        });
-                        window._smootherInstance = smootherInstance;
-                        (0, _scrollTrigger.ScrollTrigger).refresh();
-                        console.log('[global] ScrollSmoother recreated');
-                    } catch (e) {
-                        console.warn('[global] Failed to recreate ScrollSmoother:', e);
-                    }
-                } else // Scroll back to top
+                if (initialTransform === newTransform) try {
+                    smootherInstance.kill();
+                    smootherInstance = (0, _scrollSmoother.ScrollSmoother).create({
+                        wrapper: ".main-shell",
+                        content: ".content-shell",
+                        smooth: 1.2,
+                        effects: true
+                    });
+                    window._smootherInstance = smootherInstance;
+                    (0, _scrollTrigger.ScrollTrigger).refresh();
+                } catch (e) {
+                    console.warn('[global] Failed to recreate ScrollSmoother:', e);
+                }
+                else // Scroll back to top
                 try {
                     smootherInstance.scrollTo(0, false);
                 } catch (e) {}
@@ -2626,25 +2606,15 @@ window.addEventListener('DOMContentLoaded', ()=>{
     }
 });
 window.playProjectEnterAnimation = function(data) {
-    console.log('Project Page enter animation triggered');
     // Skip SplitText animation on mobile (viewport < 568px)
-    if (window.innerWidth < 568) {
-        console.log('Mobile viewport detected, skipping SplitText animation');
-        return;
-    }
+    if (window.innerWidth < 568) return;
     // Use requestAnimationFrame to ensure DOM is ready
     requestAnimationFrame(()=>{
         const projectInfoHeader = document.querySelector('.proj-rich-headline-shell');
-        if (!projectInfoHeader) {
-            console.log('proj-rich-headline-shell not found, skipping animation');
-            return;
-        }
+        if (!projectInfoHeader) return;
         // Target the h2 element directly
         const headlineText = projectInfoHeader.querySelector('.proj-rich-headline-txt') || projectInfoHeader.querySelector('h1, h2, h3, h4, h5, h6, p');
-        if (!headlineText) {
-            console.log('No headline text element found, skipping animation');
-            return;
-        }
+        if (!headlineText) return;
         // Check if element is already wrapped (from previous navigation)
         const existingWrapper = headlineText.parentElement;
         const isAlreadyWrapped = existingWrapper && existingWrapper.tagName === 'SPAN' && existingWrapper.style.overflow === 'hidden';
@@ -2685,28 +2655,18 @@ window.playProjectEnterAnimation = function(data) {
     });
 };
 window.playWorkEnterAnimation = function(data) {
-    console.log('Work Page enter animation triggered');
     // Skip SplitText animation on mobile (viewport < 568px)
-    if (window.innerWidth < 568) {
-        console.log('Mobile viewport detected, skipping SplitText animation');
-        return;
-    }
+    if (window.innerWidth < 568) return;
     // Determine delay based on whether this is a Barba transition or initial page load
     const isBarbaTransition = data !== undefined;
     const animationDelay = isBarbaTransition ? 0.95 : 0.5;
     // Use requestAnimationFrame to ensure DOM is ready
     requestAnimationFrame(()=>{
         const workHeader = document.querySelector('.proj-rich-headline-shell');
-        if (!workHeader) {
-            console.log('proj-rich-headline-shell not found, skipping animation');
-            return;
-        }
+        if (!workHeader) return;
         // Target the h2 element directly
         const richTextChild = workHeader.querySelector('.proj-rich-headline-txt') || workHeader.querySelector('h1, h2, h3, h4, h5, h6, p');
-        if (!richTextChild) {
-            console.log('No child element found in proj-rich-headline-shell, skipping animation');
-            return;
-        }
+        if (!richTextChild) return;
         // Check if element is already wrapped (from previous navigation)
         const existingWrapper = richTextChild.parentElement;
         const isAlreadyWrapped = existingWrapper && existingWrapper.tagName === 'SPAN' && existingWrapper.style.overflow === 'hidden';
@@ -2746,11 +2706,8 @@ window.playWorkEnterAnimation = function(data) {
         }
     });
 };
-window.playHomeEnterAnimation = function(data) {
-    console.log('Home Page enter animation triggered');
-};
+window.playHomeEnterAnimation = function(data) {};
 window.playFormulaEnterAnimation = function(data) {
-    console.log('Formula Page enter animation triggered');
 // Scaffold: implement page-specific enter animation for the formula page here.
 // Example: find header and animate chars using SplitText similar to work/project pages.
 };

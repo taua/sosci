@@ -752,7 +752,6 @@ function initProjectPage() {
         cleanupProjectPage();
         // Ensure page is at top on initial run (fix preserved scroll on refresh)
         try {
-            console.log('[project] initProjectPage: attempting robust scroll reset');
             const tryReset = ()=>{
                 try {
                     if (typeof window !== 'undefined' && window._smootherInstance && typeof window._smootherInstance.scrollTo === 'function') {

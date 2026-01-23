@@ -12,7 +12,6 @@ let _vennCanvas = null;
 let _vennCanvasRAF = null;
 
 export function initSciencePage() {
-  console.log('Formula page JS loaded!');
   try {
     createVennCircles();
   } catch (e) {
@@ -62,7 +61,6 @@ export function initSciencePage() {
 
 window.initPageTransitions = function() {
   // Your page-specific GSAP intro animation here
-  console.log('Science Page transition animation triggered');
 };
 
 export function cleanupSciencePage() {

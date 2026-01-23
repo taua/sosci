@@ -198,7 +198,6 @@ function initScrollSmoother() {
   // Prevent rapid re-creation (within 500ms)
   const now = Date.now();
   if (smootherInstance && (now - smootherCreationTime) < 500) {
-    console.log('[smoother] Skipping recreation - too soon since last creation');
     return;
   }
   
@@ -222,7 +221,6 @@ function initScrollSmoother() {
     // Expose globally so page scripts can access it
     window._smootherInstance = smootherInstance;
     smootherCreationTime = Date.now();
-    console.log('[smoother] ScrollSmoother created');
   // ScrollSmoother initialized
     // Force GSAP to recalculate layout
     if (typeof ScrollSmoother.refresh === 'function') {
@@ -275,15 +273,12 @@ function initAnimateText() {
   
   animationTypes.forEach(config => {
     const elements = document.querySelectorAll(config.selector);
-    console.log(`[initAnimateText] Found ${elements.length} elements with ${config.selector}`);
     elements.forEach((element, index) => {
       // Skip if already processed
       if (element.dataset.animateTextProcessed) {
-        console.log(`[initAnimateText] Skipping already processed element ${index} with ${config.selector}`);
         return;
       }
       element.dataset.animateTextProcessed = 'true';
-      console.log(`[initAnimateText] Processing element ${index} with ${config.selector}`);
       // Special handling for animate-letters: split to words, then chars, only using GSAP wrappers
       if (config.splitType === 'chars') {
         // First split into words (SplitText creates div wrappers for words)
@@ -717,7 +712,6 @@ barba.init({
       0.2
     );
   } else {
-    console.log('Nav is open, closing nav without main-shell animation');
     // Removed main-shell translate animation when navigating with nav open
     
     // Wait for both the active underline animation (in) and inactive animation (out) to complete, then close the nav
@@ -1591,8 +1585,6 @@ function closeNav(skipScrollRefresh = false) {
 }
 
 function playLoadingAnimation() {
-  console.log('[loader] playLoadingAnimation start');
-  
   // Hide project indicators immediately to prevent flashing during initial load
   const indicatorShells = document.querySelectorAll('.indicator-item-shell');
   if (indicatorShells.length) {
@@ -1628,7 +1620,6 @@ function playLoadingAnimation() {
         duration: 1.4,
         ease: "power4.out",
         onComplete: () => {
-          console.log('[loader] logo animation complete — resetting scroll');
           // Use smoother if available; fallback to native scrollTo
           try {
             if (smootherInstance && typeof smootherInstance.scrollTo === 'function') {
@@ -1641,8 +1632,6 @@ function playLoadingAnimation() {
       }
     );
   }
-
-  tl.call(() => console.log('[loader] playLoadingAnimation timeline running'));
 
   // Use different width values for mobile (568px or less)
   const isMobile = window.innerWidth <= 568;
@@ -1780,7 +1769,6 @@ window.addEventListener('DOMContentLoaded', () => {
     if (smootherInstance && contentShell) {
       // Get current transform of content-shell
       const initialTransform = contentShell.style.transform || window.getComputedStyle(contentShell).transform;
-      console.log('[global] Failsafe check - initial transform:', initialTransform);
       
       // Try to scroll programmatically
       try {
@@ -1790,11 +1778,9 @@ window.addEventListener('DOMContentLoaded', () => {
       // Check if transform actually changed after a brief delay
       setTimeout(() => {
         const newTransform = contentShell.style.transform || window.getComputedStyle(contentShell).transform;
-        console.log('[global] Failsafe check - new transform:', newTransform);
         
         // If transform didn't change, ScrollSmoother is broken
         if (initialTransform === newTransform) {
-          console.log('[global] ScrollSmoother appears broken (content not moving), recreating...');
           try {
             smootherInstance.kill();
             smootherInstance = ScrollSmoother.create({
@@ -1805,7 +1791,6 @@ window.addEventListener('DOMContentLoaded', () => {
             });
             window._smootherInstance = smootherInstance;
             ScrollTrigger.refresh();
-            console.log('[global] ScrollSmoother recreated');
           } catch (e) {
             console.warn('[global] Failed to recreate ScrollSmoother:', e);
           }
@@ -2090,11 +2075,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
 window.playProjectEnterAnimation = function(data) {
-    console.log('Project Page enter animation triggered');
-    
     // Skip SplitText animation on mobile (viewport < 568px)
     if (window.innerWidth < 568) {
-      console.log('Mobile viewport detected, skipping SplitText animation');
       return;
     }
     
@@ -2103,7 +2085,6 @@ window.playProjectEnterAnimation = function(data) {
       const projectInfoHeader = document.querySelector('.proj-rich-headline-shell');
       
       if (!projectInfoHeader) {
-        console.log('proj-rich-headline-shell not found, skipping animation');
         return;
       }
       
@@ -2112,7 +2093,6 @@ window.playProjectEnterAnimation = function(data) {
                            projectInfoHeader.querySelector('h1, h2, h3, h4, h5, h6, p');
       
       if (!headlineText) {
-        console.log('No headline text element found, skipping animation');
         return;
       }
       
@@ -2160,11 +2140,8 @@ window.playProjectEnterAnimation = function(data) {
     });
   };
   window.playWorkEnterAnimation = function(data) {
-    console.log('Work Page enter animation triggered');
-    
     // Skip SplitText animation on mobile (viewport < 568px)
     if (window.innerWidth < 568) {
-      console.log('Mobile viewport detected, skipping SplitText animation');
       return;
     }
     
@@ -2177,7 +2154,6 @@ window.playProjectEnterAnimation = function(data) {
       const workHeader = document.querySelector('.proj-rich-headline-shell');
       
       if (!workHeader) {
-        console.log('proj-rich-headline-shell not found, skipping animation');
         return;
       }
       
@@ -2186,7 +2162,6 @@ window.playProjectEnterAnimation = function(data) {
                             workHeader.querySelector('h1, h2, h3, h4, h5, h6, p');
       
       if (!richTextChild) {
-        console.log('No child element found in proj-rich-headline-shell, skipping animation');
         return;
       }
       
@@ -2236,11 +2211,9 @@ window.playProjectEnterAnimation = function(data) {
     });
   };
   window.playHomeEnterAnimation = function(data) {
-    console.log('Home Page enter animation triggered');
     
   };
   window.playFormulaEnterAnimation = function(data) {
-    console.log('Formula Page enter animation triggered');
     // Scaffold: implement page-specific enter animation for the formula page here.
     // Example: find header and animate chars using SplitText similar to work/project pages.
   };
