@@ -1097,7 +1097,7 @@ function createWorkLinksModule() {
         state.workImgMasks = workImgMasks;
         // Number work link blocks (format: "01 /", "02 /")
         try {
-            const elems = Array.from(document.querySelectorAll('.work-link-num-txt'));
+            const elems = Array.from(document.querySelectorAll('.work-link-num'));
             if (elems && elems.length) {
                 const total = elems.length;
                 const padLen = Math.max(2, String(total).length);
