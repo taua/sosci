@@ -504,6 +504,7 @@ let currentPageCleanup = null;
 
 // Track if a page transition is in progress
 let isTransitioning = false;
+let navLinkClicked = false;
 
 // Force full page reload on browser back/forward instead of Barba transitions
 window.addEventListener('popstate', (e) => {
@@ -531,6 +532,12 @@ barba.init({
       const barbaWrapper = document.querySelector('[data-barba="wrapper"]');
       if (barbaWrapper) {
         barbaWrapper.style.pointerEvents = 'none';
+      }
+      
+      // Also disable the takeover nav to prevent clicking during transition
+      const takeoverNav = document.querySelector('.takeover-nav-shell');
+      if (takeoverNav) {
+        takeoverNav.style.pointerEvents = 'none';
       }
       // Call page-specific cleanup if available before removing the container
       try {
@@ -661,6 +668,20 @@ barba.init({
         try {
           ScrollTrigger.refresh();
         } catch (e) {}
+        
+        // Re-enable pointer events after reveal animation completes
+        const barbaWrapper = document.querySelector('[data-barba="wrapper"]');
+        if (barbaWrapper) {
+          barbaWrapper.style.pointerEvents = 'auto';
+        }
+        const takeoverNav = document.querySelector('.takeover-nav-shell');
+        if (takeoverNav) {
+          takeoverNav.style.pointerEvents = 'auto';
+        }
+        
+        // Re-enable navigation after reveal animation completes
+        navLinkClicked = false;
+        isTransitioning = false;
       }
     });
     
@@ -722,7 +743,29 @@ barba.init({
         // Delay adjusted to match new animation duration
         await new Promise(res => setTimeout(res, 650));
       } catch (e) {}
-      try { if (typeof closeNav === 'function') closeNav(); } catch (e) {}
+      try { 
+        if (typeof closeNav === 'function') {
+          await closeNav(); // Wait for closeNav to complete (returns a promise)
+        }
+      } catch (e) {}
+      
+      // Add extra delay to ensure closeNav animation is fully complete
+      // closeNav has a 1s duration, plus cleanup
+      await new Promise(res => setTimeout(res, 100));
+      
+      // Re-enable pointer events after nav close completes
+      const barbaWrapper = document.querySelector('[data-barba="wrapper"]');
+      if (barbaWrapper) {
+        barbaWrapper.style.pointerEvents = 'auto';
+      }
+      const takeoverNav = document.querySelector('.takeover-nav-shell');
+      if (takeoverNav) {
+        takeoverNav.style.pointerEvents = 'auto';
+      }
+      
+      // Re-enable navigation after nav close completes
+      navLinkClicked = false;
+      isTransitioning = false;
     })();
   }
   return tl;
@@ -851,13 +894,10 @@ try {
           if (navHoverSplit?.chars?.length) {
             gsap.set(navHoverSplit.chars, { transform: 'translate3d(0, 0, 0)' });
           }
-          // Re-enable navigation links now that page is ready
-          const barbaWrapper = document.querySelector('[data-barba="wrapper"]');
-          if (barbaWrapper) {
-            barbaWrapper.style.pointerEvents = 'auto';
-          }
-          // Mark transition as complete
-          isTransitioning = false;
+          
+          // Note: Pointer events, navLinkClicked, and isTransitioning are reset 
+          // in the after() hook after the reveal animation completes
+          
           if (navBtmSplit?.chars?.length) {
             gsap.set(navBtmSplit.chars, { transform: 'translate3d(0, 0, 0)' });
           }
@@ -1869,12 +1909,28 @@ window.addEventListener('DOMContentLoaded', () => {
         // This allows the logo to trigger page transitions
         link.addEventListener('click', async (ev) => {
           try {
+            // Prevent any clicks if a nav link has already been clicked
+            if (navLinkClicked) {
+              ev.preventDefault();
+              ev.stopImmediatePropagation();
+              return;
+            }
+            
+            // Set flag immediately at the top to block subsequent clicks
+            navLinkClicked = true;
+            
             const container = link.closest('.takeover-nav-link');
-            if (!container) return;
+            if (!container) {
+              navLinkClicked = false; // Reset if invalid
+              return;
+            }
             
             // Get the href to check if we're already on that page
             const anchor = container.matches('a[href]') ? container : container.querySelector('a[href]');
-            if (!anchor) return;
+            if (!anchor) {
+              navLinkClicked = false; // Reset if invalid
+              return;
+            }
             
             let targetPath = '';
             try {
@@ -1893,6 +1949,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 ev.preventDefault(); 
                 ev.stopImmediatePropagation(); 
                 closeNav(); // Close the nav when clicking current page
+                navLinkClicked = false; // Reset since we're not navigating
               } catch (e) {}
               return;
             }
@@ -1944,7 +2001,36 @@ window.addEventListener('DOMContentLoaded', () => {
               // For logo clicks or other cases, use normal setActiveContainer
               setActiveContainer(targetContainer, { mode: 'scale' });
             }
-          } catch (e) {}
+            
+            // Safety timeout: if navigation doesn't happen within 3 seconds, reset the flag
+            setTimeout(() => {
+              navLinkClicked = false;
+              if (isTransitioning) {
+                isTransitioning = false;
+                const barbaWrapper = document.querySelector('[data-barba="wrapper"]');
+                if (barbaWrapper) {
+                  barbaWrapper.style.pointerEvents = 'auto';
+                }
+                const takeoverNav = document.querySelector('.takeover-nav-shell');
+                if (takeoverNav) {
+                  takeoverNav.style.pointerEvents = 'auto';
+                }
+              }
+            }, 3000);
+            
+          } catch (e) {
+            // If there's an error, reset the flags
+            navLinkClicked = false;
+            isTransitioning = false;
+            const barbaWrapper = document.querySelector('[data-barba="wrapper"]');
+            if (barbaWrapper) {
+              barbaWrapper.style.pointerEvents = 'auto';
+            }
+            const takeoverNav = document.querySelector('.takeover-nav-shell');
+            if (takeoverNav) {
+              takeoverNav.style.pointerEvents = 'auto';
+            }
+          }
         });
       });
     }
