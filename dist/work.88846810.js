@@ -958,7 +958,10 @@ function createWorkLinksModule() {
         const normalizeToSlug = (text)=>{
             return text.trim().toLowerCase().normalize('NFD') // Decompose accented characters
             .replace(/[\u0300-\u036f]/g, '') // Remove diacritical marks
-            .replace(/\s+/g, '-'); // Replace spaces with hyphens
+            .replace(/['']/g, '') // Remove apostrophes (both straight and curly)
+            .replace(/[^\w\s-]/g, '') // Remove other punctuation except hyphens
+            .replace(/\s+/g, '-') // Replace spaces with hyphens
+            .replace(/-+/g, '-'); // Replace multiple hyphens with single hyphen
         };
         // Check current project URL and disable matching links
         const currentPath = window.location.pathname;
