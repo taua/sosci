@@ -924,44 +924,72 @@ function initHomePage() {
         }
     });
     // Create opacity and scale animations only if both elements exist
+    // Delay creation until scroll is definitely at 0
     const heroImg = document.querySelector('.hero-img');
     const heroTickerShell = document.querySelector('.hero-ticker-shell');
-    if (heroImg && heroTickerShell) {
-        const opacityTimeline = (0, _gsap.gsap).timeline({
-            scrollTrigger: {
-                trigger: '.img-trail-hero-shell',
-                start: 'top top',
-                endTrigger: '.manifesto-shell',
-                end: 'bottom top',
-                scrub: 1,
-                invalidateOnRefresh: true,
-                onUpdate: (self)=>{
-                    const progress = self.progress;
-                    if (progress <= 0.25) (0, _gsap.gsap).to(heroImg, {
-                        opacity: progress * 4,
-                        filter: `blur(${20 - progress * 80}px)`,
-                        duration: 0.1
-                    });
-                    else if (progress >= 0.35) (0, _gsap.gsap).to(heroImg, {
-                        opacity: 1 - (progress - 0.35) * 4,
-                        duration: 0.1
-                    });
+    if (heroImg && heroTickerShell) // Wait for scroll to settle at 0 before creating ScrollTriggers
+    setTimeout(()=>{
+        window.scrollTo(0, 0);
+        requestAnimationFrame(()=>{
+            // Flag to prevent onUpdate from running until user scrolls
+            let allowAnimations = false;
+            const opacityTimeline = (0, _gsap.gsap).timeline({
+                scrollTrigger: {
+                    trigger: '.img-trail-hero-shell',
+                    start: 'top top',
+                    endTrigger: '.manifesto-shell',
+                    end: 'bottom top',
+                    scrub: 1,
+                    invalidateOnRefresh: true,
+                    onUpdate: (self)=>{
+                        if (!allowAnimations) return;
+                        const progress = self.progress;
+                        if (progress <= 0.25) (0, _gsap.gsap).to(heroImg, {
+                            opacity: progress * 4,
+                            filter: `blur(${20 - progress * 80}px)`,
+                            duration: 0.1
+                        });
+                        else if (progress >= 0.35) (0, _gsap.gsap).to(heroImg, {
+                            opacity: 1 - (progress - 0.35) * 4,
+                            duration: 0.1
+                        });
+                    }
                 }
-            }
+            });
+            homeScrollTriggers.push(opacityTimeline.scrollTrigger);
+            // Force initial state after ScrollTrigger creation
+            (0, _gsap.gsap).set(heroImg, {
+                opacity: 0,
+                filter: 'blur(20px)',
+                scale: 1.3
+            });
+            const scaleTween = (0, _gsap.gsap).to(heroImg, {
+                scale: 1,
+                scrollTrigger: {
+                    trigger: '.img-trail-hero-shell',
+                    start: 'top top',
+                    end: 'bottom top',
+                    scrub: true,
+                    invalidateOnRefresh: true,
+                    enabled: false // Start disabled
+                }
+            });
+            homeScrollTriggers.push(scaleTween.scrollTrigger);
+            // Enable animations only when user scrolls
+            let hasScrolled = false;
+            const enableScrollTriggers = ()=>{
+                if (!hasScrolled && window.scrollY > 0) {
+                    hasScrolled = true;
+                    allowAnimations = true;
+                    // Trigger immediate update to sync with current scroll position
+                    opacityTimeline.scrollTrigger.refresh();
+                    scaleTween.scrollTrigger.refresh();
+                    window.removeEventListener('scroll', enableScrollTriggers);
+                }
+            };
+            window.addEventListener('scroll', enableScrollTriggers);
         });
-        homeScrollTriggers.push(opacityTimeline.scrollTrigger);
-        const scaleTween = (0, _gsap.gsap).to(heroImg, {
-            scale: 1,
-            scrollTrigger: {
-                trigger: '.img-trail-hero-shell',
-                start: 'top top',
-                end: 'bottom top',
-                scrub: true,
-                invalidateOnRefresh: true
-            }
-        });
-        homeScrollTriggers.push(scaleTween.scrollTrigger);
-    }
+    }, 100);
     // Only run imgTrailEffect when hero is in view
     let imgTrailCleanup = null;
     let activationTimeout = null;
