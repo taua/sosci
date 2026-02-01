@@ -745,14 +745,21 @@ window.addEventListener('mousemove', function(e) {
 });
 function initHomePage() {
     (0, _scrollReset.initScrollReset)();
-    window.scrollTo(0, 0);
-    (0, _scrollTrigger.ScrollTrigger).refresh();
-    // Set initial state of hero image
+    // Set initial state of hero image BEFORE scrolling to 0
     (0, _gsap.gsap).set('.hero-img', {
         opacity: 0,
         scale: 1.3,
         filter: 'blur(20px)',
         transformOrigin: 'center center'
+    });
+    // Ensure scroll is at 0 before initializing ScrollTrigger
+    window.scrollTo(0, 0);
+    // Use requestAnimationFrame to ensure scroll has taken effect
+    requestAnimationFrame(()=>{
+        window.scrollTo(0, 0);
+        requestAnimationFrame(()=>{
+            (0, _scrollTrigger.ScrollTrigger).refresh();
+        });
     });
     // Slide-in top nav (.global-nav-links) when user starts scrolling on Home
     const globalNavLinks = document.querySelector('.global-nav-links');
@@ -927,6 +934,7 @@ function initHomePage() {
                 endTrigger: '.manifesto-shell',
                 end: 'bottom top',
                 scrub: 1,
+                invalidateOnRefresh: true,
                 onUpdate: (self)=>{
                     const progress = self.progress;
                     if (progress <= 0.25) (0, _gsap.gsap).to(heroImg, {
@@ -948,7 +956,8 @@ function initHomePage() {
                 trigger: '.img-trail-hero-shell',
                 start: 'top top',
                 end: 'bottom top',
-                scrub: true
+                scrub: true,
+                invalidateOnRefresh: true
             }
         });
         homeScrollTriggers.push(scaleTween.scrollTrigger);

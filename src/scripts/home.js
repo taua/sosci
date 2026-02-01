@@ -22,15 +22,24 @@ window.addEventListener('mousemove', function(e) {
 // Entry point for home page JS
 export function initHomePage() {
     initScrollReset();
-    window.scrollTo(0, 0);
-    ScrollTrigger.refresh();
-
-    // Set initial state of hero image
+    
+    // Set initial state of hero image BEFORE scrolling to 0
     gsap.set('.hero-img', { 
         opacity: 0, 
         scale: 1.3,
         filter: 'blur(20px)',
         transformOrigin: 'center center'
+    });
+    
+    // Ensure scroll is at 0 before initializing ScrollTrigger
+    window.scrollTo(0, 0);
+    
+    // Use requestAnimationFrame to ensure scroll has taken effect
+    requestAnimationFrame(() => {
+        window.scrollTo(0, 0);
+        requestAnimationFrame(() => {
+            ScrollTrigger.refresh();
+        });
     });
 
     // Slide-in top nav (.global-nav-links) when user starts scrolling on Home
@@ -229,6 +238,7 @@ export function initHomePage() {
                     endTrigger: '.manifesto-shell',
                     end: 'bottom top',
                 scrub: 1,
+                invalidateOnRefresh: true,
                 onUpdate: (self) => {
                     const progress = self.progress;
                     if (progress <= 0.25) {
@@ -251,7 +261,8 @@ export function initHomePage() {
                 trigger: '.img-trail-hero-shell',
                 start: 'top top',
                 end: 'bottom top',
-                scrub: true
+                scrub: true,
+                invalidateOnRefresh: true
             }
         });
         homeScrollTriggers.push(scaleTween.scrollTrigger);
