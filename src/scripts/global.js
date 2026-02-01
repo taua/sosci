@@ -5,7 +5,7 @@ import { SplitText } from "gsap/SplitText";
 import grainEffect from "./grainEffect";
 import barba from '@barba/core';
 
-console.log('test loaded3 yall!!!!');
+//console.log('test loaded3 yall!!!!');
 
 // Disable browser scroll restoration immediately to prevent scroll position jumping
 if ('scrollRestoration' in history) {
