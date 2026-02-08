@@ -57,14 +57,26 @@ function initGrain() {
   // Initialize the grain effect only once on the first full page load.
   // If a grain instance already exists, do nothing.
   try {
-    if (typeof _grainCleanup === 'function') {
-      // Already initialized — no-op
+    // Skip grain effect on mobile devices
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+    
+    if (isMobile) {
+      // Clean up any existing grain effect on mobile
+      if (typeof _grainCleanup === 'function') {
+        _grainCleanup();
+        _grainCleanup = null;
+      }
+      // Also remove any existing grain canvas elements from DOM
+      document.querySelectorAll('canvas').forEach(canvas => {
+        if (canvas.style.position === 'fixed' && canvas.style.zIndex === '999999') {
+          canvas.remove();
+        }
+      });
       return;
     }
 
-    // Skip grain effect on mobile devices
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
-    if (isMobile) {
+    if (typeof _grainCleanup === 'function') {
+      // Already initialized — no-op
       return;
     }
 
@@ -84,6 +96,21 @@ function initGrain() {
     console.error('Failed to initialize grain effect:', error);
   }
 }
+
+// Handle resize to remove grain on mobile
+let resizeTimeout;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+    if (isMobile && typeof _grainCleanup === 'function') {
+      _grainCleanup();
+      _grainCleanup = null;
+    } else if (!isMobile && !_grainCleanup) {
+      initGrain();
+    }
+  }, 250);
+});
 
 let videoScrollTriggers = [];
 function initVideoVisibility() {
