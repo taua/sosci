@@ -217,7 +217,7 @@ function initScrollSmoother() {
       content: ".content-shell",
       smooth: 1.2,
       effects: true,
-      smoothTouch: 0.8
+      smoothTouch: 0.6
     });
     // Expose globally so page scripts can access it
     window._smootherInstance = smootherInstance;
@@ -1829,7 +1829,7 @@ window.addEventListener('DOMContentLoaded', () => {
               content: ".content-shell",
               smooth: 1.2,
               effects: true,
-              smoothTouch: 0.8
+              smoothTouch: 0.6
             });
             window._smootherInstance = smootherInstance;
             ScrollTrigger.refresh();
