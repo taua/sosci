@@ -34,14 +34,9 @@ export function initHomePage() {
     // Ensure scroll is at 0 before initializing ScrollTrigger
     window.scrollTo(0, 0);
     
-    // Use requestAnimationFrame to ensure scroll has taken effect
-    requestAnimationFrame(() => {
-        window.scrollTo(0, 0);
-        requestAnimationFrame(() => {
-            ScrollTrigger.refresh();
-        });
-    });
-
+    // Check if mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+    
     // Slide-in top nav (.global-nav-links) when user starts scrolling on Home
     const globalNavLinks = document.querySelector('.global-nav-links');
     let navShowTrigger = null;
@@ -67,89 +62,113 @@ export function initHomePage() {
         return globalFooter.offsetHeight + marginBottom;
     };
     
-    // Wait for scroll to settle before creating nav/footer ScrollTriggers
-    // This prevents race conditions on mobile where scroll position may be unpredictable
+    if (isMobile) {
+        // On mobile: keep nav and footer always visible
+        if (globalNavLinks) {
+            gsap.set(globalNavLinks, { transform: 'translate3d(0, 0, 0)' });
+        }
+        if (globalFooter) {
+            gsap.set(globalFooter, { transform: 'translate3d(0, 0, 0)' });
+        }
+    } else {
+        // On desktop: create ScrollTriggers for slide-in/out behavior
+        const scrolled = window.scrollY > 120;
+        
+        if (globalNavLinks) {
+            // Set initial state
+            if (scrolled) {
+                gsap.set(globalNavLinks, { transform: 'translate3d(0, 0, 0)' });
+            } else {
+                gsap.set(globalNavLinks, { transform: `translate3d(0, ${getNavHideY()}px, 0)` });
+            }
+
+            navShowTrigger = ScrollTrigger.create({
+                trigger: document.body,
+                start: '120px top',
+                onEnter: () => {
+                    // Don't animate during resize
+                    if (isResizing) return;
+                    gsap.to(globalNavLinks, {
+                        transform: 'translate3d(0, 0, 0)',
+                        duration: 1,
+                        ease: 'power4.out',
+                        overwrite: true
+                    });
+                },
+                onLeaveBack: () => {
+                    // Don't animate during resize
+                    if (isResizing) return;
+                    gsap.to(globalNavLinks, {
+                        transform: `translate3d(0, ${getNavHideY()}px, 0)`,
+                        duration: 1,
+                        ease: 'power4.out',
+                        overwrite: true
+                    });
+                }
+            });
+            homeScrollTriggers.push(navShowTrigger);
+        }
+        
+        if (globalFooter) {
+            // Set initial state
+            if (scrolled) {
+                gsap.set(globalFooter, { transform: 'translate3d(0, 0, 0)' });
+            } else {
+                gsap.set(globalFooter, { transform: `translate3d(0, ${getFooterHideY()}px, 0)` });
+            }
+
+            footerShowTrigger = ScrollTrigger.create({
+                trigger: document.body,
+                start: '120px top',
+                onEnter: () => {
+                    // Don't animate during resize
+                    if (isResizing) return;
+                    gsap.to(globalFooter, {
+                        transform: 'translate3d(0, 0, 0)',
+                        duration: 1,
+                        ease: 'power4.out',
+                        overwrite: true
+                    });
+                },
+                onLeaveBack: () => {
+                    // Don't animate during resize
+                    if (isResizing) return;
+                    gsap.to(globalFooter, {
+                        transform: `translate3d(0, ${getFooterHideY()}px, 0)`,
+                        duration: 1,
+                        ease: 'power4.out',
+                        overwrite: true
+                    });
+                }
+            });
+            homeScrollTriggers.push(footerShowTrigger);
+        }
+    }
+    
+    // Use requestAnimationFrame for non-critical ScrollTrigger refresh
     requestAnimationFrame(() => {
         window.scrollTo(0, 0);
         requestAnimationFrame(() => {
-            // Now safely check scroll position and set initial states
-            const scrolled = window.scrollY > 120;
-            
-            if (globalNavLinks) {
-                // Set initial state
-                if (scrolled) {
-                    gsap.set(globalNavLinks, { transform: 'translate3d(0, 0, 0)' });
-                } else {
-                    gsap.set(globalNavLinks, { transform: `translate3d(0, ${getNavHideY()}px, 0)` });
-                }
-
-                navShowTrigger = ScrollTrigger.create({
-                    trigger: document.body,
-                    start: '120px top',
-                    onEnter: () => {
-                        // Don't animate during resize
-                        if (isResizing) return;
-                        gsap.to(globalNavLinks, {
-                            transform: 'translate3d(0, 0, 0)',
-                            duration: 1,
-                            ease: 'power4.out',
-                            overwrite: true
-                        });
-                    },
-                    onLeaveBack: () => {
-                        // Don't animate during resize
-                        if (isResizing) return;
-                        gsap.to(globalNavLinks, {
-                            transform: `translate3d(0, ${getNavHideY()}px, 0)`,
-                            duration: 1,
-                            ease: 'power4.out',
-                            overwrite: true
-                        });
-                    }
-                });
-                homeScrollTriggers.push(navShowTrigger);
-            }
-            
-            if (globalFooter) {
-                // Set initial state
-                if (scrolled) {
-                    gsap.set(globalFooter, { transform: 'translate3d(0, 0, 0)' });
-                } else {
-                    gsap.set(globalFooter, { transform: `translate3d(0, ${getFooterHideY()}px, 0)` });
-                }
-
-                footerShowTrigger = ScrollTrigger.create({
-                    trigger: document.body,
-                    start: '120px top',
-                    onEnter: () => {
-                        // Don't animate during resize
-                        if (isResizing) return;
-                        gsap.to(globalFooter, {
-                            transform: 'translate3d(0, 0, 0)',
-                            duration: 1,
-                            ease: 'power4.out',
-                            overwrite: true
-                        });
-                    },
-                    onLeaveBack: () => {
-                        // Don't animate during resize
-                        if (isResizing) return;
-                        gsap.to(globalFooter, {
-                            transform: `translate3d(0, ${getFooterHideY()}px, 0)`,
-                            duration: 1,
-                            ease: 'power4.out',
-                            overwrite: true
-                        });
-                    }
-                });
-                homeScrollTriggers.push(footerShowTrigger);
-            }
+            ScrollTrigger.refresh();
         });
     });
     
-    // Resize handler for nav/footer - update positions and refresh ScrollTrigger
+    // Resize handler for nav/footer - only needed for desktop
     let navFooterResizeTimeout;
     const navFooterResizeHandler = () => {
+        const isMobileNow = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+        
+        if (isMobileNow) {
+            // On mobile: always keep nav and footer visible
+            if (globalNavLinks) {
+                gsap.set(globalNavLinks, { transform: 'translate3d(0, 0, 0)' });
+            }
+            if (globalFooter) {
+                gsap.set(globalFooter, { transform: 'translate3d(0, 0, 0)' });
+            }
+            return;
+        }
+        
         isResizing = true;
         clearTimeout(navFooterResizeTimeout);
         
