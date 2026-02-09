@@ -22,6 +22,9 @@ export function createWorkLinksModule() {
   };
 
   function init() {
+    // Check if device is mobile - if so, skip hover effects entirely
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+    
     // Pause all videos
     document.querySelectorAll('video').forEach(video => {
       video.pause();
@@ -36,6 +39,71 @@ export function createWorkLinksModule() {
     state.workLinksShell = workLinksShell;
     state.workLinks = workLinks;
     state.workImgMasks = workImgMasks;
+    
+    // Exit early on mobile - skip all hover logic
+    if (isMobile) {
+      // Only handle project disabling for current/coming soon
+      const currentPath = window.location.pathname;
+      const projectMatch = currentPath.match(/projects\/([^\/]+)/);
+      const currentProjectSlug = projectMatch ? normalizeToSlug(projectMatch[1]) : null;
+      
+      workLinks.forEach((link) => {
+        let isCurrentProject = false;
+        
+        if (currentProjectSlug) {
+          const href = link.getAttribute('href');
+          if (href && href.includes(`projects/`)) {
+            const linkSlugMatch = href.match(/projects\/([^\/]+)/);
+            if (linkSlugMatch) {
+              const linkSlug = normalizeToSlug(linkSlugMatch[1]);
+              if (linkSlug === currentProjectSlug) {
+                isCurrentProject = true;
+              }
+            }
+          }
+          
+          if (!isCurrentProject) {
+            const headlineEl = link.querySelector('.work-link-headline-txt');
+            if (headlineEl) {
+              const headlineSlug = normalizeToSlug(headlineEl.textContent);
+              if (headlineSlug === currentProjectSlug) {
+                isCurrentProject = true;
+              }
+            }
+          }
+        }
+        
+        let isComingSoon = false;
+        const linkText = link.textContent || link.innerText || '';
+        if (linkText.toLowerCase().includes('coming soon')) {
+          isComingSoon = true;
+        }
+        
+        if (isCurrentProject || isComingSoon) {
+          link.style.opacity = '0.5';
+          link.setAttribute('data-current-project', 'true');
+          link.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          });
+        }
+      });
+      
+      // Helper function needed for mobile check
+      function normalizeToSlug(text) {
+        return text
+          .trim()
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/['']/g, '')
+          .replace(/[^\w\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-');
+      }
+      
+      return; // Exit - no hover effects on mobile
+    }
 
     // Number work link blocks (format: "01 /", "02 /")
     try {

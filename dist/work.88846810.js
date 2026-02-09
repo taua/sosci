@@ -838,6 +838,8 @@ function createWorkLinksModule() {
         onInitialMouseMove: null
     };
     function init() {
+        // Check if device is mobile - if so, skip hover effects entirely
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
         // Pause all videos
         document.querySelectorAll('video').forEach((video)=>{
             video.pause();
@@ -850,6 +852,49 @@ function createWorkLinksModule() {
         state.workLinksShell = workLinksShell;
         state.workLinks = workLinks;
         state.workImgMasks = workImgMasks;
+        // Exit early on mobile - skip all hover logic
+        if (isMobile) {
+            // Only handle project disabling for current/coming soon
+            const currentPath = window.location.pathname;
+            const projectMatch = currentPath.match(/projects\/([^\/]+)/);
+            const currentProjectSlug = projectMatch ? normalizeToSlug(projectMatch[1]) : null;
+            workLinks.forEach((link)=>{
+                let isCurrentProject = false;
+                if (currentProjectSlug) {
+                    const href = link.getAttribute('href');
+                    if (href && href.includes(`projects/`)) {
+                        const linkSlugMatch = href.match(/projects\/([^\/]+)/);
+                        if (linkSlugMatch) {
+                            const linkSlug = normalizeToSlug(linkSlugMatch[1]);
+                            if (linkSlug === currentProjectSlug) isCurrentProject = true;
+                        }
+                    }
+                    if (!isCurrentProject) {
+                        const headlineEl = link.querySelector('.work-link-headline-txt');
+                        if (headlineEl) {
+                            const headlineSlug = normalizeToSlug(headlineEl.textContent);
+                            if (headlineSlug === currentProjectSlug) isCurrentProject = true;
+                        }
+                    }
+                }
+                let isComingSoon = false;
+                const linkText = link.textContent || link.innerText || '';
+                if (linkText.toLowerCase().includes('coming soon')) isComingSoon = true;
+                if (isCurrentProject || isComingSoon) {
+                    link.style.opacity = '0.5';
+                    link.setAttribute('data-current-project', 'true');
+                    link.addEventListener('click', (e)=>{
+                        e.preventDefault();
+                        e.stopPropagation();
+                    });
+                }
+            });
+            // Helper function needed for mobile check
+            function normalizeToSlug(text) {
+                return text.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/['']/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
+            }
+            return; // Exit - no hover effects on mobile
+        }
         // Number work link blocks (format: "01 /", "02 /")
         try {
             const elems = Array.from(document.querySelectorAll('.work-link-num'));
@@ -955,7 +1000,7 @@ function createWorkLinksModule() {
         state.onMouseMoveLastY = onMouseMoveLastY;
         window.addEventListener('mousemove', onMouseMoveLastY);
         // Helper function to normalize text by removing accents and converting to slug format
-        const normalizeToSlug = (text)=>{
+        const normalizeToSlug1 = (text)=>{
             return text.trim().toLowerCase().normalize('NFD') // Decompose accented characters
             .replace(/[\u0300-\u036f]/g, '') // Remove diacritical marks
             .replace(/['']/g, '') // Remove apostrophes (both straight and curly)
@@ -966,7 +1011,7 @@ function createWorkLinksModule() {
         // Check current project URL and disable matching links
         const currentPath = window.location.pathname;
         const projectMatch = currentPath.match(/projects\/([^\/]+)/);
-        const currentProjectSlug = projectMatch ? normalizeToSlug(projectMatch[1]) : null;
+        const currentProjectSlug = projectMatch ? normalizeToSlug1(projectMatch[1]) : null;
         // Handle matching z-index updates and video control
         workLinks.forEach((link, index)=>{
             // Check if this link matches the current project
@@ -977,7 +1022,7 @@ function createWorkLinksModule() {
                 if (href && href.includes(`projects/`)) {
                     const linkSlugMatch = href.match(/projects\/([^\/]+)/);
                     if (linkSlugMatch) {
-                        const linkSlug = normalizeToSlug(linkSlugMatch[1]);
+                        const linkSlug = normalizeToSlug1(linkSlugMatch[1]);
                         if (linkSlug === currentProjectSlug) isCurrentProject = true;
                     }
                 }
@@ -985,7 +1030,7 @@ function createWorkLinksModule() {
                 if (!isCurrentProject) {
                     const headlineEl = link.querySelector('.work-link-headline-txt');
                     if (headlineEl) {
-                        const headlineSlug = normalizeToSlug(headlineEl.textContent);
+                        const headlineSlug = normalizeToSlug1(headlineEl.textContent);
                         if (headlineSlug === currentProjectSlug) isCurrentProject = true;
                     }
                 }
