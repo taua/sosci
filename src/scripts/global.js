@@ -557,6 +557,22 @@ barba.init({
   },
   transitions: [{
     name: 'default-transition',
+    before(data) {
+      // Lock hero image state immediately when navigation is triggered to prevent flash
+      const heroImg = document.querySelector('.hero-img');
+      if (heroImg) {
+        const currentOpacity = gsap.getProperty(heroImg, 'opacity');
+        const currentScale = gsap.getProperty(heroImg, 'scale');
+        const currentFilter = gsap.getProperty(heroImg, 'filter') || window.getComputedStyle(heroImg).filter;
+        gsap.set(heroImg, { 
+          opacity: currentOpacity,
+          scale: currentScale,
+          filter: currentFilter
+        });
+        // Kill any active tweens on hero image to prevent it from animating during transition
+        gsap.killTweensOf(heroImg);
+      }
+    },
     async leave(data) {
   // Barba leave: page cleanup (if any)
       // Mark transition as in progress

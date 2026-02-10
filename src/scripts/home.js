@@ -1086,6 +1086,20 @@ export function initHomePage() {
 }
 
 export function cleanupHomePage() {
+    // Lock hero image's current state before killing ScrollTriggers to prevent flash
+    const heroImg = document.querySelector('.hero-img');
+    if (heroImg) {
+        const currentOpacity = gsap.getProperty(heroImg, 'opacity');
+        const currentScale = gsap.getProperty(heroImg, 'scale');
+        const currentFilter = gsap.getProperty(heroImg, 'filter') || window.getComputedStyle(heroImg).filter;
+        gsap.set(heroImg, { 
+            opacity: currentOpacity,
+            scale: currentScale,
+            filter: currentFilter,
+            clearProps: '' // ensure properties are not cleared
+        });
+    }
+    
     // Kill home-specific ScrollTriggers
     if (Array.isArray(homeScrollTriggers)) {
         // Remove nav/footer resize handler if stored
