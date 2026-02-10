@@ -1677,7 +1677,7 @@ function playLoadingAnimation() {
 
   const tl = gsap.timeline();
   
-  // Detect mobile for optimized animations
+  // Detect mobile for optimized animations (use consistent breakpoint)
   const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
 
   // Wait 1 second before starting transLogoShell animation
@@ -1710,10 +1710,10 @@ function playLoadingAnimation() {
     );
   }
 
-  // Use different width values for mobile (568px or less)
-  const isMobile = window.innerWidth <= 568;
-  const spacerWidth = isMobile ? '15vw' : '8vw';
-  const imgShellWidth = isMobile ? '12vw' : '6.8vw';
+  // Use consistent mobile detection for spacing values
+  const spacerWidth = isMobileDevice ? '15vw' : '8vw';
+  const imgShellWidth = isMobileDevice ? '16.2vw' : '6.8vw';
+  const mainTranslateY = isMobileDevice ? '20%' : '40%';
 
   // Animate spacer and img-shell widths in parallel, after logo anim
   tl.to(transSpacer, {
@@ -1784,7 +1784,7 @@ function playLoadingAnimation() {
   }
   if (transMainShell) {
     tl.from(transMainShell, {
-      transform: 'translate3d(0, 40%, 0)', 
+      transform: `translate3d(0, ${mainTranslateY}, 0)`, 
       duration: 1.2,
       ease: "expo.inOut",
       onStart: () => {
