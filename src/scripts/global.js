@@ -1676,22 +1676,25 @@ function playLoadingAnimation() {
   const globalTransition = document.querySelector('.global-transition');
 
   const tl = gsap.timeline();
+  
+  // Detect mobile for optimized animations
+  const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
 
   // Wait 1 second before starting transLogoShell animation
   //tl.to({}, { duration: .1 }); // dummy tween for delay
 
-  // Fade and blur in trans-logo-shell
+  // Fade and blur in trans-logo-shell (skip blur on mobile for performance)
   if (transLogoShell) {
     tl.fromTo(
       transLogoShell,
       {
         opacity: 0,
-        filter: 'blur(40px)'
+        filter: isMobileDevice ? 'blur(0px)' : 'blur(40px)'
       },
       {
         opacity: 1,
         filter: 'blur(0px)',
-        duration: 1.4,
+        duration: isMobileDevice ? 1 : 1.4,
         ease: "power4.out",
         onComplete: () => {
           // Use smoother if available; fallback to native scrollTo
