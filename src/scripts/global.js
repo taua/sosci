@@ -1879,7 +1879,7 @@ window.addEventListener('DOMContentLoaded', () => {
   
   // Setup nav click handler
   document.addEventListener('click', (e) => {
-    const navTrigger = e.target.closest('.nav-hover');
+    const navTrigger = e.target.closest('.menu-hit-area');
     if (navTrigger) {
       openNav();
       e.preventDefault();
@@ -2073,8 +2073,9 @@ window.addEventListener('DOMContentLoaded', () => {
   
   // Add hover animation for nav-hover element after fonts are loaded
   const navHoverEl = document.querySelector('.nav-hover');
+  const menuHitArea = document.querySelector('.menu-hit-area');
   
-  if (navHoverEl) {
+  if (navHoverEl && menuHitArea) {
     // Find both nav-wht-top and nav-wht-btm elements inside nav-hover
     const navTopText = navHoverEl.querySelector('.nav-wht-top');
     const navBtmText = navHoverEl.querySelector('.nav-wht-btm');
@@ -2124,8 +2125,8 @@ window.addEventListener('DOMContentLoaded', () => {
       
       // Set up hover listeners only if at least one split was successful
       if (navHoverSplit?.chars?.length || navBtmSplit?.chars?.length) {
-        // Set up hover in animation
-        navHoverEl.addEventListener('mouseenter', () => {
+        // Attach events to menu-hit-area instead of nav-hover
+        menuHitArea.addEventListener('mouseenter', () => {
           // Skip if nav is open or animation is already active
           if (navOpen || isNavHoverActive) return;
           
@@ -2156,8 +2157,7 @@ window.addEventListener('DOMContentLoaded', () => {
           }
         });
         
-        // Set up hover out animation
-        navHoverEl.addEventListener('mouseleave', () => {
+        menuHitArea.addEventListener('mouseleave', () => {
           // Skip if nav is open or animation is not active
           if (navOpen || !isNavHoverActive) return;
           
