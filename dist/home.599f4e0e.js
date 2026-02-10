@@ -1549,8 +1549,8 @@ function initHomePage() {
                         ease: "power2.out"
                     });
                 }
-                // Trigger hover in animations only if not already hovered
-                if (!isHovered) {
+                // Trigger hover in animations only if not already hovered (or always on mobile)
+                if (!isHovered || isMobile) {
                     const serviceBg = item.querySelector('.service-link-bg');
                     const plusSymbol = item.querySelector('.plus-symbol-svg');
                     const serviceName = item.querySelector('.service-name-txt');
@@ -1569,7 +1569,8 @@ function initHomePage() {
                             ease: "expo.out"
                         });
                     }
-                    if (plusSymbol) {
+                    // Skip plus symbol animations on mobile (let fade-out work)
+                    if (plusSymbol && !isMobile) {
                         (0, _gsap.gsap).killTweensOf(plusSymbol);
                         (0, _gsap.gsap).to(plusSymbol, {
                             color: '#000000',
@@ -1600,6 +1601,8 @@ function initHomePage() {
             }
         });
         item.addEventListener('mouseenter', (e)=>{
+            // Skip hover effects on mobile
+            if (isMobile) return;
             isHovered = true;
             // Don't trigger hover animations if item is open
             if (item.classList.contains('open')) return;
@@ -1637,6 +1640,8 @@ function initHomePage() {
             });
         });
         item.addEventListener('mouseleave', (e)=>{
+            // Skip hover effects on mobile
+            if (isMobile) return;
             isHovered = false;
             // Don't trigger hover out if item is open
             if (item.classList.contains('open')) return;
