@@ -1047,42 +1047,44 @@ function initHomePage() {
             });
         }, 100);
     }
-    // Only run imgTrailEffect when hero is in view
-    let imgTrailCleanup = null;
-    let activationTimeout = null;
-    function enableEffect() {
-        clearTimeout(activationTimeout);
-        activationTimeout = setTimeout(()=>{
+    // Only run imgTrailEffect when hero is in view - Skip on mobile
+    if (!isMobile) {
+        let imgTrailCleanup = null;
+        let activationTimeout = null;
+        function enableEffect() {
+            clearTimeout(activationTimeout);
+            activationTimeout = setTimeout(()=>{
+                if (typeof imgTrailCleanup === 'function') {
+                    imgTrailCleanup();
+                    imgTrailCleanup = null;
+                }
+                imgTrailCleanup = (0, _imgTrailEffectDefault.default)();
+            }, 100);
+        }
+        function disableEffect() {
+            clearTimeout(activationTimeout);
             if (typeof imgTrailCleanup === 'function') {
                 imgTrailCleanup();
                 imgTrailCleanup = null;
             }
-            imgTrailCleanup = (0, _imgTrailEffectDefault.default)();
-        }, 100);
-    }
-    function disableEffect() {
-        clearTimeout(activationTimeout);
-        if (typeof imgTrailCleanup === 'function') {
-            imgTrailCleanup();
-            imgTrailCleanup = null;
         }
+        (0, _scrollTrigger.ScrollTrigger).create({
+            trigger: '.img-trail-hero-shell',
+            start: 'top bottom',
+            end: 'bottom 75%',
+            //markers: true,
+            onEnter: enableEffect,
+            onLeave: disableEffect,
+            onEnterBack: enableEffect,
+            onLeaveBack: disableEffect
+        });
+        // Store effect cleanup on window so cleanupHomePage can access them if needed
+        window._homeImgTrailCleanup = ()=>{
+            try {
+                disableEffect();
+            } catch (e) {}
+        };
     }
-    (0, _scrollTrigger.ScrollTrigger).create({
-        trigger: '.img-trail-hero-shell',
-        start: 'top bottom',
-        end: 'bottom 75%',
-        //markers: true,
-        onEnter: enableEffect,
-        onLeave: disableEffect,
-        onEnterBack: enableEffect,
-        onLeaveBack: disableEffect
-    });
-    // Store effect cleanup on window so cleanupHomePage can access them if needed
-    window._homeImgTrailCleanup = ()=>{
-        try {
-            disableEffect();
-        } catch (e) {}
-    };
     // Function to initialize all tickers
     function initTickers() {
         // Clean up existing tickers first

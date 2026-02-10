@@ -367,44 +367,46 @@ export function initHomePage() {
         }
     }
 
-    // Only run imgTrailEffect when hero is in view
-    let imgTrailCleanup = null;
-    let activationTimeout = null;
+    // Only run imgTrailEffect when hero is in view - Skip on mobile
+    if (!isMobile) {
+        let imgTrailCleanup = null;
+        let activationTimeout = null;
 
-    function enableEffect() {
-        clearTimeout(activationTimeout);
-        activationTimeout = setTimeout(() => {
+        function enableEffect() {
+            clearTimeout(activationTimeout);
+            activationTimeout = setTimeout(() => {
+                if (typeof imgTrailCleanup === 'function') {
+                    imgTrailCleanup();
+                    imgTrailCleanup = null;
+                }
+                imgTrailCleanup = imgTrailEffect();
+            }, 100);
+        }
+
+        function disableEffect() {
+            clearTimeout(activationTimeout);
             if (typeof imgTrailCleanup === 'function') {
                 imgTrailCleanup();
                 imgTrailCleanup = null;
             }
-            imgTrailCleanup = imgTrailEffect();
-        }, 100);
-    }
-
-    function disableEffect() {
-        clearTimeout(activationTimeout);
-        if (typeof imgTrailCleanup === 'function') {
-            imgTrailCleanup();
-            imgTrailCleanup = null;
         }
-    }
 
-    ScrollTrigger.create({
-        trigger: '.img-trail-hero-shell',
-        start: 'top bottom',
-        end: 'bottom 75%',
-        //markers: true,
-        onEnter: enableEffect,
-        onLeave: disableEffect,
-        onEnterBack: enableEffect,
-        onLeaveBack: disableEffect
-    });
+        ScrollTrigger.create({
+            trigger: '.img-trail-hero-shell',
+            start: 'top bottom',
+            end: 'bottom 75%',
+            //markers: true,
+            onEnter: enableEffect,
+            onLeave: disableEffect,
+            onEnterBack: enableEffect,
+            onLeaveBack: disableEffect
+        });
 
         // Store effect cleanup on window so cleanupHomePage can access them if needed
         window._homeImgTrailCleanup = () => {
             try { disableEffect(); } catch (e) { /* ignore */ }
         };
+    }
 
     // Function to initialize all tickers
     function initTickers() {
